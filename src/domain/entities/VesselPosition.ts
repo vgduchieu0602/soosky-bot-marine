@@ -4,7 +4,16 @@
 //  Tách riêng khỏi Vessel: đây là dữ liệu time-series, ghi rất nhiều.
 // ============================================================================
 
-export type PositionSource = "vesselfinder" | "unknown";
+import { isValidLatitude, isValidLongitude } from "../validators/geo";
+import { VesselSource } from "../value-objects/VesselSource";
+
+/**
+ * Nguồn của bản ghi vị trí.
+ * TRƯỚC A1 đây là union đóng `"vesselfinder" | "unknown"` -> thêm nguồn phải
+ * sửa entity. Nay trỏ vào VesselSource (mở rộng được). Alias giữ nguyên tên cũ
+ * để không phá import nào đang có; giá trị lưu xuống DB KHÔNG đổi.
+ */
+export type PositionSource = VesselSource;
 
 export interface VesselPositionProps {
   imo?: string | number | null;
@@ -50,8 +59,9 @@ export class VesselPosition {
     this.mmsi = key != null ? String(key) : null;
 
     // Business Rule BR-03: loại toạ độ vô lý (ngoài phạm vi trái đất).
-    this.lat = VesselPosition.isValidLat(props.lat) ? (props.lat as number) : null;
-    this.lon = VesselPosition.isValidLon(props.lon) ? (props.lon as number) : null;
+    // Dùng CHUNG validator với canonical model — không copy logic ra 2 nơi.
+    this.lat = isValidLatitude(props.lat) ? props.lat : null;
+    this.lon = isValidLongitude(props.lon) ? props.lon : null;
 
     this.speedKn = props.speedKn ?? null;
     this.courseDeg = props.courseDeg ?? null;
@@ -69,12 +79,5 @@ export class VesselPosition {
 
   hasCoordinates(): boolean {
     return this.lat !== null && this.lon !== null;
-  }
-
-  private static isValidLat(v: unknown): v is number {
-    return typeof v === "number" && v >= -90 && v <= 90;
-  }
-  private static isValidLon(v: unknown): v is number {
-    return typeof v === "number" && v >= -180 && v <= 180;
   }
 }
