@@ -5,3 +5,5 @@ data/
 *.log
 *.md
 docs/*
+# Tài liệu kiến trúc PHẢI đi cùng code (A1/A2) -> gỡ khỏi 2 luật trên.
+!docs/*.md
