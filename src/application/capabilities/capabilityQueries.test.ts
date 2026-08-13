@@ -74,6 +74,30 @@ test("includeDisabled=true mở nguồn đang tắt, thứ tự theo defaultPrio
   assert.equal(sources[1], VesselSource.VESSELFINDER);
 });
 
+test("ShipInfo là ứng viên vị trí: chỉ hiện khi mở CẢ includeDisabled lẫn includeCandidate", () => {
+  // Mặc định và chỉ-mở-disabled đều không thấy: LAT của ShipInfo mới là CANDIDATE.
+  assert.equal(getSourcesForField(VesselField.LAT).includes(VesselSource.SHIPINFO), false);
+  assert.equal(
+    getSourcesForField(VesselField.LAT, { includeDisabled: true }).includes(VesselSource.SHIPINFO),
+    false
+  );
+
+  const opened = getSourcesForField(VesselField.LAT, {
+    includeDisabled: true,
+    includeCandidate: true,
+  });
+  assert.equal(opened.includes(VesselSource.SHIPINFO), true);
+  // Vẫn xếp sau 2 nguồn đã confirm, đúng defaultPriority (10, 20, rồi 45).
+  assert.equal(opened.indexOf(VesselSource.SHIPINFO) > opened.indexOf(VesselSource.VESSELFINDER), true);
+
+  // ShipInfo cũng phải đủ điều kiện cho cả bộ field position lẫn details.
+  const positionAndDetails = getSourcesForFields(
+    [VesselField.LAT, VesselField.LNG, VesselField.SPEED, VesselField.GROSS_TONNAGE],
+    { includeDisabled: true, includeCandidate: true }
+  );
+  assert.equal(positionAndDetails.includes(VesselSource.SHIPINFO), true);
+});
+
 test("UNKNOWN không bao giờ được trả về, kể cả khi mở hết bộ lọc", () => {
   const sources = getSourcesForField(VesselField.MMSI, {
     includeDisabled: true,

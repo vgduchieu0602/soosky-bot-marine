@@ -142,6 +142,7 @@ const VESSELFINDER = defineSourceCapability({
   enabled: true,
   defaultPriority: 20,
   notes: [
+    "enabled=true CHỈ phản ánh việc legacy crawler đang chạy production (ScanArea/EnrichVesselTypes/CrawlFleetPositions). Nó KHÔNG có nghĩa nguồn này mặc định được phép dùng trong multi-source resolver mới — resolver phải tự quyết theo policy riêng.",
     "Nguồn duy nhất đã có adapter thật: VesselFinderMapSource (mp2) + VesselFinderHtmlSource (HTML).",
     "LAT/LNG từ HTML bị làm tròn (~111km) -> latLngApproximate=true; từ mp2 thì chính xác.",
     "NAV_STATUS chỉ CONFIRMED phần text; navStatusCode chưa nguồn nào ghi.",
@@ -151,7 +152,7 @@ const VESSELFINDER = defineSourceCapability({
 });
 
 // ---------------------------------------------------------------------------
-//  SHIPINFO — cơ sở dữ liệu lý lịch tàu. Chưa có implementation.
+//  SHIPINFO — ứng viên cho CẢ vị trí LẪN lý lịch. Chưa có implementation.
 // ---------------------------------------------------------------------------
 const SHIPINFO = defineSourceCapability({
   source: VesselSource.SHIPINFO,
@@ -159,12 +160,13 @@ const SHIPINFO = defineSourceCapability({
     searchByName: true,
     searchByMmsi: true,
     searchByImo: true,
-    position: false,
+    position: true,
     particulars: true,
     voyage: false,
     areaScan: false,
   },
   fields: buildFieldSupport(UNSUPPORTED, {
+    // --- identity / details ---
     [VesselField.MMSI]: CANDIDATE,
     [VesselField.IMO]: CANDIDATE,
     [VesselField.NAME]: CANDIDATE,
@@ -177,14 +179,23 @@ const SHIPINFO = defineSourceCapability({
     [VesselField.LENGTH]: CANDIDATE,
     [VesselField.BEAM]: CANDIDATE,
     [VesselField.DRAUGHT]: CANDIDATE,
+    // --- position: ứng viên theo yêu cầu dự án, CHƯA POC ---
+    [VesselField.LAT]: CANDIDATE,
+    [VesselField.LNG]: CANDIDATE,
+    [VesselField.SPEED]: CANDIDATE,
+    [VesselField.COURSE]: CANDIDATE,
+    [VesselField.HEADING]: CANDIDATE,
+    [VesselField.NAV_STATUS]: CANDIDATE,
+    [VesselField.POSITION_RECEIVED_AT]: CANDIDATE,
   }),
   costType: SourceCostType.FREE,
   enabled: false,
   defaultPriority: 45,
   notes: [
     "Chưa có implementation trong repo. P2 không gọi mạng để xác minh.",
-    "Định vị kiến trúc: nguồn LÝ LỊCH, không phải nguồn vị trí -> mọi field nhóm Position để UNSUPPORTED.",
-    "Toàn bộ field là CANDIDATE cho tới khi có POC.",
+    "Định vị kiến trúc theo yêu cầu dự án: ứng viên cho CẢ vessel position LẪN vessel details.",
+    "Toàn bộ field là CANDIDATE cho tới khi có POC — kể cả nhóm Position.",
+    "Voyage giữ UNSUPPORTED (operations.voyage=false): chưa có bằng chứng nào cho destination/ETA/lịch cảng. Đây là lựa chọn BẢO THỦ, không phải kết luận rằng nguồn không có — nâng lên CANDIDATE khi audit thấy dấu vết.",
   ],
 });
 

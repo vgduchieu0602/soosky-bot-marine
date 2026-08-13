@@ -59,7 +59,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `aisstream` | EXISTING_STREAM | — | 10 | — | ✅ | — | ✅ | ✅ | ✅ | ✅ |
 | `vesselfinder` | FREE | ✅ | 20 | — | ✅ | ✅ | ✅ | ✅ | — | ✅ |
 | `shiptraffic` | FREE | — | 40 | ✅ | ✅ | ✅ | — | ✅ | ✅ | — |
-| `shipinfo` | FREE | — | 45 | ✅ | ✅ | ✅ | — | ✅ | — | — |
+| `shipinfo` | FREE | — | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | — | — |
 | `vesseltracker` | FREE | — | 50 | ✅ | ✅ | ✅ | — | ✅ | ✅ | — |
 | `shipfinder` | FREE | — | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — |
 | `boatnerd` | FREE | — | 60 | ✅ | ✅ | — | ✅ | ✅ | — | — |
@@ -69,6 +69,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 
 `vesselfinder.voyage = false`: mapper hiện không bóc `destination`/`eta`.
 `aisstream.searchByImo = false`: AIS đánh địa chỉ theo MMSI; IMO chỉ là payload của message 5.
+`shipinfo.position = true`: theo yêu cầu dự án, ShipInfo là ứng viên cho **cả** vị trí lẫn chi tiết — nhưng toàn bộ vẫn CANDIDATE vì chưa POC.
 
 ## 5. Field × Source
 
@@ -88,13 +89,13 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 ### Nhóm B · Position
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `lat` | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `lng` | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `speed` | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `course` | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `heading` | ✅ | 🟡 | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `navStatus` | ✅ | ✅ | — | 🟡 | — | 🟡 | — | — | 🟡 | — |
-| `positionReceivedAt` | ✅ | 🟡 | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `lat` | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `lng` | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `speed` | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `course` | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `heading` | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `navStatus` | ✅ | ✅ | 🟡 | 🟡 | — | 🟡 | — | — | 🟡 | — |
+| `positionReceivedAt` | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
 
 ### Nhóm C · Particulars
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
@@ -123,7 +124,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 |---|---|---|---|
 | `aisstream` | 17 | 2 | 9 |
 | `vesselfinder` | **14** | 8 | 6 |
-| `shipinfo` | 0 | 12 | 16 |
+| `shipinfo` | 0 | 19 | 9 |
 | `shipfinder` | 0 | 25 | 3 |
 | `boatnerd` | 0 | 14 | 14 |
 | `marinetraffic_live` | 0 | 28 | 0 |
@@ -150,6 +151,11 @@ CANDIDATE của VesselFinder có 2 loại lý do khác nhau:
 
 `navStatus` CONFIRMED **chỉ phần text** (bảng "Navigation Status"); `navStatusCode` chưa nguồn nào ghi.
 
+**VesselFinder — phạm vi của `enabled = true`.** Cờ này **chỉ** phản ánh một sự thật vận hành: legacy crawler (`ScanArea`, `EnrichVesselTypes`, `CrawlFleetPositions`) đang chạy production. Nó **KHÔNG** có nghĩa multi-source resolver mới được mặc định dùng nguồn này. Resolver ở phase sau phải tự quyết theo policy riêng của nó — kế thừa `enabled` mà không suy nghĩ là hiểu sai cờ. Runtime crawler hiện tại **không bị đụng tới** trong P2.
+
+**SHIPINFO** — theo yêu cầu dự án, đây là ứng viên cho **cả `position` lẫn `particulars`/details**, không phải nguồn lý lịch thuần. `operations.position = true` và 7 field nhóm Position ở mức **CANDIDATE**, vì chưa có POC nào trong repo (P2 không gọi mạng để xác minh).
+Nhóm Voyage giữ **UNSUPPORTED** + `operations.voyage = false` — lựa chọn **bảo thủ**: chưa có bằng chứng nào về `destination`/`eta`/lịch cảng. Đây không phải kết luận rằng nguồn không có; nâng lên CANDIDATE ngay khi audit thấy dấu vết.
+
 **AISSTREAM** — CONFIRMED ở đây dựa trên **đặc tả AIS** (message 1/2/3 dynamic, message 5 static & voyage) cộng với việc Marine đang vận hành AISStream thật — **KHÔNG phải POC trong bot**. `grossTonnage`/`deadweight`/`builtYear` là **UNSUPPORTED** (bằng chứng: không AIS message nào mang chúng), không phải "chưa audit". `vesselType` và `flag` là CANDIDATE vì phải suy diễn (mã → nhãn chữ; MID → quốc gia).
 
 **MYSHIPTRACKING** — toàn bộ **CANDIDATE**. Repo không chứa API client, không chứa tài liệu hay response mẫu để làm bằng chứng. Danh sách field CONFIRMED phải đến từ API task ngoài repo; nâng trạng thái khi có danh sách đó. Xem §11.
@@ -170,13 +176,13 @@ CANDIDATE của VesselFinder có 2 loại lý do khác nhau:
 
 | Source | enabled | Lý do |
 |---|---|---|
-| `vesselfinder` | ✅ | Nguồn duy nhất có adapter thật đang chạy |
+| `vesselfinder` | ✅ | **Chỉ** vì legacy crawler đang chạy production — **không** đồng nghĩa resolver multi-source mới được mặc định dùng |
 | `myshiptracking` | ✅ | Được phép dùng — nhưng `defaultPriority = 900` nên luôn cuối |
 | `aisstream` | — | Marine đã sở hữu connection; Phase A **không mở connection thứ hai** từ bot. Đây là quyết định vận hành, **không phải giới hạn kỹ thuật** |
 | `marinetraffic_live` | — | Không có crawler, **không được bật** ở phase này |
 | 5 nguồn còn lại | — | Chưa có implementation, chưa audit provider |
 
-⚠️ `enabled = true` chỉ nói "được phép dùng", **không** nói "được gọi trước". Thứ tự là việc của `defaultPriority`.
+⚠️ `enabled = true` chỉ nói "được phép dùng ở phase hiện tại", **không** nói "được gọi trước" (thứ tự là việc của `defaultPriority`), và **không** nói "resolver mới được kế thừa quyền đó". Với `vesselfinder`, cờ này thuần tuý mô tả legacy crawler đang chạy.
 
 ## 8. Quy tắc: Crawl-first, Paid-last
 

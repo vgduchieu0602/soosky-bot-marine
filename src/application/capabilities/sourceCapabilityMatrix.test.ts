@@ -117,6 +117,62 @@ test("AISStream: EXISTING_STREAM, chưa bật trong bot, KHÔNG confirm GT/DWT/n
   assert.equal(capability.fields[VesselField.LAT], FieldSupportStatus.CONFIRMED);
 });
 
+test("ShipInfo: ứng viên cho CẢ position LẪN details", () => {
+  const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
+  assert.equal(capability.operations.position, true);
+  assert.equal(capability.operations.particulars, true);
+  assert.equal(capability.operations.searchByName, true);
+  assert.equal(capability.operations.searchByMmsi, true);
+  assert.equal(capability.operations.searchByImo, true);
+
+  // Position: CANDIDATE (chưa POC) — không được UNSUPPORTED, cũng không được CONFIRMED.
+  for (const field of [
+    VesselField.LAT,
+    VesselField.LNG,
+    VesselField.SPEED,
+    VesselField.COURSE,
+    VesselField.HEADING,
+    VesselField.NAV_STATUS,
+    VesselField.POSITION_RECEIVED_AT,
+  ]) {
+    assert.equal(capability.fields[field], FieldSupportStatus.CANDIDATE, field);
+  }
+
+  // Identity/details giữ nguyên CANDIDATE.
+  for (const field of [
+    VesselField.MMSI,
+    VesselField.IMO,
+    VesselField.NAME,
+    VesselField.GROSS_TONNAGE,
+    VesselField.BUILT_YEAR,
+  ]) {
+    assert.equal(capability.fields[field], FieldSupportStatus.CANDIDATE, field);
+  }
+});
+
+test("ShipInfo: voyage giữ bảo thủ — chưa bằng chứng thì không hứa", () => {
+  const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
+  assert.equal(capability.operations.voyage, false);
+  for (const field of [
+    VesselField.DESTINATION,
+    VesselField.ETA,
+    VesselField.CURRENT_PORT,
+    VesselField.NEXT_PORT,
+    VesselField.LAST_PORT,
+  ]) {
+    assert.equal(capability.fields[field], FieldSupportStatus.UNSUPPORTED, field);
+  }
+});
+
+test("VesselFinder: enabled=true phải kèm note giới hạn phạm vi (legacy crawler)", () => {
+  const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.VESSELFINDER];
+  assert.equal(capability.enabled, true);
+  const scoped = capability.notes?.some(
+    (note) => note.includes("legacy crawler") && note.includes("resolver")
+  );
+  assert.equal(scoped, true, "thiếu note: enabled=true không đồng nghĩa resolver mới được phép dùng");
+});
+
 test("nguồn chưa có implementation đều enabled=false", () => {
   for (const source of [
     VesselSource.SHIPINFO,
