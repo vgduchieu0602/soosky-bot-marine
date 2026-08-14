@@ -6,4 +6,8 @@ data/
 *.md
 docs/*
 # Tài liệu kiến trúc PHẢI đi cùng code (A1/A2) -> gỡ khỏi 2 luật trên.
+# Phải mở cả THƯ MỤC CON: git không đi vào thư mục đã bị ignore, nên chỉ
+# "!docs/*.md" thôi thì docs/sources/*.md vẫn bị bỏ qua.
 !docs/*.md
+!docs/*/
+!docs/*/*.md
