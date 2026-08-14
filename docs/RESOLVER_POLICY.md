@@ -606,6 +606,78 @@ POSITION ứng viên: shipfinder@2026-08-14T16:39:41Z | shipinfo@2026-08-13T20:1
 
 ---
 
+## Q · Ghi chú implementation P8.3 (Identity + Particulars)
+
+Hiện thực thêm **bước 2, 7, 8** của §O. Còn lại: Voyage (bước 9).
+
+| Thành phần | File |
+|---|---|
+| Khung phân xử một field | `fieldResolution.ts` — hàm thuần, không class, không kế thừa |
+| Chuẩn hoá mã cờ | `flagNormalization.ts` |
+| Chính sách hai nhóm tĩnh | `StaticResolverPolicy.ts` |
+| Resolver | `IdentityResolver.ts` · `ParticularsResolver.ts` |
+| Đường đọc | `ResolveCurrentIdentity.ts` · `ResolveCurrentParticulars.ts` |
+
+`PositionResolver` **không bị đụng** — nhóm POSITION nguyên khối, bài toán khác hẳn, không gom chung.
+
+### Q.1 Cờ — chọn hướng nào và vì sao
+
+§E.3 từng đề xuất chuẩn hoá **trong mapper**. P8.3 chọn khác: **chuẩn hoá để SO SÁNH, ngay trong resolver**.
+
+Lý do: sửa mapper không đổi được **observation lịch sử đã ghi** — kho là append-only. Chuẩn hoá lúc so sánh xử lý được cả dữ liệu cũ lẫn mới, và không phải viết lại P7.
+
+Bảng quy đổi alpha-3 → alpha-2 **chỉ chứa mã đã quan sát thật** (5 dòng: `LBR USA CHN SGP BGD`), mỗi dòng truy được về một observation cụ thể. **Không** viết database quốc gia, **không** thêm dependency.
+
+Mã alpha-3 lạ → `INCOMPARABLE_REPRESENTATION`, **không phải** `DIFFERENT`. Ta chưa chứng minh được chúng khác nhau, chỉ là chưa so được — nói "xung đột" ở đây là nói sai.
+
+⚠️ **TUYỆT ĐỐI không suy bằng tiền tố**: `"CH"` là tiền tố của `"CHN"` nhưng CH = Thuỵ Sĩ còn CHN = Trung Quốc. Có test khoá.
+
+⚠️ **Giới hạn đã biết**: chuẩn hoá chỉ dùng để so sánh; **giá trị trả ra giữ nguyên dạng của nguồn thắng**. Nên `flagCode` canonical có thể là `"LBR"` (alpha-3) hoặc `"LR"` (alpha-2) tuỳ ai thắng. Thống nhất biểu diễn đầu ra là việc của phase có canonical storage.
+
+### Q.2 Thứ tự tiêu chí theo field
+
+| Field | Thứ tự | Vì sao |
+|---|---|---|
+| `imo` | quality → priority | Định danh gần như vĩnh viễn. **Cố ý bỏ `NEWER_FETCH`**: hai nguồn nói hai IMO khác nhau thì "nguồn mới hơn" không phải bằng chứng — một trong hai đơn giản là sai |
+| `name`, `callsign` | quality → **newer fetch** | Tên tàu **đổi thật** (quan sát: `"Queen Of The West"` → `"AMERICAN WEST"`, cùng callsign) |
+| `vesselType` | quality → **source preference** → newer fetch | Độ **chi tiết** quyết định, không phải độ mới |
+| `flagCode`, `flagName` | quality → newer fetch | Hai subfield phân xử **riêng**, có thể đến từ hai nguồn |
+| `length`, `beam` | **quality** → newer fetch | Hằng số vật lý; `shipinfo` là `UNSUPPORTED` nên không thể vượt `shipfinder` |
+| `draught` | quality → **newer fetch** | ⚠️ **nửa động**: đổi theo hàng hoá từng chuyến. Canonical hiện xếp trong Particulars — P8.3 giữ nguyên chỗ, không thiết kế lại model. Có thể cần policy riêng sau này |
+| `builtYear` | **chỉ quality** | Bất biến; dung sai **bằng 0** — lệch 1 năm là sai thật, không phải làm tròn |
+| `grossTonnage`, `deadweight` | quality → newer fetch | Không suy GT từ DWT, không suy DWT từ kích thước |
+
+Sau khi hết tiêu chí: `defaultPriority` rồi **tên nguồn theo bảng chữ cái** → kết quả tất định.
+
+### Q.3 Dung sai số
+
+`length`/`beam` ±1 m · `draught` ±0.2 m · tấn ±2 % · `builtYear` **0**.
+
+Trong dung sai → `SOURCES_AGREE`, và **giá trị trả ra là con số MỘT NGUỒN THẬT SỰ NÓI**. Không bao giờ lấy trung bình: `(179+180)/2 = 179.5` là số chưa nguồn nào từng nói. Có test khoá.
+
+### Q.4 Xác minh trên dữ liệu THẬT (Mongo)
+
+```
+MMSI 636018086 · IDENTITY
+  name       "AGIA DOXA"    ← shipfinder  SOURCES_AGREE        ("Agia Doxa" chỉ khác cách viết)
+  callsign   "D5OC7"        ← shipfinder  SOURCES_AGREE
+  vesselType "Bulk Carrier" ← shipinfo    SOURCE_FIELD_PREFERENCE  (thắng dù fetch CŨ HƠN)
+  flag.code  "LBR"          ← shipfinder  SOURCES_AGREE        (LBR ≡ LR sau chuẩn hoá)
+  flag.name  "Liberia"      ← shipinfo    ONLY_AVAILABLE_VALUE
+
+MMSI 636018086 · PARTICULARS
+  length 179 · beam 29 · draught 5.9   ← shipfinder
+  builtYear 2010 · deadweight 33261    ← shipinfo
+  grossTonnage —                        (không nguồn nào có)
+
+MMSI 367452710 · IDENTITY
+  name "AMERICAN WEST" ← shipfinder  NEWER_FETCH   (tàu đổi tên, callsign vẫn khớp)
+```
+
+Bộ particulars này **không nguồn nào tự mình cho được** — đúng giá trị mà multi-source tạo ra, và là lý do nhóm này bắt buộc trộn field.
+
+---
+
 ## Phụ lục · Cách tái lập bằng chứng
 
 ```js
