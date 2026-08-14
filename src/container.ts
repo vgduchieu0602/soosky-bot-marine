@@ -20,6 +20,7 @@ import { MongoWatchlistRepository } from "./infrastructure/persistence/MongoWatc
 import { connectMongo } from "./infrastructure/persistence/mongoose/connection";
 
 import { ProviderRegistry } from "./application/providers/ProviderRegistry";
+import { SourceRuntimeManager } from "./application/runtime/SourceRuntimeManager";
 import { VesselFinderProvider } from "./infrastructure/providers/VesselFinderProvider";
 
 import { GetVesselDetails } from "./application/use-cases/GetVesselDetails";
@@ -47,6 +48,13 @@ export interface Container {
    * đây để phase sau có chỗ cắm resolver. Xem PROVIDER_ARCHITECTURE.md §6.
    */
   providerRegistry: ProviderRegistry;
+  /**
+   * Crawl runtime dùng chung (P4): concurrency/delay/retry/cooldown theo TỪNG
+   * nguồn. Hiện KHÔNG use case nào dùng — legacy vẫn tự sleep/cooldown như cũ.
+   * Tạo lười: chưa ai gọi getExecutor thì không có timer, không có state.
+   * Xem CRAWL_RUNTIME.md §9.
+   */
+  crawlRuntime: SourceRuntimeManager;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -135,6 +143,11 @@ export async function buildContainer(): Promise<Container> {
     new VesselFinderProvider({ detailsSource, areaScanner: mapSource })
   );
 
+  // 4) Crawl runtime (P4). Config đi vào TỪ ĐÂY — runtime class không đọc
+  //    process.env. Chưa truyền override nào: mặc định bảo thủ là đủ cho tới
+  //    khi có crawler thật để đo. Không đụng nhịp nghỉ của legacy use case.
+  const crawlRuntime = new SourceRuntimeManager();
+
   return {
     config,
     repository,
@@ -146,5 +159,6 @@ export async function buildContainer(): Promise<Container> {
     enrichVesselTypes,
     cleanupStalePositions,
     providerRegistry,
+    crawlRuntime,
   };
 }
