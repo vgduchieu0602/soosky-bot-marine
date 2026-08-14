@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Source Capability Matrix — Soosky Marine Bot</title>
+<style>
+  :root{
+    --bg:#f6f8fa; --panel:#fff; --panel2:#eef2f6; --border:#d8e0e8;
+    --text:#12202e; --muted:#5b7185; --accent:#0b6bcb;
+    --ok:#12805c; --okbg:#dff5ec; --cand:#9a6700; --candbg:#fff4d6;
+    --no:#8b95a1; --nobg:#eef1f4; --paid:#a33; --paidbg:#fdeaea;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0b1420; --panel:#0f1d2e; --panel2:#132437; --border:#1e3349;
+      --text:#dbe7f2; --muted:#7c93a8; --accent:#2fa8ff;
+      --ok:#4ade80; --okbg:#12301f; --cand:#fbbf24; --candbg:#332708;
+      --no:#64748b; --nobg:#16202c; --paid:#f87171; --paidbg:#331414;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0b1420; --panel:#0f1d2e; --panel2:#132437; --border:#1e3349;
+    --text:#dbe7f2; --muted:#7c93a8; --accent:#2fa8ff;
+    --ok:#4ade80; --okbg:#12301f; --cand:#fbbf24; --candbg:#332708;
+    --no:#64748b; --nobg:#16202c; --paid:#f87171; --paidbg:#331414;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1400px;margin:0 auto;padding:24px 20px 64px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:16px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+  code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+  a{color:var(--accent)}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+       background:var(--panel);border:1px solid var(--border);border-radius:10px;
+       padding:10px 12px;margin-bottom:18px;position:sticky;top:0;z-index:20}
+  button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--border);
+         border-radius:7px;padding:5px 11px;cursor:pointer}
+  button:hover{border-color:var(--accent)}
+  button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .spacer{flex:1}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .card h3{margin:0 0 8px;font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .chip{font-size:11px;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .chip.on{background:var(--okbg);color:var(--ok);border-color:transparent}
+  .chip.off{background:var(--nobg);color:var(--no);border-color:transparent}
+  .chip.paid{background:var(--paidbg);color:var(--paid);border-color:transparent}
+  .counts{display:flex;gap:6px;font-size:12px}
+  .counts span{flex:1;text-align:center;padding:4px 2px;border-radius:6px}
+  .c-ok{background:var(--okbg);color:var(--ok)}
+  .c-cd{background:var(--candbg);color:var(--cand)}
+  .c-no{background:var(--nobg);color:var(--no)}
+
+  .scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2}
+  thead th{position:sticky;top:0;background:var(--panel2);z-index:3;font-size:11px;
+           letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  thead th:first-child{z-index:4}
+  tbody tr:hover td{background:var(--panel2)}
+  tbody tr:hover td:first-child{background:var(--panel2)}
+  .grp td{background:var(--panel2);font-weight:600;text-align:left;font-size:12px;
+          text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .fld{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .m{display:inline-block;min-width:22px;padding:1px 6px;border-radius:5px;font-size:12px;font-weight:600}
+  .m-CONFIRMED{background:var(--okbg);color:var(--ok)}
+  .m-CANDIDATE{background:var(--candbg);color:var(--cand)}
+  .m-UNSUPPORTED{background:var(--nobg);color:var(--no)}
+  .yes{color:var(--ok);font-weight:600}
+  .no{color:var(--no)}
+  .dim{opacity:.32}
+
+  .notes{margin-top:10px;display:grid;gap:10px}
+  .note{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);
+        border-radius:8px;padding:11px 14px}
+  .note h4{margin:0 0 6px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .note ul{margin:0;padding-left:18px}
+  .note li{margin:3px 0;color:var(--muted);font-size:13px}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:12px;margin:0 0 16px}
+  footer{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Source Capability Matrix</h1>
+  <p class="sub">
+    Nguồn nào cấp được field nào — sinh trực tiếp từ
+    <code>src/application/capabilities/sourceCapabilityMatrix.ts</code>.
+    Bản văn bản kèm giải thích: <a href="./SOURCE_CAPABILITY_MATRIX.md">SOURCE_CAPABILITY_MATRIX.md</a>
+  </p>
+
+  <div class="legend">
+    <span><span class="m m-CONFIRMED">✓</span> CONFIRMED — có bằng chứng, code đã bóc được</span>
+    <span><span class="m m-CANDIDATE">?</span> CANDIDATE — có thể cấp, chưa audit/POC</span>
+    <span><span class="m m-UNSUPPORTED">–</span> UNSUPPORTED — không phù hợp / bằng chứng vắng mặt</span>
+  </div>
+
+  <div class="bar">
+    <button id="f-all" aria-pressed="true">Tất cả nguồn</button>
+    <button id="f-impl" aria-pressed="false">Chỉ nguồn đã có provider</button>
+    <button id="f-conf" aria-pressed="false">Chỉ field có nguồn CONFIRMED</button>
+    <span class="spacer"></span>
+    <button id="theme">◐ Sáng / Tối</button>
+  </div>
+
+  <h2>1 · Tổng quan từng nguồn</h2>
+  <div class="cards" id="cards"></div>
+
+  <h2>2 · Nguồn × Operation</h2>
+  <div class="scroll"><table id="ops"></table></div>
+
+  <h2>3 · Field × Nguồn</h2>
+  <div class="scroll"><table id="matrix"></table></div>
+
+  <h2>4 · Ghi chú vận hành</h2>
+  <div class="notes" id="notes"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script id="matrix-data" type="application/json">{"generatedFrom":"src/application/capabilities/sourceCapabilityMatrix.ts","fields":[{"id":"mmsi","group":"identity"},{"id":"imo","group":"identity"},{"id":"name","group":"identity"},{"id":"callsign","group":"identity"},{"id":"vesselType","group":"identity"},{"id":"vesselTypeCode","group":"identity"},{"id":"flag","group":"identity"},{"id":"lat","group":"position"},{"id":"lng","group":"position"},{"id":"speed","group":"position"},{"id":"course","group":"position"},{"id":"heading","group":"position"},{"id":"navStatus","group":"position"},{"id":"positionReceivedAt","group":"position"},{"id":"grossTonnage","group":"particulars"},{"id":"deadweight","group":"particulars"},{"id":"builtYear","group":"particulars"},{"id":"length","group":"particulars"},{"id":"beam","group":"particulars"},{"id":"draught","group":"particulars"},{"id":"destination","group":"voyage"},{"id":"eta","group":"voyage"},{"id":"currentPort","group":"voyage"},{"id":"currentPortArrivalAt","group":"voyage"},{"id":"nextPort","group":"voyage"},{"id":"nextPortEta","group":"voyage"},{"id":"lastPort","group":"voyage"},{"id":"lastPortDepartureAt","group":"voyage"}],"groups":["identity","position","particulars","voyage"],"sources":[{"id":"aisstream","costType":"EXISTING_STREAM","enabled":false,"priority":10,"operations":{"searchByName":false,"searchByMmsi":true,"searchByImo":false,"position":true,"particulars":true,"voyage":true,"areaScan":true},"notes":["Marine đã sở hữu và vận hành kết nối AISStream. Phase A KHÔNG mở connection thứ hai từ bot.","enabled=false là quyết định vận hành (tránh 2 connection), không phải giới hạn kỹ thuật.","GT/DWT/năm đóng UNSUPPORTED: không AIS message nào mang các trường này.","Mọi field cảng UNSUPPORTED: AIS không phát sự kiện cập cảng/rời cảng."],"fields":{"mmsi":"CONFIRMED","imo":"CONFIRMED","name":"CONFIRMED","callsign":"CONFIRMED","vesselType":"CANDIDATE","vesselTypeCode":"CONFIRMED","flag":"CANDIDATE","lat":"CONFIRMED","lng":"CONFIRMED","speed":"CONFIRMED","course":"CONFIRMED","heading":"CONFIRMED","navStatus":"CONFIRMED","positionReceivedAt":"CONFIRMED","grossTonnage":"UNSUPPORTED","deadweight":"UNSUPPORTED","builtYear":"UNSUPPORTED","length":"CONFIRMED","beam":"CONFIRMED","draught":"CONFIRMED","destination":"CONFIRMED","eta":"CONFIRMED","currentPort":"UNSUPPORTED","currentPortArrivalAt":"UNSUPPORTED","nextPort":"UNSUPPORTED","nextPortEta":"UNSUPPORTED","lastPort":"UNSUPPORTED","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"vesselfinder","costType":"FREE","enabled":true,"priority":20,"operations":{"searchByName":false,"searchByMmsi":true,"searchByImo":true,"position":true,"particulars":true,"voyage":false,"areaScan":true},"notes":["enabled=true CHỈ phản ánh việc legacy crawler đang chạy production (ScanArea/EnrichVesselTypes/CrawlFleetPositions). Nó KHÔNG có nghĩa nguồn này mặc định được phép dùng trong multi-source resolver mới — resolver phải tự quyết theo policy riêng.","Nguồn duy nhất đã có adapter thật: VesselFinderMapSource (mp2) + VesselFinderHtmlSource (HTML).","LAT/LNG từ HTML bị làm tròn (~111km) -> latLngApproximate=true; từ mp2 thì chính xác.","NAV_STATUS chỉ CONFIRMED phần text; navStatusCode chưa nguồn nào ghi.","GROSS_TONNAGE/DEADWEIGHT/BUILT_YEAR/DESTINATION/ETA là CANDIDATE vì Mongo schema có cột nhưng VesselFinderHtmlMapper KHÔNG bóc (CURRENT_DATA_FLOW.md §2.3).","P2 không mở rộng crawler — nâng CANDIDATE lên CONFIRMED là việc của phase sau."],"fields":{"mmsi":"CONFIRMED","imo":"CONFIRMED","name":"CONFIRMED","callsign":"CONFIRMED","vesselType":"CONFIRMED","vesselTypeCode":"CANDIDATE","flag":"CONFIRMED","lat":"CONFIRMED","lng":"CONFIRMED","speed":"CONFIRMED","course":"CONFIRMED","heading":"CANDIDATE","navStatus":"CONFIRMED","positionReceivedAt":"CANDIDATE","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CONFIRMED","beam":"CONFIRMED","draught":"CONFIRMED","destination":"CANDIDATE","eta":"CANDIDATE","currentPort":"UNSUPPORTED","currentPortArrivalAt":"UNSUPPORTED","nextPort":"UNSUPPORTED","nextPortEta":"UNSUPPORTED","lastPort":"UNSUPPORTED","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"shipinfo","costType":"FREE","enabled":false,"priority":45,"operations":{"searchByName":false,"searchByMmsi":true,"searchByImo":true,"position":true,"particulars":true,"voyage":false,"areaScan":false},"notes":["Có provider thật (ShipInfoProvider), đã đăng ký trong ProviderRegistry, mọi request đi qua crawl runtime P4.","enabled=false: mới chỉ có POC gọi TAY (`npm run shipinfo:poc`), CHƯA có ingestion tự động. Bật lên là một quyết định riêng.","⚠️ Vị trí bản free TRỄ ~14 GIỜ có chủ ý (fresh_locked). Không dùng làm nguồn vị trí thời gian thực; merge policy phải xếp sau nguồn tươi hơn theo sourceReceivedAt.","LENGTH/BEAM là UNSUPPORTED do dữ liệu nguồn ĐẢO không nhất quán, KHÔNG phải do thiếu dữ liệu.","Không dùng bất kỳ endpoint /api/ nào (robots.txt cấm) -> không có tìm theo tên.","Giá trị riêng so với VesselFinder: mã cờ quốc gia, và lịch sử track ~270 điểm/tàu (chưa khai thác)."],"fields":{"mmsi":"CONFIRMED","imo":"CONFIRMED","name":"CONFIRMED","callsign":"CONFIRMED","vesselType":"CONFIRMED","vesselTypeCode":"UNSUPPORTED","flag":"CONFIRMED","lat":"CONFIRMED","lng":"CONFIRMED","speed":"CONFIRMED","course":"CONFIRMED","heading":"UNSUPPORTED","navStatus":"UNSUPPORTED","positionReceivedAt":"CONFIRMED","grossTonnage":"UNSUPPORTED","deadweight":"CONFIRMED","builtYear":"CONFIRMED","length":"UNSUPPORTED","beam":"UNSUPPORTED","draught":"UNSUPPORTED","destination":"UNSUPPORTED","eta":"UNSUPPORTED","currentPort":"UNSUPPORTED","currentPortArrivalAt":"UNSUPPORTED","nextPort":"UNSUPPORTED","nextPortEta":"UNSUPPORTED","lastPort":"UNSUPPORTED","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"shipfinder","costType":"FREE","enabled":false,"priority":55,"operations":{"searchByName":false,"searchByMmsi":true,"searchByImo":false,"position":true,"particulars":true,"voyage":true,"areaScan":false},"notes":["Có provider thật (ShipFinderProvider), đã đăng ký trong ProviderRegistry, mọi request đi qua crawl runtime P4.","enabled=false: mới chỉ có POC gọi TAY (`npm run shipfinder:poc`), CHƯA có ingestion tự động.","⚠️ POSITION_RECEIVED_AT phụ thuộc GIẢ ĐỊNH VẬN HÀNH về múi giờ: nguồn KHÔNG khai báo timezone, P7.1 chỉ suy luận UTC+8. Không đặt SHIPFINDER_SOURCE_UTC_OFFSET_MINUTES thì provider KHÔNG phát nhóm position.","Chỉ tra được bằng MMSI. Không tìm theo tên, không quét vùng (endpoint đều bị ký chữ ký hoặc không tồn tại).","Không dùng bất kỳ endpoint /Ship/* nào (đòi header chữ ký `s` + `t`).","Giá trị riêng so với ShipInfo: vị trí tươi theo PHÚT (POC: 6.1 phút vs ~14 giờ), cộng heading + navStatus + draught."],"fields":{"mmsi":"CONFIRMED","imo":"CONFIRMED","name":"CONFIRMED","callsign":"CONFIRMED","vesselType":"CONFIRMED","vesselTypeCode":"UNSUPPORTED","flag":"CONFIRMED","lat":"CONFIRMED","lng":"CONFIRMED","speed":"CONFIRMED","course":"CONFIRMED","heading":"CONFIRMED","navStatus":"CONFIRMED","positionReceivedAt":"CONFIRMED","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CONFIRMED","beam":"CONFIRMED","draught":"CONFIRMED","destination":"CONFIRMED","eta":"CANDIDATE","currentPort":"CANDIDATE","currentPortArrivalAt":"UNSUPPORTED","nextPort":"CANDIDATE","nextPortEta":"UNSUPPORTED","lastPort":"CANDIDATE","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"boatnerd","costType":"FREE","enabled":false,"priority":60,"operations":{"searchByName":true,"searchByMmsi":true,"searchByImo":false,"position":true,"particulars":true,"voyage":false,"areaScan":false},"notes":["Chưa có implementation. Position-oriented.","Static particulars để CANDIDATE — không confirm bừa.","Voyage/lịch cảng UNSUPPORTED: không có căn cứ nào trong dự án.","Phạm vi địa lý hẹp -> phase sau phải cân nhắc trước khi đưa vào resolver toàn cầu."],"fields":{"mmsi":"CANDIDATE","imo":"UNSUPPORTED","name":"CANDIDATE","callsign":"UNSUPPORTED","vesselType":"CANDIDATE","vesselTypeCode":"UNSUPPORTED","flag":"UNSUPPORTED","lat":"CANDIDATE","lng":"CANDIDATE","speed":"CANDIDATE","course":"CANDIDATE","heading":"CANDIDATE","navStatus":"UNSUPPORTED","positionReceivedAt":"CANDIDATE","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CANDIDATE","beam":"CANDIDATE","draught":"UNSUPPORTED","destination":"UNSUPPORTED","eta":"UNSUPPORTED","currentPort":"UNSUPPORTED","currentPortArrivalAt":"UNSUPPORTED","nextPort":"UNSUPPORTED","nextPortEta":"UNSUPPORTED","lastPort":"UNSUPPORTED","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"marinetraffic_live","costType":"FREE","enabled":false,"priority":70,"operations":{"searchByName":true,"searchByMmsi":true,"searchByImo":true,"position":true,"particulars":true,"voyage":true,"areaScan":true},"notes":["KHÔNG có crawler implementation trong repo và KHÔNG được bật ở phase này.","Capability khai để kiến trúc có chỗ cắm; mọi field là CANDIDATE, chưa audit gì.","enabled=false: bật lên phải là quyết định riêng, kèm audit điều khoản sử dụng."],"fields":{"mmsi":"CANDIDATE","imo":"CANDIDATE","name":"CANDIDATE","callsign":"CANDIDATE","vesselType":"CANDIDATE","vesselTypeCode":"CANDIDATE","flag":"CANDIDATE","lat":"CANDIDATE","lng":"CANDIDATE","speed":"CANDIDATE","course":"CANDIDATE","heading":"CANDIDATE","navStatus":"CANDIDATE","positionReceivedAt":"CANDIDATE","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CANDIDATE","beam":"CANDIDATE","draught":"CANDIDATE","destination":"CANDIDATE","eta":"CANDIDATE","currentPort":"CANDIDATE","currentPortArrivalAt":"CANDIDATE","nextPort":"CANDIDATE","nextPortEta":"CANDIDATE","lastPort":"CANDIDATE","lastPortDepartureAt":"CANDIDATE"}},{"id":"shiptraffic","costType":"FREE","enabled":false,"priority":40,"operations":{"searchByName":true,"searchByMmsi":true,"searchByImo":true,"position":false,"particulars":true,"voyage":true,"areaScan":false},"notes":["Chưa có implementation. Không network request trong P2.","Vai trò dự kiến: vessel details/particulars -> nhóm Position để UNSUPPORTED."],"fields":{"mmsi":"CANDIDATE","imo":"CANDIDATE","name":"CANDIDATE","callsign":"CANDIDATE","vesselType":"CANDIDATE","vesselTypeCode":"UNSUPPORTED","flag":"CANDIDATE","lat":"UNSUPPORTED","lng":"UNSUPPORTED","speed":"UNSUPPORTED","course":"UNSUPPORTED","heading":"UNSUPPORTED","navStatus":"UNSUPPORTED","positionReceivedAt":"UNSUPPORTED","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CANDIDATE","beam":"CANDIDATE","draught":"CANDIDATE","destination":"CANDIDATE","eta":"CANDIDATE","currentPort":"UNSUPPORTED","currentPortArrivalAt":"UNSUPPORTED","nextPort":"UNSUPPORTED","nextPortEta":"UNSUPPORTED","lastPort":"UNSUPPORTED","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"vesseltracker","costType":"FREE","enabled":false,"priority":50,"operations":{"searchByName":true,"searchByMmsi":true,"searchByImo":true,"position":false,"particulars":true,"voyage":true,"areaScan":false},"notes":["Chưa có implementation. enabled=false cho tới khi provider được audit.","Ứng viên cho nhóm Voyage — hiện là nhóm rỗng nhất của canonical model."],"fields":{"mmsi":"CANDIDATE","imo":"CANDIDATE","name":"CANDIDATE","callsign":"CANDIDATE","vesselType":"CANDIDATE","vesselTypeCode":"UNSUPPORTED","flag":"CANDIDATE","lat":"UNSUPPORTED","lng":"UNSUPPORTED","speed":"UNSUPPORTED","course":"UNSUPPORTED","heading":"UNSUPPORTED","navStatus":"UNSUPPORTED","positionReceivedAt":"UNSUPPORTED","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CANDIDATE","beam":"CANDIDATE","draught":"CANDIDATE","destination":"CANDIDATE","eta":"CANDIDATE","currentPort":"CANDIDATE","currentPortArrivalAt":"UNSUPPORTED","nextPort":"CANDIDATE","nextPortEta":"UNSUPPORTED","lastPort":"CANDIDATE","lastPortDepartureAt":"UNSUPPORTED"}},{"id":"myshiptracking","costType":"PAID","enabled":true,"priority":900,"operations":{"searchByName":true,"searchByMmsi":true,"searchByImo":true,"position":true,"particulars":true,"voyage":true,"areaScan":true},"notes":["Paid fallback only. Resolver must place this source last.","P2 KHÔNG implement API client.","Mọi field để CANDIDATE: repo không chứa client/tài liệu/response mẫu để làm bằng chứng. Nâng lên CONFIRMED khi danh sách field của API task được đưa vào.","enabled=true chỉ nói 'được phép dùng', KHÔNG có nghĩa được gọi trước nguồn free — xem defaultPriority."],"fields":{"mmsi":"CANDIDATE","imo":"CANDIDATE","name":"CANDIDATE","callsign":"CANDIDATE","vesselType":"CANDIDATE","vesselTypeCode":"CANDIDATE","flag":"CANDIDATE","lat":"CANDIDATE","lng":"CANDIDATE","speed":"CANDIDATE","course":"CANDIDATE","heading":"CANDIDATE","navStatus":"CANDIDATE","positionReceivedAt":"CANDIDATE","grossTonnage":"CANDIDATE","deadweight":"CANDIDATE","builtYear":"CANDIDATE","length":"CANDIDATE","beam":"CANDIDATE","draught":"CANDIDATE","destination":"CANDIDATE","eta":"CANDIDATE","currentPort":"CANDIDATE","currentPortArrivalAt":"CANDIDATE","nextPort":"CANDIDATE","nextPortEta":"CANDIDATE","lastPort":"CANDIDATE","lastPortDepartureAt":"CANDIDATE"}},{"id":"unknown","costType":"FREE","enabled":false,"priority":null,"operations":{"searchByName":false,"searchByMmsi":false,"searchByImo":false,"position":false,"particulars":false,"voyage":false,"areaScan":false},"notes":["Giá trị canh biên cho dữ liệu cũ/không nhận dạng được (parseVesselSource trả về đây).","Không bao giờ được chọn làm nguồn."],"fields":{"mmsi":"UNSUPPORTED","imo":"UNSUPPORTED","name":"UNSUPPORTED","callsign":"UNSUPPORTED","vesselType":"UNSUPPORTED","vesselTypeCode":"UNSUPPORTED","flag":"UNSUPPORTED","lat":"UNSUPPORTED","lng":"UNSUPPORTED","speed":"UNSUPPORTED","course":"UNSUPPORTED","heading":"UNSUPPORTED","navStatus":"UNSUPPORTED","positionReceivedAt":"UNSUPPORTED","grossTonnage":"UNSUPPORTED","deadweight":"UNSUPPORTED","builtYear":"UNSUPPORTED","length":"UNSUPPORTED","beam":"UNSUPPORTED","draught":"UNSUPPORTED","destination":"UNSUPPORTED","eta":"UNSUPPORTED","currentPort":"UNSUPPORTED","currentPortArrivalAt":"UNSUPPORTED","nextPort":"UNSUPPORTED","nextPortEta":"UNSUPPORTED","lastPort":"UNSUPPORTED","lastPortDepartureAt":"UNSUPPORTED"}}]}</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById("matrix-data").textContent);
+  var OPS = ["searchByName","searchByMmsi","searchByImo","position","particulars","voyage","areaScan"];
+  var MARK = { CONFIRMED: "✓", CANDIDATE: "?", UNSUPPORTED: "–" };
+  var GROUP_LABEL = { identity:"A · Identity", position:"B · Position",
+                      particulars:"C · Particulars", voyage:"D · Voyage" };
+
+  var state = { onlyImplemented: false, onlyConfirmedFields: false };
+  var IMPLEMENTED = ["vesselfinder", "shipinfo", "shipfinder"];
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function counts(src) {
+    var c = { CONFIRMED: 0, CANDIDATE: 0, UNSUPPORTED: 0 };
+    DATA.fields.forEach(function (f) { c[src.fields[f.id]]++; });
+    return c;
+  }
+  function visibleSources() {
+    return DATA.sources.filter(function (s) {
+      return !state.onlyImplemented || IMPLEMENTED.indexOf(s.id) !== -1;
+    });
+  }
+  function visibleFields() {
+    var srcs = visibleSources();
+    return DATA.fields.filter(function (f) {
+      if (!state.onlyConfirmedFields) return true;
+      return srcs.some(function (s) { return s.fields[f.id] === "CONFIRMED"; });
+    });
+  }
+
+  function renderCards() {
+    var box = document.getElementById("cards");
+    box.innerHTML = "";
+    visibleSources().forEach(function (s) {
+      var c = counts(s);
+      var card = el("div", "card");
+      card.appendChild(el("h3", null, s.id));
+
+      var chips = el("div", "chips");
+      chips.appendChild(el("span", "chip " + (s.costType === "PAID" ? "paid" : ""), s.costType));
+      chips.appendChild(el("span", "chip " + (s.enabled ? "on" : "off"),
+        s.enabled ? "enabled" : "chưa bật"));
+      chips.appendChild(el("span", "chip", "prio " + (s.priority === null ? "∞" : s.priority)));
+      if (IMPLEMENTED.indexOf(s.id) !== -1) chips.appendChild(el("span", "chip on", "có provider"));
+      card.appendChild(chips);
+
+      var row = el("div", "counts");
+      row.appendChild(el("span", "c-ok", c.CONFIRMED + " ✓"));
+      row.appendChild(el("span", "c-cd", c.CANDIDATE + " ?"));
+      row.appendChild(el("span", "c-no", c.UNSUPPORTED + " –"));
+      card.appendChild(row);
+      box.appendChild(card);
+    });
+  }
+
+  function renderOps() {
+    var srcs = visibleSources();
+    var t = document.getElementById("ops");
+    t.innerHTML = "";
+
+    var thead = el("thead"), hr = el("tr");
+    ["Source", "cost", "enabled", "prio"].concat(OPS).forEach(function (h) {
+      hr.appendChild(el("th", null, h));
+    });
+    thead.appendChild(hr); t.appendChild(thead);
+
+    var tb = el("tbody");
+    srcs.forEach(function (s) {
+      var tr = el("tr");
+      tr.appendChild(el("td", "fld", s.id));
+      tr.appendChild(el("td", null, s.costType));
+      tr.appendChild(el("td", s.enabled ? "yes" : "no", s.enabled ? "✓" : "–"));
+      tr.appendChild(el("td", null, s.priority === null ? "∞" : String(s.priority)));
+      OPS.forEach(function (o) {
+        tr.appendChild(el("td", s.operations[o] ? "yes" : "no", s.operations[o] ? "✓" : "–"));
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+  }
+
+  function renderMatrix() {
+    var srcs = visibleSources();
+    var flds = visibleFields();
+    var t = document.getElementById("matrix");
+    t.innerHTML = "";
+
+    var thead = el("thead"), hr = el("tr");
+    hr.appendChild(el("th", null, "Field"));
+    srcs.forEach(function (s) { hr.appendChild(el("th", null, s.id)); });
+    thead.appendChild(hr); t.appendChild(thead);
+
+    var tb = el("tbody"), lastGroup = null;
+    flds.forEach(function (f) {
+      if (f.group !== lastGroup) {
+        lastGroup = f.group;
+        var gr = el("tr", "grp");
+        var gtd = el("td", null, GROUP_LABEL[f.group] || f.group);
+        gtd.colSpan = srcs.length + 1;
+        gr.appendChild(gtd); tb.appendChild(gr);
+      }
+      var tr = el("tr");
+      tr.appendChild(el("td", "fld", f.id));
+      srcs.forEach(function (s) {
+        var status = s.fields[f.id];
+        var td = el("td", status === "UNSUPPORTED" ? "dim" : null);
+        td.appendChild(el("span", "m m-" + status, MARK[status]));
+        td.title = s.id + " · " + f.id + " → " + status;
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+  }
+
+  function renderNotes() {
+    var box = document.getElementById("notes");
+    box.innerHTML = "";
+    visibleSources().filter(function (s) { return s.notes.length; }).forEach(function (s) {
+      var n = el("div", "note");
+      n.appendChild(el("h4", null, s.id));
+      var ul = el("ul");
+      s.notes.forEach(function (line) { ul.appendChild(el("li", null, line)); });
+      n.appendChild(ul);
+      box.appendChild(n);
+    });
+  }
+
+  function renderAll() { renderCards(); renderOps(); renderMatrix(); renderNotes(); }
+
+  function toggle(id, key) {
+    var b = document.getElementById(id);
+    b.addEventListener("click", function () {
+      state[key] = !state[key];
+      b.setAttribute("aria-pressed", String(state[key]));
+      if (key === "onlyImplemented") {
+        document.getElementById("f-all").setAttribute("aria-pressed", String(!state[key]));
+      }
+      renderAll();
+    });
+  }
+  toggle("f-impl", "onlyImplemented");
+  toggle("f-conf", "onlyConfirmedFields");
+  document.getElementById("f-all").addEventListener("click", function () {
+    state.onlyImplemented = false;
+    this.setAttribute("aria-pressed", "true");
+    document.getElementById("f-impl").setAttribute("aria-pressed", "false");
+    renderAll();
+  });
+  document.getElementById("theme").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.getAttribute("data-theme") === "dark" ||
+      (!root.getAttribute("data-theme") &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    root.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  document.getElementById("foot").textContent =
+    DATA.sources.length + " nguồn · " + DATA.fields.length +
+    " field canonical · sinh từ " + DATA.generatedFrom +
+    " — sửa matrix trong code rồi tạo lại trang này, đừng sửa tay.";
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

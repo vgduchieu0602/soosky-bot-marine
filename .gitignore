@@ -9,5 +9,6 @@ docs/*
 # Phải mở cả THƯ MỤC CON: git không đi vào thư mục đã bị ignore, nên chỉ
 # "!docs/*.md" thôi thì docs/sources/*.md vẫn bị bỏ qua.
 !docs/*.md
+!docs/*.html
 !docs/*/
 !docs/*/*.md

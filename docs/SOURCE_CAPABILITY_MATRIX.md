@@ -4,6 +4,8 @@
 > Tiền đề: [CURRENT_ARCHITECTURE.md](./CURRENT_ARCHITECTURE.md) · [CURRENT_DATA_FLOW.md](./CURRENT_DATA_FLOW.md) · [CANONICAL_VESSEL_MODEL.md](./CANONICAL_VESSEL_MODEL.md)
 > P2 **chỉ mô hình hoá capability**. Không crawler mới, không network request, không resolver, không đụng DB/FE/Marine.
 
+> 🖥️ **Bảng tương tác:** [SOURCE_CAPABILITY_MATRIX.html](./SOURCE_CAPABILITY_MATRIX.html) — mở bằng trình duyệt, có lọc/sắp xếp, sinh thẳng từ code. File `.md` này giữ phần **giải thích và bằng chứng**; file `.html` giữ phần **tra cứu**.
+
 Code:
 - [src/domain/value-objects/VesselField.ts](../src/domain/value-objects/VesselField.ts)
 - [src/application/capabilities/SourceCapability.ts](../src/application/capabilities/SourceCapability.ts)
