@@ -678,6 +678,80 @@ Bộ particulars này **không nguồn nào tự mình cho được** — đúng
 
 ---
 
+## R · Ghi chú implementation P8.4 (Voyage + read model ghép)
+
+Hiện thực **bước 9** của §O. §O **đã xong toàn bộ**.
+
+| Thành phần | File |
+|---|---|
+| Phân xử voyage theo field | `VoyageResolver.ts` |
+| Đường đọc voyage | `ResolveCurrentVoyage.ts` |
+| Kiểu read model | `ResolvedCurrentVessel.ts` |
+| Ghép bốn nhóm | `ResolveCurrentVessel.ts` |
+| So `Date` theo giá trị | `fieldResolution.ts` — thêm `compareDate()` |
+| Cửa sổ 7 ngày | `StaticResolverPolicy.ts` — thêm `VoyageResolverPolicy` |
+
+Ba resolver trước **không bị đụng**. Không có Mongo model, không có collection mới, không ghi gì.
+
+### R.1 Thứ tự tiêu chí — ĐẢO so với Identity/Particulars
+
+| Nhóm | Thứ tự |
+|---|---|
+| Identity, Particulars | **quality** → newer fetch |
+| **Voyage** | **newer fetch** → quality |
+
+Lý do: identity/particulars mô tả **con tàu** — thuộc tính bền, nguồn nào đo chuẩn hơn thì đúng hơn, độ mới gần như vô nghĩa. Voyage mô tả **chuyến đi hiện tại** — một `destination` cũ không phải "kém chính xác", nó **nói về chuyến khác**. Nguồn hạng cao mà dữ liệu cũ vẫn sai. Nên độ mới đứng trước.
+
+Bằng chứng khoá trong test: `shipinfo` có `defaultPriority` tốt hơn (45 vs 55) nhưng vẫn **thua** `shipfinder` khi fetch cũ hơn.
+
+Hết hai tiêu chí → `defaultPriority` → tên nguồn theo bảng chữ cái. Tất định.
+
+### R.2 `compareDate` — vì sao phải thêm
+
+`Date` là object nên `===` so **tham chiếu**. Hai `Date` cùng mốc thời gian vẫn "khác nhau" nếu so bằng `compareText`/`===` → hai nguồn đồng ý về ETA lại bị ghi là xung đột. `compareDate()` so `getTime()`, và coi `Invalid Date` là không phải ứng viên.
+
+### R.3 Field đã làm và field cố ý bỏ
+
+Làm: `destination` · `eta` · `currentPort` · `nextPort` · `lastPort` · `lastPortDepartureAt`.
+
+Canonical `VesselVoyage` còn `currentPortArrivalAt` và `nextPortEta`. **Cố ý không phân xử**: chưa nguồn nào đã implement cung cấp chúng — viết luật cho field không có dữ liệu là viết luật chưa kiểm chứng được.
+
+⚠️ **Không suy diễn giữa các field**: `destination` **không phải** `currentPort`, `lastPortDepartureAt` **không phải** `fetchedAt`. Có test khoá cả hai.
+
+### R.4 Tầng ghép không phân xử gì
+
+`ResolveCurrentVessel` chạy bốn use case **song song** rồi đặt kết quả cạnh nhau. Nó **không** biết luật của nhóm nào, **không** bóc `ResolvedField` thành giá trị trần, **không** lấp field nhóm này bằng nhóm khác, **không** đụng `position` (nguyên khối theo §D.0).
+
+Bốn truy vấn riêng thay vì một aggregate: bốn nhóm có **cửa sổ khác nhau** (position 7 ngày, voyage 7 ngày, identity/particulars 90 ngày), gộp lại phải mã hoá bốn cửa sổ vào một câu truy vấn — phức tạp hơn mà không mua được gì. Chạy song song nên chỉ tốn một lượt chờ.
+
+`vesselKey` giữ nguyên định danh người gọi đưa vào; chỉ **bổ sung** `imo` khi khoá gốc chưa có. Không bao giờ ghi đè. `resolvedAt` là **thời điểm chạy resolve**, không phải `max(fetchedAt)`.
+
+`null` khi và chỉ khi **cả bốn** nhóm đều `null`. Tàu mới có identity mà chưa có vị trí vẫn là dữ liệu dùng được.
+
+### R.5 Xác minh trên dữ liệu THẬT (Mongo)
+
+```
+MMSI 636018086 · VOYAGE
+  destination "LONG BEACH, US"  ← shipfinder  ONLY_AVAILABLE_VALUE
+  eta         —                  (nguồn cho "07-29 07:01", thiếu năm → mapper P7 cố ý không map)
+  các cảng    —                  (không nguồn nào có)
+```
+
+Ghép đủ bốn nhóm cho AGIA DOXA — **ảnh mà không nguồn đơn lẻ nào dựng được**:
+
+```
+identity    name "AGIA DOXA" · callsign "D5OC7" · type "Bulk Carrier" · flag LBR/"Liberia"
+position    shipfinder · FRESHER_SOURCE_TIMESTAMP · 0.02 h  (shipinfo trễ 14.49 h)
+particulars 179/29/5.9 ← shipfinder   ·   2010/33261 ← shipinfo
+voyage      "LONG BEACH, US" ← shipfinder
+```
+
+### R.6 Còn thiếu gì
+
+Read model **chỉ nằm trong RAM**. Chưa có canonical storage, chưa ghi `current_vessels`, chưa có API. Đó là phase sau.
+
+---
+
 ## Phụ lục · Cách tái lập bằng chứng
 
 ```js

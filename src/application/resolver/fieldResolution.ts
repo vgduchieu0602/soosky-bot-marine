@@ -215,6 +215,19 @@ export function compareText(a: string, b: string): ValueComparison {
 }
 
 /**
+ * So hai mốc thời gian canonical. `Date` là object nên `===` là so THAM CHIẾU —
+ * hai `Date` cùng thời điểm vẫn khác nhau. Phải so theo giá trị.
+ * Mốc không hợp lệ -> DIFFERENT (người gọi đã lọc trước, đây chỉ là lưới an toàn).
+ */
+export function compareDate(a: Date, b: Date): ValueComparison {
+  if (!(a instanceof Date) || !(b instanceof Date)) return ValueComparison.DIFFERENT;
+  if (!Number.isFinite(a.getTime()) || !Number.isFinite(b.getTime())) {
+    return ValueComparison.DIFFERENT;
+  }
+  return a.getTime() === b.getTime() ? ValueComparison.EQUAL : ValueComparison.DIFFERENT;
+}
+
+/**
  * So số có dung sai. `179` vs `180` chênh 0.56 % — làm tròn khác nhau hoặc
  * LOA vs LBP, KHÔNG phải xung đột nghiêm trọng.
  *

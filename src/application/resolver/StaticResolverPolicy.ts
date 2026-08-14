@@ -54,6 +54,21 @@ export interface ParticularsResolverPolicy {
   candidateWindowMs: number;
 }
 
+/**
+ * Voyage đổi NHANH HƠN particulars (mỗi chuyến) nhưng CHẬM HƠN position (mỗi
+ * vài giây) — nên nó có thang thời gian riêng, không dùng bậc của POSITION.
+ * Một `destination` 6 giờ tuổi vẫn hoàn toàn dùng được; một vị trí 6 giờ tuổi
+ * thì không.
+ */
+export interface VoyageResolverPolicy {
+  /** Một chuyến biển điển hình. Cũ hơn thì không còn là "hiện tại". */
+  candidateWindowMs: number;
+}
+
+export const DEFAULT_VOYAGE_RESOLVER_POLICY: Readonly<VoyageResolverPolicy> = Object.freeze({
+  candidateWindowMs: 7 * DAY,
+});
+
 export const DEFAULT_PARTICULARS_RESOLVER_POLICY: Readonly<ParticularsResolverPolicy> =
   Object.freeze({
     // 1 m: chênh lệch làm tròn, hoặc LOA vs LBP.
