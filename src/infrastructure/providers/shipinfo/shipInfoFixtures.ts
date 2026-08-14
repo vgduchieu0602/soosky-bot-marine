@@ -109,3 +109,59 @@ var vesselSeoContext = {"name":"Agia Doxa",,};
 export const FIXTURE_BRACE_IN_STRING = page(
   `var IMOs = {"9467976":{"imo":"9467976","name":"WEIRD } NAME {","notes":"a \\" quote and } brace","points":[]}};`
 );
+
+// ---------------------------------------------------------------------------
+//  Fixtures cho việc CHỌN ĐIỂM và suy MỐC THỜI GIAN (P6.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Fixture 12 — điểm CUỐI hỏng toạ độ, điểm trước đó tốt.
+ * Mapper phải lùi về điểm hợp lệ gần nhất chứ không bỏ cả tàu.
+ * `updated_utc` vẫn neo theo điểm cuối (đúng hành vi quan sát được của nguồn),
+ * nên offset vẫn suy ra được +2h.
+ */
+export const FIXTURE_LAST_POINT_INVALID = page(`
+var IMOs = {"9467976":{"imo":"9467976","mmsi":"636018086","name":"Agia Doxa","points":[{"updated":"2026-08-13 19:32:11","lat":"33.75001","lng":"-118.20901","speed":"7.5","course":"61","heading":null,"draught":null,"destination":null,"eta":null,"inserted":"2026-08-13 19:32:40","provider":"free","src":""},{"updated":"2026-08-13 19:39:30","lat":"999","lng":"-118.20887","speed":"0","course":"58","heading":null,"draught":null,"destination":null,"eta":null,"inserted":"2026-08-13 19:39:55","provider":"free","src":""}]}};
+var vesselSeoContext = {"name":"Agia Doxa","updated_utc":"2026-08-13 17:39:30","imo":"9467976","mmsi":"636018086"};
+`);
+
+/** Fixture 13 — MỌI điểm đều hỏng toạ độ -> không có vị trí, không bịa (0,0). */
+export const FIXTURE_ALL_POINTS_INVALID = page(`
+var IMOs = {"9467976":{"imo":"9467976","mmsi":"636018086","name":"Agia Doxa","points":[{"updated":"2026-08-13 19:32:11","lat":"","lng":"-118.20901","speed":"7.5","course":"61","provider":"free","src":""},{"updated":"2026-08-13 19:39:30","lat":"abc","lng":"999","speed":"0","course":"58","provider":"free","src":""}]}};
+var vesselSeoContext = {"name":"Agia Doxa","updated_utc":"2026-08-13 17:39:30","imo":"9467976","mmsi":"636018086"};
+`);
+
+/**
+ * Fixture 14 — có điểm hợp lệ nhưng KHÔNG có `vesselSeoContext`.
+ * Không có mỏ neo UTC -> không suy được offset -> KHÔNG được phát ra vị trí.
+ * Thà thiếu vị trí còn hơn gắn mốc thời gian sai 1–2 giờ.
+ */
+export const FIXTURE_POINTS_WITHOUT_SEO_ANCHOR = page(`
+var IMOs = {"9467976":{"imo":"9467976","mmsi":"636018086","name":"Agia Doxa","points":[{"updated":"2026-08-13 19:39:30","lat":"33.74968","lng":"-118.20887","speed":"0","course":"58","provider":"free","src":""}]}};
+`);
+
+/**
+ * Fixture 15 — `updated_utc` rỗng (quan sát thật ở Admarine 100 / LADY K II).
+ * Cũng không suy được offset.
+ */
+export const FIXTURE_EMPTY_UPDATED_UTC = page(`
+var IMOs = {"8913629":{"imo":"8913629","mmsi":"374121000","name":"Admarine 100","points":[{"updated":"2026-08-13 19:39:30","lat":"25.1","lng":"55.2","speed":"0","course":"12","provider":"free","src":""}]}};
+var vesselSeoContext = {"name":"Admarine 100","geo_label":"Unknown location","last_seen":"recently","updated_utc":"","imo":"8913629","mmsi":0};
+`);
+
+/**
+ * Fixture 16 — lệch giữa `updated` và `updated_utc` VÔ LÝ (3 ngày).
+ * Đó không phải múi giờ; mapper phải từ chối thay vì tạo mốc sai.
+ */
+export const FIXTURE_ABSURD_OFFSET = page(`
+var IMOs = {"9467976":{"imo":"9467976","mmsi":"636018086","name":"Agia Doxa","points":[{"updated":"2026-08-13 19:39:30","lat":"33.74968","lng":"-118.20887","speed":"0","course":"58","provider":"free","src":""}]}};
+var vesselSeoContext = {"name":"Agia Doxa","updated_utc":"2026-08-10 19:39:30","imo":"9467976","mmsi":"636018086"};
+`);
+
+/**
+ * Fixture 17 — tàu CHỈ có IMO (mmsi null), kèm dwt/year sai kiểu để kiểm tra
+ * mapper bỏ giá trị vô lý thay vì bịa số 0.
+ */
+export const FIXTURE_IMO_ONLY_AND_BAD_NUMBERS = page(`
+var IMOs = {"9467976":{"imo":"9467976","mmsi":null,"name":"  Odd  Spacing  ","callsign":"   ","type":"  Bulk Carrier\\n","flag":"","country":null,"year":"0","dwt":"abc","points":[]}};
+`);
