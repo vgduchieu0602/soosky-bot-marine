@@ -152,12 +152,17 @@ const VESSELFINDER = defineSourceCapability({
 });
 
 // ---------------------------------------------------------------------------
-//  SHIPINFO — ứng viên cho CẢ vị trí LẪN lý lịch. Chưa có implementation.
+//  SHIPINFO — nguồn thứ HAI có implementation thật (shipinfo.net)
 // ---------------------------------------------------------------------------
+//  CONFIRMED ở đây đã đi TRỌN đường: audit P6.1 -> raw parser P6.2 -> canonical
+//  mapper + provider P6.3 -> runtime P4 + observation P5, và POC live P6.4 đã
+//  ghi observation thật vào `vessel_observations`.
+//  Xem docs/sources/SHIPINFO_POC.md.
 const SHIPINFO = defineSourceCapability({
   source: VesselSource.SHIPINFO,
   operations: {
-    searchByName: true,
+    // Endpoint tìm theo tên nằm dưới /api/ mà robots.txt cấm -> KHÔNG hỗ trợ.
+    searchByName: false,
     searchByMmsi: true,
     searchByImo: true,
     position: true,
@@ -166,36 +171,38 @@ const SHIPINFO = defineSourceCapability({
     areaScan: false,
   },
   fields: buildFieldSupport(UNSUPPORTED, {
-    // --- identity / details ---
-    [VesselField.MMSI]: CANDIDATE,
-    [VesselField.IMO]: CANDIDATE,
-    [VesselField.NAME]: CANDIDATE,
-    [VesselField.CALLSIGN]: CANDIDATE,
-    [VesselField.VESSEL_TYPE]: CANDIDATE,
-    [VesselField.FLAG]: CANDIDATE,
-    [VesselField.GROSS_TONNAGE]: CANDIDATE,
-    [VesselField.DEADWEIGHT]: CANDIDATE,
-    [VesselField.BUILT_YEAR]: CANDIDATE,
-    [VesselField.LENGTH]: CANDIDATE,
-    [VesselField.BEAM]: CANDIDATE,
-    [VesselField.DRAUGHT]: CANDIDATE,
-    // --- position: ứng viên theo yêu cầu dự án, CHƯA POC ---
-    [VesselField.LAT]: CANDIDATE,
-    [VesselField.LNG]: CANDIDATE,
-    [VesselField.SPEED]: CANDIDATE,
-    [VesselField.COURSE]: CANDIDATE,
-    [VesselField.HEADING]: CANDIDATE,
-    [VesselField.NAV_STATUS]: CANDIDATE,
-    [VesselField.POSITION_RECEIVED_AT]: CANDIDATE,
+    // --- CONFIRMED: đã xuất hiện trong observation THẬT ---
+    [VesselField.MMSI]: CONFIRMED,
+    [VesselField.IMO]: CONFIRMED,
+    [VesselField.NAME]: CONFIRMED,
+    [VesselField.CALLSIGN]: CONFIRMED,
+    [VesselField.VESSEL_TYPE]: CONFIRMED,
+    [VesselField.FLAG]: CONFIRMED, // cho CẢ mã ("LR") lẫn tên ("Liberia")
+    [VesselField.BUILT_YEAR]: CONFIRMED,
+    [VesselField.DEADWEIGHT]: CONFIRMED,
+    [VesselField.LAT]: CONFIRMED,
+    [VesselField.LNG]: CONFIRMED,
+    [VesselField.SPEED]: CONFIRMED,
+    [VesselField.COURSE]: CONFIRMED, // sentinel "-1" bị mapper loại thành null
+    [VesselField.POSITION_RECEIVED_AT]: CONFIRMED, // mốc UTC suy từ updated_utc
+
+    // --- UNSUPPORTED: BẰNG CHỨNG VẮNG MẶT, không phải "chưa audit" ---
+    // LENGTH/BEAM  : nguồn đảo KHÔNG NHẤT QUÁN giữa các tàu -> mapper CỐ Ý
+    //                không map. Dữ liệu sai tệ hơn không có dữ liệu.
+    // HEADING/DRAUGHT/DESTINATION/ETA : khoá tồn tại nhưng null ở 0/1073 điểm.
+    // GROSS_TONNAGE/NAV_STATUS        : nguồn không có khoá nào.
+    // VESSEL_TYPE_CODE                : chỉ có nhãn chữ, không có mã AIS.
   }),
   costType: SourceCostType.FREE,
   enabled: false,
   defaultPriority: 45,
   notes: [
-    "Chưa có implementation trong repo. P2 không gọi mạng để xác minh.",
-    "Định vị kiến trúc theo yêu cầu dự án: ứng viên cho CẢ vessel position LẪN vessel details.",
-    "Toàn bộ field là CANDIDATE cho tới khi có POC — kể cả nhóm Position.",
-    "Voyage giữ UNSUPPORTED (operations.voyage=false): chưa có bằng chứng nào cho destination/ETA/lịch cảng. Đây là lựa chọn BẢO THỦ, không phải kết luận rằng nguồn không có — nâng lên CANDIDATE khi audit thấy dấu vết.",
+    "Có provider thật (ShipInfoProvider), đã đăng ký trong ProviderRegistry, mọi request đi qua crawl runtime P4.",
+    "enabled=false: mới chỉ có POC gọi TAY (`npm run shipinfo:poc`), CHƯA có ingestion tự động. Bật lên là một quyết định riêng.",
+    "⚠️ Vị trí bản free TRỄ ~14 GIỜ có chủ ý (fresh_locked). Không dùng làm nguồn vị trí thời gian thực; merge policy phải xếp sau nguồn tươi hơn theo sourceReceivedAt.",
+    "LENGTH/BEAM là UNSUPPORTED do dữ liệu nguồn ĐẢO không nhất quán, KHÔNG phải do thiếu dữ liệu.",
+    "Không dùng bất kỳ endpoint /api/ nào (robots.txt cấm) -> không có tìm theo tên.",
+    "Giá trị riêng so với VesselFinder: mã cờ quốc gia, và lịch sử track ~270 điểm/tàu (chưa khai thác).",
   ],
 });
 

@@ -27,6 +27,12 @@ import {
   ShipInfoSeoContext,
 } from "./ShipInfoTypes";
 
+/**
+ * Phiên bản parser. ShipInfo đổi cách nhúng dữ liệu -> bump số này, để
+ * observation cũ và mới phân biệt được (OBSERVATION_STORAGE.md §4).
+ */
+export const SHIPINFO_PARSER_VERSION = "shipinfo-embedded-json-v1";
+
 /** Khối chứa dữ liệu tàu. */
 const VESSELS_MARKER = /var\s+IMOs\s*=\s*/;
 /** Khối phụ, chứa mốc UTC duy nhất của trang. */

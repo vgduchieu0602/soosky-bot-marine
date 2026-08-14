@@ -13,6 +13,7 @@
     "audit": "ts-node src/interfaces/cli/auditData.ts",
     "check-drift": "ts-node src/interfaces/cli/detectHtmlDrift.ts",
     "shipinfo:smoke": "ts-node src/interfaces/cli/shipinfoSmoke.ts",
+    "shipinfo:poc": "ts-node src/interfaces/cli/shipinfoPoc.ts",
     "test": "node -r ts-node/register --test \"src/**/*.test.ts\"",
     "reset-indexes": "ts-node src/interfaces/cli/resetIndexes.ts",
     "start:prod": "node dist/interfaces/http/server.js"

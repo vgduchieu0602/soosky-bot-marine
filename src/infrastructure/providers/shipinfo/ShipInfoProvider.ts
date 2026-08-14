@@ -31,8 +31,9 @@ import {
   toVesselParticulars,
   toVesselPositionReport,
 } from "./ShipInfoMapper";
+import { parseError } from "../../../application/runtime/SourceError";
 import { ShipInfoParsedDocument } from "./ShipInfoTypes";
-import { parseShipInfoHtml } from "./ShipInfoParser";
+import { ShipInfoParseError, parseShipInfoHtml } from "./ShipInfoParser";
 
 export interface ShipInfoProviderDeps {
   client: ShipInfoClient;
@@ -107,11 +108,26 @@ export class ShipInfoProvider implements VesselDataProvider {
 
   // ---- private ------------------------------------------------------------
 
-  /** Tải + parse. `null` = nguồn không có tàu. Lỗi parse thì ném tiếp. */
+  /**
+   * Tải + parse. `null` = nguồn không có tàu.
+   *
+   * Khối JSON hỏng -> đổi sang `SourceRequestError(PARSE_ERROR)` của P4. Đây là
+   * BIÊN dịch lỗi: `ShipInfoParseError` là khái niệm riêng của nguồn này, runtime
+   * chỉ hiểu `SourceErrorCategory`. Không dịch thì nó rơi vào UNKNOWN và
+   * `parseErrorCount` không bao giờ tăng — mất luôn tín hiệu nguồn đổi định dạng.
+   * Lỗi gốc giữ trong `cause`.
+   */
   private async load(identifier: VesselIdentifier): Promise<ShipInfoParsedDocument | null> {
     const html = await this.fetch(identifier);
-    const parsed = parseShipInfoHtml(html);
-    return parsed.status === "OK" ? parsed.document : null;
+    try {
+      const parsed = parseShipInfoHtml(html);
+      return parsed.status === "OK" ? parsed.document : null;
+    } catch (err) {
+      if (err instanceof ShipInfoParseError) {
+        throw parseError(this.source, err.message, err);
+      }
+      throw err;
+    }
   }
 
   private fetch(identifier: VesselIdentifier): Promise<string> {

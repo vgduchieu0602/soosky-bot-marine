@@ -10,6 +10,10 @@ import {
   getProviderOperations,
   providerSupportsOperation,
 } from "../../../application/providers/VesselDataProvider";
+import {
+  SourceErrorCategory,
+  SourceRequestError,
+} from "../../../application/runtime/SourceError";
 import { imoIdentifier, mmsiIdentifier } from "../../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../../domain/value-objects/VesselSource";
 import { ShipInfoClient } from "./ShipInfoClient";
@@ -164,13 +168,24 @@ test("PHP fatal (HTTP 200) -> null, KHÔNG ném", async () => {
   assert.equal(await provider.getPosition(imoIdentifier("9467976")), null);
 });
 
-test("JSON hỏng -> NÉM, KHÔNG biến thành not-found", async () => {
+test("JSON hỏng -> NÉM PARSE_ERROR đã phân loại, KHÔNG biến thành not-found", async () => {
   const { provider } = providerWith(FIXTURE_MALFORMED_JSON);
 
   // Nguồn đổi định dạng khác hẳn tàu không tồn tại. Nuốt thành null sẽ âm thầm
   // xoá dữ liệu đang có ở phase sau.
-  await assert.rejects(() => provider.getDetails(imoIdentifier("9467976")), ShipInfoParseError);
-  await assert.rejects(() => provider.getPosition(imoIdentifier("9467976")), ShipInfoParseError);
+  // Provider dịch lỗi riêng của nguồn sang category của P4; lỗi gốc giữ ở `cause`.
+  const assertParseError = async (run: () => Promise<unknown>): Promise<void> => {
+    await assert.rejects(run, (err: unknown) => {
+      assert.ok(err instanceof SourceRequestError);
+      assert.equal(err.category, SourceErrorCategory.PARSE_ERROR);
+      assert.equal(err.source, VesselSource.SHIPINFO);
+      assert.ok(err.cause instanceof ShipInfoParseError, "giữ lỗi gốc của parser");
+      return true;
+    });
+  };
+
+  await assertParseError(() => provider.getDetails(imoIdentifier("9467976")));
+  await assertParseError(() => provider.getPosition(imoIdentifier("9467976")));
 });
 
 // ---- Định danh ------------------------------------------------------------

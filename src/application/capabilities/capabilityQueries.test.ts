@@ -74,28 +74,32 @@ test("includeDisabled=true mở nguồn đang tắt, thứ tự theo defaultPrio
   assert.equal(sources[1], VesselSource.VESSELFINDER);
 });
 
-test("ShipInfo là ứng viên vị trí: chỉ hiện khi mở CẢ includeDisabled lẫn includeCandidate", () => {
-  // Mặc định và chỉ-mở-disabled đều không thấy: LAT của ShipInfo mới là CANDIDATE.
+test("ShipInfo đã CONFIRMED nhưng vẫn tắt: chỉ hiện khi mở includeDisabled", () => {
+  // Mặc định không thấy vì enabled=false (chưa có ingestion tự động).
   assert.equal(getSourcesForField(VesselField.LAT).includes(VesselSource.SHIPINFO), false);
-  assert.equal(
-    getSourcesForField(VesselField.LAT, { includeDisabled: true }).includes(VesselSource.SHIPINFO),
-    false
-  );
 
-  const opened = getSourcesForField(VesselField.LAT, {
-    includeDisabled: true,
-    includeCandidate: true,
-  });
+  // Chỉ cần mở disabled là đủ — LAT của ShipInfo nay là CONFIRMED, không còn
+  // phải mở thêm includeCandidate.
+  const opened = getSourcesForField(VesselField.LAT, { includeDisabled: true });
   assert.equal(opened.includes(VesselSource.SHIPINFO), true);
-  // Vẫn xếp sau 2 nguồn đã confirm, đúng defaultPriority (10, 20, rồi 45).
+  // Vẫn xếp sau AISStream (10) và VesselFinder (20) theo defaultPriority 45.
   assert.equal(opened.indexOf(VesselSource.SHIPINFO) > opened.indexOf(VesselSource.VESSELFINDER), true);
 
-  // ShipInfo cũng phải đủ điều kiện cho cả bộ field position lẫn details.
+  // Đủ điều kiện cho cả bộ field position lẫn details ĐÃ CONFIRMED.
   const positionAndDetails = getSourcesForFields(
-    [VesselField.LAT, VesselField.LNG, VesselField.SPEED, VesselField.GROSS_TONNAGE],
-    { includeDisabled: true, includeCandidate: true }
+    [VesselField.LAT, VesselField.LNG, VesselField.SPEED, VesselField.BUILT_YEAR],
+    { includeDisabled: true }
   );
   assert.equal(positionAndDetails.includes(VesselSource.SHIPINFO), true);
+
+  // Nhưng field KHÔNG có bằng chứng thì không lọt, kể cả khi mở hết bộ lọc.
+  assert.equal(
+    getSourcesForField(VesselField.LENGTH, {
+      includeDisabled: true,
+      includeCandidate: true,
+    }).includes(VesselSource.SHIPINFO),
+    false
+  );
 });
 
 test("UNKNOWN không bao giờ được trả về, kể cả khi mở hết bộ lọc", () => {

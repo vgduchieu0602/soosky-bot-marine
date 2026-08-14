@@ -26,6 +26,11 @@ import { ObservationRecorder } from "./application/observations/ObservationRecor
 import { InMemoryVesselObservationRepository } from "./infrastructure/persistence/InMemoryVesselObservationRepository";
 import { MongoVesselObservationRepository } from "./infrastructure/persistence/MongoVesselObservationRepository";
 import { VesselFinderProvider } from "./infrastructure/providers/VesselFinderProvider";
+import { ShipInfoClient } from "./infrastructure/providers/shipinfo/ShipInfoClient";
+import { ShipInfoProvider } from "./infrastructure/providers/shipinfo/ShipInfoProvider";
+import { SHIPINFO_PARSER_VERSION } from "./infrastructure/providers/shipinfo/ShipInfoParser";
+import { CollectVesselObservations } from "./application/use-cases/CollectVesselObservations";
+import { VesselSource } from "./domain/value-objects/VesselSource";
 
 import { GetVesselDetails } from "./application/use-cases/GetVesselDetails";
 import { CrawlFleetPositions } from "./application/use-cases/CrawlFleetPositions";
@@ -67,6 +72,12 @@ export interface Container {
   observationRepository: IVesselObservationRepository;
   /** Cửa duy nhất để provider mới ghi observation. Chưa ai gọi ở P5. */
   observationRecorder: ObservationRecorder;
+  /**
+   * P6.4: nối provider (P3) + crawl runtime (P4) + observation (P5) thành một
+   * đường chạy. Chỉ được gọi TAY qua `npm run shipinfo:poc` — không scheduler,
+   * không cron, không bulk crawl.
+   */
+  collectVesselObservations: CollectVesselObservations;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -169,6 +180,26 @@ export async function buildContainer(): Promise<Container> {
     : new InMemoryVesselObservationRepository();
   const observationRecorder = new ObservationRecorder({ repository: observationRepository });
 
+  // 6) ShipInfo (P6.4). Đăng ký provider là thao tác TRƠ: registry chỉ ghi sổ,
+  //    không tự chạy gì. Mọi lời gọi mạng của ShipInfo bắt buộc đi qua
+  //    CollectVesselObservations -> SourceRequestExecutor (P4).
+  //    HttpClient RIÊNG với timeout lấy TỪ chính runtime config: nếu để chung
+  //    client 10s, timeout 20s của ShipInfo sẽ không bao giờ có hiệu lực vì
+  //    AbortSignal bên trong HttpClient bắn trước.
+  const shipInfoTimeoutMs = crawlRuntime.getConfig(VesselSource.SHIPINFO).timeoutMs;
+  providerRegistry.register(
+    new ShipInfoProvider({
+      client: new ShipInfoClient({ http: new HttpClient({ timeoutMs: shipInfoTimeoutMs }) }),
+    })
+  );
+
+  const collectVesselObservations = new CollectVesselObservations({
+    registry: providerRegistry,
+    runtime: crawlRuntime,
+    recorder: observationRecorder,
+    parserVersionBySource: { [VesselSource.SHIPINFO]: SHIPINFO_PARSER_VERSION },
+  });
+
   return {
     config,
     repository,
@@ -183,5 +214,6 @@ export async function buildContainer(): Promise<Container> {
     crawlRuntime,
     observationRepository,
     observationRecorder,
+    collectVesselObservations,
   };
 }

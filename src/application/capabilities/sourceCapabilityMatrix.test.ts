@@ -117,37 +117,62 @@ test("AISStream: EXISTING_STREAM, chưa bật trong bot, KHÔNG confirm GT/DWT/n
   assert.equal(capability.fields[VesselField.LAT], FieldSupportStatus.CONFIRMED);
 });
 
-test("ShipInfo: ứng viên cho CẢ position LẪN details", () => {
+test("ShipInfo: đã POC trọn đường -> CONFIRMED cho cả position lẫn details", () => {
   const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
   assert.equal(capability.operations.position, true);
   assert.equal(capability.operations.particulars, true);
-  assert.equal(capability.operations.searchByName, true);
   assert.equal(capability.operations.searchByMmsi, true);
   assert.equal(capability.operations.searchByImo, true);
+  // Endpoint tìm theo tên nằm dưới /api/ mà robots.txt cấm.
+  assert.equal(capability.operations.searchByName, false);
 
-  // Position: CANDIDATE (chưa POC) — không được UNSUPPORTED, cũng không được CONFIRMED.
-  for (const field of [
-    VesselField.LAT,
-    VesselField.LNG,
-    VesselField.SPEED,
-    VesselField.COURSE,
-    VesselField.HEADING,
-    VesselField.NAV_STATUS,
-    VesselField.POSITION_RECEIVED_AT,
-  ]) {
-    assert.equal(capability.fields[field], FieldSupportStatus.CANDIDATE, field);
-  }
-
-  // Identity/details giữ nguyên CANDIDATE.
   for (const field of [
     VesselField.MMSI,
     VesselField.IMO,
     VesselField.NAME,
-    VesselField.GROSS_TONNAGE,
+    VesselField.CALLSIGN,
+    VesselField.FLAG,
+    VesselField.VESSEL_TYPE,
     VesselField.BUILT_YEAR,
+    VesselField.DEADWEIGHT,
+    VesselField.LAT,
+    VesselField.LNG,
+    VesselField.SPEED,
+    VesselField.COURSE,
+    VesselField.POSITION_RECEIVED_AT,
   ]) {
-    assert.equal(capability.fields[field], FieldSupportStatus.CANDIDATE, field);
+    assert.equal(capability.fields[field], FieldSupportStatus.CONFIRMED, field);
   }
+});
+
+test("ShipInfo: field KHÔNG có bằng chứng vẫn phải UNSUPPORTED", () => {
+  const { fields } = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
+
+  // length/beam: nguồn ĐẢO không nhất quán -> mapper cố ý không map.
+  assert.equal(fields[VesselField.LENGTH], FieldSupportStatus.UNSUPPORTED);
+  assert.equal(fields[VesselField.BEAM], FieldSupportStatus.UNSUPPORTED);
+  // null ở 0/1073 điểm, hoặc nguồn không có khoá.
+  for (const field of [
+    VesselField.HEADING,
+    VesselField.DRAUGHT,
+    VesselField.DESTINATION,
+    VesselField.ETA,
+    VesselField.GROSS_TONNAGE,
+    VesselField.NAV_STATUS,
+    VesselField.VESSEL_TYPE_CODE,
+  ]) {
+    assert.equal(fields[field], FieldSupportStatus.UNSUPPORTED, field);
+  }
+});
+
+test("ShipInfo: có implementation nhưng CHƯA bật ingestion tự động", () => {
+  const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
+  // Provider tồn tại và POC đã chạy, nhưng mới chỉ gọi TAY qua CLI.
+  assert.equal(capability.enabled, false);
+  assert.equal(
+    capability.notes?.some((note) => note.includes("shipinfo:poc")),
+    true
+  );
 });
 
 test("ShipInfo: voyage giữ bảo thủ — chưa bằng chứng thì không hứa", () => {
@@ -189,8 +214,8 @@ test("nguồn chưa có implementation đều enabled=false", () => {
 });
 
 test("nguồn chưa POC không được có field CONFIRMED nào", () => {
+  // SHIPINFO đã ra khỏi danh sách này ở P6.4: POC live đã ghi observation thật.
   for (const source of [
-    VesselSource.SHIPINFO,
     VesselSource.SHIPFINDER,
     VesselSource.BOATNERD,
     VesselSource.MARINETRAFFIC_LIVE,

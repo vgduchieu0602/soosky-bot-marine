@@ -57,7 +57,26 @@ export const SOURCE_RUNTIME_OVERRIDES: Readonly<
   Partial<Record<VesselSource, Partial<SourceRuntimeConfig>>>
 > = Object.freeze({
   [VesselSource.VESSELFINDER]: Object.freeze({}),
-  [VesselSource.SHIPINFO]: Object.freeze({}),
+  // ShipInfo — số liệu lấy từ đo đạc thật (docs/sources/SHIPINFO_AUDIT.md §6):
+  //   • trang tàu nặng 250–295 KB, server Apache/PHP mỏng (input xấu -> fatal
+  //     error "memory exhausted") -> timeout rộng hơn mặc định.
+  //   • nghỉ dài hơn mặc định: không quan sát thấy rate-limit ở nhịp 1 req/2–4s,
+  //     nhưng KHÔNG dò ngưỡng nên phải nhường về phía an toàn.
+  //   • maxRetries thấp: trang nặng, thử lại tốn nhiều mà cơ hội khác lần đầu ít.
+  //   • cooldown dài gấp 3 mặc định: nguồn không công bố hạn mức nào, bị chặn
+  //     rồi thì im lặng lâu là phản ứng đúng.
+  // Mục tiêu POC là crawl LỊCH SỰ, không phải thông lượng.
+  [VesselSource.SHIPINFO]: Object.freeze({
+    maxConcurrency: 1,
+    minDelayMs: 3000,
+    maxDelayMs: 8000,
+    timeoutMs: 20_000,
+    maxRetries: 1,
+    initialBackoffMs: 5000,
+    maxBackoffMs: 30_000,
+    consecutiveFailuresBeforeCooldown: 3,
+    cooldownMs: 15 * 60 * 1000,
+  }),
   [VesselSource.SHIPFINDER]: Object.freeze({}),
   [VesselSource.BOATNERD]: Object.freeze({}),
   [VesselSource.SHIPTRAFFIC]: Object.freeze({}),
