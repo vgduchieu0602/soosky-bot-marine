@@ -61,7 +61,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `shiptraffic` | FREE | — | 40 | ✅ | ✅ | ✅ | — | ✅ | ✅ | — |
 | `shipinfo` | FREE | — | 45 | — | ✅ | ✅ | ✅ | ✅ | — | — |
 | `vesseltracker` | FREE | — | 50 | ✅ | ✅ | ✅ | — | ✅ | ✅ | — |
-| `shipfinder` | FREE | — | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | — |
+| `shipfinder` | FREE | — | 55 | — | ✅ | — | ✅ | ✅ | ✅ | — |
 | `boatnerd` | FREE | — | 60 | ✅ | ✅ | — | ✅ | ✅ | — | — |
 | `marinetraffic_live` | FREE | — | 70 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `myshiptracking` | PAID | ✅ | 900 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -70,6 +70,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 `vesselfinder.voyage = false`: mapper hiện không bóc `destination`/`eta`.
 `aisstream.searchByImo = false`: AIS đánh địa chỉ theo MMSI; IMO chỉ là payload của message 5.
 `shipinfo.searchByName = false`: endpoint tìm theo tên nằm dưới `/api/` mà `robots.txt` của ShipInfo cấm.
+`shipfinder.searchByImo = false`: `/ship/detail/imo/{imo}` trả 404 — nguồn chỉ tra được bằng MMSI. `searchByName` cũng false vì endpoint duy nhất bị ký chữ ký.
 
 ## 5. Field × Source
 
@@ -78,24 +79,24 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 ### Nhóm A · Identity
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `mmsi` | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `imo` | ✅ | ✅ | ✅ | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `name` | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `callsign` | ✅ | ✅ | ✅ | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `vesselType` | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `vesselTypeCode` | ✅ | 🟡 | — | 🟡 | — | 🟡 | — | — | 🟡 | — |
-| `flag` | 🟡 | ✅ | ✅ | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `mmsi` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `imo` | ✅ | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `name` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `callsign` | ✅ | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `vesselType` | 🟡 | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `vesselTypeCode` | ✅ | 🟡 | — | — | — | 🟡 | — | — | 🟡 | — |
+| `flag` | 🟡 | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 
 ### Nhóm B · Position
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `lat` | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `lng` | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `speed` | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `course` | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `heading` | ✅ | 🟡 | — | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
-| `navStatus` | ✅ | ✅ | — | 🟡 | — | 🟡 | — | — | 🟡 | — |
-| `positionReceivedAt` | ✅ | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | — | — | 🟡 | — |
+| `lat` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
+| `lng` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
+| `speed` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
+| `course` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
+| `heading` | ✅ | 🟡 | — | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
+| `navStatus` | ✅ | ✅ | — | ✅ | — | 🟡 | — | — | 🟡 | — |
+| `positionReceivedAt` | ✅ | 🟡 | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 
 ### Nhóm C · Particulars
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
@@ -103,14 +104,14 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `grossTonnage` | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `deadweight` | — | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `builtYear` | — | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `length` | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `beam` | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `draught` | ✅ | ✅ | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `length` | ✅ | ✅ | — | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `beam` | ✅ | ✅ | — | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `draught` | ✅ | ✅ | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 
 ### Nhóm D · Voyage
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `destination` | ✅ | 🟡 | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `destination` | ✅ | 🟡 | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `eta` | ✅ | 🟡 | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `currentPort` | — | — | — | 🟡 | — | 🟡 | — | 🟡 | 🟡 | — |
 | `currentPortArrivalAt` | — | — | — | — | — | 🟡 | — | — | 🟡 | — |
@@ -125,7 +126,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `aisstream` | 17 | 2 | 9 |
 | `vesselfinder` | **14** | 8 | 6 |
 | `shipinfo` | **13** | 0 | 15 |
-| `shipfinder` | 0 | 25 | 3 |
+| `shipfinder` | **17** | 7 | 4 |
 | `boatnerd` | 0 | 14 | 14 |
 | `marinetraffic_live` | 0 | 28 | 0 |
 | `shiptraffic` | 0 | 14 | 14 |
@@ -133,8 +134,21 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `myshiptracking` | 0 | 28 | 0 |
 | `unknown` | 0 | 0 | **28** |
 
-**Chỉ 3 nguồn có field CONFIRMED.** Đó là bức tranh thật của dự án hôm nay, không phải bức tranh mong muốn.
-ShipInfo được nâng ở **P6.4** sau khi POC live ghi được observation thật — xem [SHIPINFO_POC.md](./sources/SHIPINFO_POC.md).
+**Chỉ 4 nguồn có field CONFIRMED.** Đó là bức tranh thật của dự án hôm nay, không phải bức tranh mong muốn.
+ShipInfo được nâng ở **P6.4**, ShipFinder ở **P7.4** — cả hai sau khi POC live ghi được observation thật. Xem [SHIPINFO_POC.md](./sources/SHIPINFO_POC.md) · [SHIPFINDER_POC.md](./sources/SHIPFINDER_POC.md).
+
+**SHIPFINDER** *(cập nhật P7.4)* — nguồn thứ **ba** có implementation thật, và là nguồn crawl có **nhiều field CONFIRMED nhất (17)**.
+
+Ba thứ chỉ ShipFinder cho được trong nhóm nguồn crawl: **`heading`**, **`navStatus`**, **`draught`** — ShipInfo là UNSUPPORTED cả ba (0/1073 điểm). Cộng thêm vị trí **tươi theo phút** (POC đo 6.1 phút) so với ShipInfo bị khoá trễ ~14 giờ.
+
+⚠️ **`positionReceivedAt` CONFIRMED nhưng có điều kiện.** Nguồn **không khai báo múi giờ** ở bất kỳ đâu; P7.1 chỉ *suy luận* UTC+8. Không đặt `SHIPFINDER_SOURCE_UTC_OFFSET_MINUTES` thì provider **không phát nhóm position** — thà thiếu vị trí còn hơn gắn mốc lệch hàng giờ.
+
+CANDIDATE của ShipFinder đều là "nguồn CÓ nhưng đường ta dùng chưa lấy được":
+- `eta`: trang cho `"07-29 07:01"` — **thiếu năm**, canonical `eta` là `Date` nên mapper cố ý không map.
+- `grossTonnage` / `deadweight` / `builtYear`: nằm sau `/ship/GetIHSData` — **API ký chữ ký**, không đụng.
+- `currentPort` / `nextPort` / `lastPort`: mục Port Call đòi đăng nhập, Ship Event là tính năng trả tiền.
+
+⚠️ **`defaultPriority` giữ nguyên 55, thấp hơn ShipInfo (45), dù vị trí tươi hơn nhiều.** Đổi thứ tự ưu tiên chính là mã hoá "ShipFinder thắng ShipInfo" — đó là việc của **resolver**, và resolver **chưa tồn tại**.
 
 ### Ghi chú bằng chứng
 
@@ -191,7 +205,8 @@ CANDIDATE của VesselFinder có 2 loại lý do khác nhau:
 | `aisstream` | — | Marine đã sở hữu connection; Phase A **không mở connection thứ hai** từ bot. Đây là quyết định vận hành, **không phải giới hạn kỹ thuật** |
 | `shipinfo` | — | **Có** provider thật + POC live đã chạy, nhưng mới gọi **tay** qua CLI. Chưa có ingestion tự động → chưa bật |
 | `marinetraffic_live` | — | Không có crawler, **không được bật** ở phase này |
-| 4 nguồn còn lại | — | Chưa có implementation, chưa audit provider |
+| `shipfinder` | — | **Có** provider thật + POC live, nhưng mới gọi **tay** qua CLI. Ngoài ra position còn phụ thuộc giả định múi giờ phải khai tường minh |
+| 3 nguồn còn lại | — | Chưa có implementation, chưa audit provider |
 
 ⚠️ `enabled = true` chỉ nói "được phép dùng ở phase hiện tại", **không** nói "được gọi trước" (thứ tự là việc của `defaultPriority`), và **không** nói "resolver mới được kế thừa quyền đó". Với `vesselfinder`, cờ này thuần tuý mô tả legacy crawler đang chạy.
 

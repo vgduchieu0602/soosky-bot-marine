@@ -165,6 +165,72 @@ test("ShipInfo: field KHÔNG có bằng chứng vẫn phải UNSUPPORTED", () =>
   }
 });
 
+test("ShipFinder: đã POC trọn đường -> CONFIRMED cho position + details", () => {
+  const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPFINDER];
+
+  // Chỉ tra được bằng MMSI (P7.1: /ship/detail/imo/... -> 404).
+  assert.equal(capability.operations.searchByMmsi, true);
+  assert.equal(capability.operations.searchByImo, false);
+  assert.equal(capability.operations.searchByName, false, "endpoint bị ký chữ ký");
+  assert.equal(capability.operations.areaScan, false);
+
+  for (const field of [
+    VesselField.MMSI,
+    VesselField.IMO,
+    VesselField.NAME,
+    VesselField.CALLSIGN,
+    VesselField.FLAG,
+    VesselField.VESSEL_TYPE,
+    VesselField.LAT,
+    VesselField.LNG,
+    VesselField.SPEED,
+    VesselField.COURSE,
+    VesselField.HEADING,
+    VesselField.NAV_STATUS,
+    VesselField.POSITION_RECEIVED_AT,
+    VesselField.LENGTH,
+    VesselField.BEAM,
+    VesselField.DRAUGHT,
+    VesselField.DESTINATION,
+  ]) {
+    assert.equal(capability.fields[field], FieldSupportStatus.CONFIRMED, field);
+  }
+});
+
+test("ShipFinder: ETA KHÔNG confirmed — nguồn thiếu năm nên mapper không map", () => {
+  const { fields } = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPFINDER];
+  assert.notEqual(fields[VesselField.ETA], FieldSupportStatus.CONFIRMED);
+  // GT/DWT/năm đóng nằm sau API ký chữ ký -> chưa lấy được.
+  for (const field of [
+    VesselField.GROSS_TONNAGE,
+    VesselField.DEADWEIGHT,
+    VesselField.BUILT_YEAR,
+  ]) {
+    assert.notEqual(fields[field], FieldSupportStatus.CONFIRMED, field);
+  }
+  // Không có mã AIS số.
+  assert.equal(fields[VesselField.VESSEL_TYPE_CODE], FieldSupportStatus.UNSUPPORTED);
+});
+
+test("ShipFinder: heading/navStatus/draught là thứ ShipInfo KHÔNG có", () => {
+  const shipfinder = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPFINDER].fields;
+  const shipinfo = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO].fields;
+
+  for (const field of [VesselField.HEADING, VesselField.NAV_STATUS, VesselField.DRAUGHT]) {
+    assert.equal(shipfinder[field], FieldSupportStatus.CONFIRMED, field);
+    assert.equal(shipinfo[field], FieldSupportStatus.UNSUPPORTED, field);
+  }
+});
+
+test("KHÔNG mã hoá 'ShipFinder thắng ShipInfo' vào defaultPriority", () => {
+  // ShipFinder có vị trí tươi hơn nhiều, nhưng đổi thứ tự ưu tiên chính là làm
+  // resolver — mà resolver CHƯA TỒN TẠI.
+  const shipinfo = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
+  const shipfinder = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPFINDER];
+  assert.equal(shipinfo.defaultPriority, 45);
+  assert.equal(shipfinder.defaultPriority, 55);
+});
+
 test("ShipInfo: có implementation nhưng CHƯA bật ingestion tự động", () => {
   const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
   // Provider tồn tại và POC đã chạy, nhưng mới chỉ gọi TAY qua CLI.
@@ -214,9 +280,9 @@ test("nguồn chưa có implementation đều enabled=false", () => {
 });
 
 test("nguồn chưa POC không được có field CONFIRMED nào", () => {
-  // SHIPINFO đã ra khỏi danh sách này ở P6.4: POC live đã ghi observation thật.
+  // SHIPINFO ra khỏi danh sách này ở P6.4, SHIPFINDER ở P7.4 — cả hai đã có
+  // POC live ghi observation thật.
   for (const source of [
-    VesselSource.SHIPFINDER,
     VesselSource.BOATNERD,
     VesselSource.MARINETRAFFIC_LIVE,
     VesselSource.SHIPTRAFFIC,

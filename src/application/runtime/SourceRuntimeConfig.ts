@@ -77,7 +77,25 @@ export const SOURCE_RUNTIME_OVERRIDES: Readonly<
     consecutiveFailuresBeforeCooldown: 3,
     cooldownMs: 15 * 60 * 1000,
   }),
-  [VesselSource.SHIPFINDER]: Object.freeze({}),
+  // ShipFinder — số liệu từ audit P7.1 (docs/sources/SHIPFINDER_AUDIT.md §"Anti-bot"):
+  //   • trang chi tiết chỉ ~59 KB (nhẹ hơn ShipInfo ~5 lần) -> timeout 15s là đủ
+  //     rộng; không cần 20s như ShipInfo.
+  //   • ~30 request ở nhịp 2–4s KHÔNG gặp 403/429, robots.txt `Allow: /` và
+  //     không có Crawl-delay. Nhưng CỐ Ý không dò ngưỡng, nên vẫn giữ nhịp nghỉ
+  //     y như ShipInfo: nhường về phía an toàn thay vì tối ưu thông lượng.
+  //   • maxRetries 1: trang server-render, hỏng lần đầu thì lần hai hiếm khác.
+  //   • cooldown 15 phút: nguồn không công bố hạn mức nào.
+  [VesselSource.SHIPFINDER]: Object.freeze({
+    maxConcurrency: 1,
+    minDelayMs: 3000,
+    maxDelayMs: 8000,
+    timeoutMs: 15_000,
+    maxRetries: 1,
+    initialBackoffMs: 5000,
+    maxBackoffMs: 30_000,
+    consecutiveFailuresBeforeCooldown: 3,
+    cooldownMs: 15 * 60 * 1000,
+  }),
   [VesselSource.BOATNERD]: Object.freeze({}),
   [VesselSource.SHIPTRAFFIC]: Object.freeze({}),
   [VesselSource.VESSELTRACKER]: Object.freeze({}),

@@ -40,6 +40,18 @@ export interface AppConfig {
   enrichIntervalMs: number;
   watchlist: string[];
   scanBoundingBoxes: BoundingBox[];
+  /**
+   * Độ lệch múi giờ của mốc `Last update` trên ShipFinder, tính bằng PHÚT.
+   *
+   * ⚠️ KHÔNG CÓ MẶC ĐỊNH, và đó là chủ ý. ShipFinder KHÔNG khai báo múi giờ ở
+   * bất kỳ đâu; audit P7.1 chỉ SUY LUẬN ra UTC+8 (=480) từ ba căn cứ gián tiếp.
+   * Suy luận khác hợp đồng, nên đây là GIẢ ĐỊNH VẬN HÀNH mà người triển khai
+   * phải khai tường minh qua `SHIPFINDER_SOURCE_UTC_OFFSET_MINUTES`.
+   *
+   * Không khai -> ShipFinder KHÔNG phát ra nhóm position (identity/particulars/
+   * voyage vẫn ghi bình thường). Thà thiếu vị trí còn hơn gắn mốc sai hàng giờ.
+   */
+  shipFinderSourceUtcOffsetMinutes?: number;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -81,6 +93,16 @@ function positiveNum(env: Env, name: string, fallback: number): number {
 /** Cho phép 0 (delay/batch có thể tắt bằng 0). */
 function nonNegativeNum(env: Env, name: string, fallback: number): number {
   return num(env, name, fallback, { min: 0 });
+}
+
+/**
+ * Số KHÔNG có mặc định: không đặt biến -> `undefined`, không phải 0.
+ * Dùng cho giá trị mà "chưa khai" và "khai bằng 0" mang ý nghĩa KHÁC NHAU.
+ */
+function optionalNum(env: Env, name: string, constraints: NumConstraints = {}): number | undefined {
+  const raw = env[name];
+  if (raw === undefined || raw.trim() === "") return undefined;
+  return num(env, name, Number.NaN, constraints);
 }
 
 // Đọc "WATCHLIST=9811983,305803000" -> ["9811983","305803000"]
@@ -136,6 +158,12 @@ export function loadConfig(env: Env = process.env): AppConfig {
     enrichIntervalMs: positiveNum(env, "ENRICH_INTERVAL_MS", 5 * 60 * 1000),
     watchlist: parseWatchlist(env),
     scanBoundingBoxes: parseBBox(env),
+    // Giả định vận hành, không phải hợp đồng của nguồn. Phạm vi múi giờ thật:
+    // -12h..+14h.
+    shipFinderSourceUtcOffsetMinutes: optionalNum(env, "SHIPFINDER_SOURCE_UTC_OFFSET_MINUTES", {
+      min: -12 * 60,
+      max: 14 * 60,
+    }),
   };
 }
 

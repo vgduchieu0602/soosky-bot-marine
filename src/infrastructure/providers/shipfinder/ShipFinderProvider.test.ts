@@ -10,6 +10,10 @@ import {
   getProviderOperations,
   providerSupportsOperation,
 } from "../../../application/providers/VesselDataProvider";
+import {
+  SourceErrorCategory,
+  SourceRequestError,
+} from "../../../application/runtime/SourceError";
 import { imoIdentifier, mmsiIdentifier } from "../../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../../domain/value-objects/VesselSource";
 import { ShipFinderClient } from "./ShipFinderClient";
@@ -171,13 +175,25 @@ test("HTTP 200 + mọi ô \"-\" -> null, KHÔNG ném", async () => {
   assert.equal(await provider.getPosition(mmsiIdentifier(MMSI)), null);
 });
 
-test("parser drift -> NÉM, KHÔNG biến thành not-found", async () => {
+test("parser drift -> NÉM PARSE_ERROR đã phân loại, KHÔNG biến thành not-found", async () => {
   const { provider } = providerWith(FIXTURE_STRUCTURE_DRIFT, {
     sourceUtcOffsetMinutes: OFFSET_UTC_PLUS_8,
   });
-  // Nguồn đổi cấu trúc khác hẳn tàu không tồn tại.
-  await assert.rejects(() => provider.getDetails(mmsiIdentifier(MMSI)), ShipFinderParseError);
-  await assert.rejects(() => provider.getPosition(mmsiIdentifier(MMSI)), ShipFinderParseError);
+
+  // Nguồn đổi cấu trúc khác hẳn tàu không tồn tại. Provider dịch lỗi riêng của
+  // nguồn sang category của P4; lỗi gốc giữ ở `cause`.
+  const assertParseError = async (run: () => Promise<unknown>): Promise<void> => {
+    await assert.rejects(run, (err: unknown) => {
+      assert.ok(err instanceof SourceRequestError);
+      assert.equal(err.category, SourceErrorCategory.PARSE_ERROR);
+      assert.equal(err.source, VesselSource.SHIPFINDER);
+      assert.ok(err.cause instanceof ShipFinderParseError, "giữ lỗi gốc của parser");
+      return true;
+    });
+  };
+
+  await assertParseError(() => provider.getDetails(mmsiIdentifier(MMSI)));
+  await assertParseError(() => provider.getPosition(mmsiIdentifier(MMSI)));
 });
 
 // ---- Định danh ------------------------------------------------------------

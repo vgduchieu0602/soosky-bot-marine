@@ -207,31 +207,76 @@ const SHIPINFO = defineSourceCapability({
 });
 
 // ---------------------------------------------------------------------------
-//  SHIPFINDER — vị trí + chi tiết. Chưa có implementation.
+//  SHIPFINDER — nguồn thứ BA có implementation thật (www.shipfinder.com)
 // ---------------------------------------------------------------------------
+//  CONFIRMED ở đây đã đi TRỌN đường: audit P7.1 -> raw parser P7.2 -> canonical
+//  mapper + provider P7.3 -> runtime P4 + observation P5, và POC live P7.4 đã
+//  ghi observation thật vào `vessel_observations`.
+//  Xem docs/sources/SHIPFINDER_POC.md.
+//
+//  Điểm mạnh riêng: vị trí TƯƠI THEO PHÚT (POC đo 6.1 phút) trong khi ShipInfo
+//  bị khoá trễ ~14 giờ; và là nguồn duy nhất cho heading + navStatus + draught.
 const SHIPFINDER = defineSourceCapability({
   source: VesselSource.SHIPFINDER,
   operations: {
-    searchByName: true,
+    // Tìm theo tên chỉ có qua API ký chữ ký -> không hỗ trợ.
+    searchByName: false,
     searchByMmsi: true,
-    searchByImo: true,
+    // `/ship/detail/imo/{imo}` trả 404; không có đường tra theo IMO.
+    searchByImo: false,
     position: true,
     particulars: true,
     voyage: true,
     areaScan: false,
   },
-  fields: buildFieldSupport(CANDIDATE, {
-    // Lịch cảng nhiều kỳ chưa có căn cứ kiến trúc nào -> không hứa.
-    [VesselField.CURRENT_PORT_ARRIVAL_AT]: UNSUPPORTED,
-    [VesselField.NEXT_PORT_ETA]: UNSUPPORTED,
-    [VesselField.LAST_PORT_DEPARTURE_AT]: UNSUPPORTED,
+  fields: buildFieldSupport(UNSUPPORTED, {
+    // --- CONFIRMED: đã xuất hiện trong observation THẬT ---
+    [VesselField.MMSI]: CONFIRMED,
+    [VesselField.IMO]: CONFIRMED,
+    [VesselField.NAME]: CONFIRMED,
+    [VesselField.CALLSIGN]: CONFIRMED,
+    [VesselField.VESSEL_TYPE]: CONFIRMED,
+    [VesselField.FLAG]: CONFIRMED, // mã ISO3 ("LBR"), khác ISO2 của ShipInfo
+    [VesselField.LAT]: CONFIRMED, // DDM -> decimal degrees
+    [VesselField.LNG]: CONFIRMED,
+    [VesselField.SPEED]: CONFIRMED,
+    [VesselField.COURSE]: CONFIRMED,
+    [VesselField.HEADING]: CONFIRMED, // ShipInfo: 0/1073 điểm
+    [VesselField.NAV_STATUS]: CONFIRMED, // chỉ text; ShipInfo không có khoá
+    [VesselField.POSITION_RECEIVED_AT]: CONFIRMED, // ⚠️ phụ thuộc giả định múi giờ
+    [VesselField.LENGTH]: CONFIRMED,
+    [VesselField.BEAM]: CONFIRMED,
+    [VesselField.DRAUGHT]: CONFIRMED, // ShipInfo: 0/1073 điểm
+    [VesselField.DESTINATION]: CONFIRMED,
+
+    // --- CANDIDATE: nguồn CÓ nhưng đường ta dùng chưa lấy được ---
+    // ETA: trang cho "07-29 07:01" — THIẾU NĂM. Canonical `eta` là Date nên
+    //   mapper cố ý KHÔNG map; bịa năm sẽ sai ở ranh giới năm mới.
+    [VesselField.ETA]: CANDIDATE,
+    // GT/DWT/năm đóng: nằm sau `/ship/GetIHSData` — API ký chữ ký, ta không đụng.
+    [VesselField.GROSS_TONNAGE]: CANDIDATE,
+    [VesselField.DEADWEIGHT]: CANDIDATE,
+    [VesselField.BUILT_YEAR]: CANDIDATE,
+    // Cảng: mục Port Call đòi đăng nhập, Ship Event là tính năng trả tiền.
+    [VesselField.CURRENT_PORT]: CANDIDATE,
+    [VesselField.NEXT_PORT]: CANDIDATE,
+    [VesselField.LAST_PORT]: CANDIDATE,
+
+    // --- UNSUPPORTED (mặc định): VESSEL_TYPE_CODE (chỉ có nhãn chữ) và các
+    //     mốc thời gian cảng (không có bằng chứng nào).
   }),
   costType: SourceCostType.FREE,
   enabled: false,
+  // ⚠️ GIỮ NGUYÊN 55 dù vị trí tươi hơn ShipInfo (45). Đổi thứ tự ưu tiên chính
+  // là mã hoá "ShipFinder thắng ShipInfo" — đó là việc của resolver, CHƯA CÓ.
   defaultPriority: 55,
   notes: [
-    "Chưa có implementation. Không network request trong P2.",
-    "Khai theo kiến trúc DỰ KIẾN: nguồn hỗn hợp vị trí + chi tiết, toàn bộ CANDIDATE.",
+    "Có provider thật (ShipFinderProvider), đã đăng ký trong ProviderRegistry, mọi request đi qua crawl runtime P4.",
+    "enabled=false: mới chỉ có POC gọi TAY (`npm run shipfinder:poc`), CHƯA có ingestion tự động.",
+    "⚠️ POSITION_RECEIVED_AT phụ thuộc GIẢ ĐỊNH VẬN HÀNH về múi giờ: nguồn KHÔNG khai báo timezone, P7.1 chỉ suy luận UTC+8. Không đặt SHIPFINDER_SOURCE_UTC_OFFSET_MINUTES thì provider KHÔNG phát nhóm position.",
+    "Chỉ tra được bằng MMSI. Không tìm theo tên, không quét vùng (endpoint đều bị ký chữ ký hoặc không tồn tại).",
+    "Không dùng bất kỳ endpoint /Ship/* nào (đòi header chữ ký `s` + `t`).",
+    "Giá trị riêng so với ShipInfo: vị trí tươi theo PHÚT (POC: 6.1 phút vs ~14 giờ), cộng heading + navStatus + draught.",
   ],
 });
 

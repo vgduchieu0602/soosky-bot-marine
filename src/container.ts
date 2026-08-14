@@ -29,6 +29,9 @@ import { VesselFinderProvider } from "./infrastructure/providers/VesselFinderPro
 import { ShipInfoClient } from "./infrastructure/providers/shipinfo/ShipInfoClient";
 import { ShipInfoProvider } from "./infrastructure/providers/shipinfo/ShipInfoProvider";
 import { SHIPINFO_PARSER_VERSION } from "./infrastructure/providers/shipinfo/ShipInfoParser";
+import { ShipFinderClient } from "./infrastructure/providers/shipfinder/ShipFinderClient";
+import { ShipFinderProvider } from "./infrastructure/providers/shipfinder/ShipFinderProvider";
+import { SHIPFINDER_PARSER_VERSION } from "./infrastructure/providers/shipfinder/ShipFinderParser";
 import { CollectVesselObservations } from "./application/use-cases/CollectVesselObservations";
 import { VesselSource } from "./domain/value-objects/VesselSource";
 
@@ -193,11 +196,26 @@ export async function buildContainer(): Promise<Container> {
     })
   );
 
+  // 7) ShipFinder (P7.4). Cũng đăng ký TRƠ; mọi request đi qua P4 y như ShipInfo.
+  //    Timeout lấy từ chính runtime config để hai chỗ không trôi khỏi nhau.
+  //    `sourceUtcOffsetMinutes` đến từ .env — KHÔNG có mặc định: chưa khai thì
+  //    ShipFinder không phát nhóm position (xem AppConfig).
+  const shipFinderTimeoutMs = crawlRuntime.getConfig(VesselSource.SHIPFINDER).timeoutMs;
+  providerRegistry.register(
+    new ShipFinderProvider({
+      client: new ShipFinderClient({ http: new HttpClient({ timeoutMs: shipFinderTimeoutMs }) }),
+      sourceUtcOffsetMinutes: config.shipFinderSourceUtcOffsetMinutes,
+    })
+  );
+
   const collectVesselObservations = new CollectVesselObservations({
     registry: providerRegistry,
     runtime: crawlRuntime,
     recorder: observationRecorder,
-    parserVersionBySource: { [VesselSource.SHIPINFO]: SHIPINFO_PARSER_VERSION },
+    parserVersionBySource: {
+      [VesselSource.SHIPINFO]: SHIPINFO_PARSER_VERSION,
+      [VesselSource.SHIPFINDER]: SHIPFINDER_PARSER_VERSION,
+    },
   });
 
   return {
