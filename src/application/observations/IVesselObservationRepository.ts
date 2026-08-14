@@ -63,10 +63,36 @@ export interface IVesselObservationRepository {
    * Bản ghi mới nhất của một tàu cho MỘT nhóm.
    * ⚠️ Có thể đến từ BẤT KỲ nguồn nào — hàm này KHÔNG phân xử nguồn nào đúng.
    * Muốn theo nguồn cụ thể thì lọc từ `findRecentByVessel`.
+   *
+   * ⛔ KHÔNG dùng cho resolver: nó trả về ĐÚNG MỘT bản ghi, nên mọi nguồn khác
+   * biến mất. VD với PARTICULARS của MMSI 636018086 nó trả ShipFinder
+   * (`length=179, builtYear=null`) và nuốt mất `builtYear=2010` của ShipInfo.
+   * Resolver phải dùng `findLatestPerSourceByVesselAndType`.
    */
   findLatestByVesselAndType(
     key: VesselObservationKey,
     type: VesselObservationType,
     options?: ObservationQueryOptions
   ): Promise<VesselSourceObservation | null>;
+
+  /**
+   * Bản ghi MỚI NHẤT của **MỖI NGUỒN** cho một (tàu, nhóm) — đầu vào của resolver.
+   *
+   * Khác `findLatestByVesselAndType` ở chỗ quyết định: trả **tối đa một bản ghi
+   * cho mỗi nguồn**, nên số kết quả bị chặn bởi SỐ NGUỒN chứ không bởi một
+   * `limit` tuỳ tiện. Một nguồn crawl dày không thể đẩy nguồn khác ra khỏi cửa
+   * sổ — đó chính là lỗi mà `findRecentByVessel(..., {limit})` mắc phải.
+   *
+   * "Mới nhất" đo bằng `fetchedAt` (giống mọi truy vấn khác của kho này).
+   * Việc so **độ tươi của NGUỒN** (`sourceReceivedAt`) là của resolver, không
+   * phải của kho — xem RESOLVER_POLICY.md §D.2.
+   *
+   * Thứ tự trả về SẮP THEO TÊN NGUỒN để kết quả tất định, không phụ thuộc thứ
+   * tự đọc từ DB.
+   */
+  findLatestPerSourceByVesselAndType(
+    key: VesselObservationKey,
+    type: VesselObservationType,
+    options?: ObservationQueryOptions
+  ): Promise<readonly VesselSourceObservation[]>;
 }

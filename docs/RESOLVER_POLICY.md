@@ -572,6 +572,40 @@ Theo thứ tự, mỗi bước độc lập:
 
 ---
 
+## P · Trạng thái implementation (cập nhật sau P8.2)
+
+P8.2 đã hiện thực **bước 1, 3, 4, 5, 6** của §O. Chưa làm 2, 7, 8, 9.
+
+| Thành phần | File | Ghi chú |
+|---|---|---|
+| Truy vấn ứng viên | `IVesselObservationRepository.findLatestPerSourceByVesselAndType` | Cả InMemory lẫn Mongo. Mongo dùng `$match → $sort → $group $first → $sort _id` |
+| Ngưỡng độ tươi | `PositionResolverPolicy` | `LIVE 30ph · RECENT 6h · STALE 24h`, cấu hình được |
+| Kiểu provenance | `ResolverTypes` | 5 mã thắng + 6 mã loại — **chỉ** những mã POSITION dùng |
+| Resolver thuần | `PositionResolver` | §D thành code, nguyên khối, tất định |
+| Đường đọc | `ResolveCurrentPosition` | Chỉ đọc, không ghi, không mạng |
+
+### Quyết định phát sinh: cửa sổ nạp ứng viên (§36 của đề bài P8.2)
+
+Chọn **Option B**: `candidateWindowMs = 7 ngày`, rộng hơn `staleMaxAgeMs` (24h).
+
+Lý do: cắt đúng 24 giờ thì hai bậc cuối — `EXPIRED` và `NO_SOURCE_TIME` — **không bao giờ tới được resolver**, tức là chính sách định nghĩa ra chúng rồi không bao giờ dùng tới. Với tàu ít dữ liệu, một vị trí 3 ngày tuổi vẫn hơn không có gì, miễn là nó được **gắn nhãn đúng** là `EXPIRED` để tầng trên tự quyết. 7 ngày vẫn chặn được truy vấn, không nạp lịch sử vô hạn.
+
+⚠️ `since` lọc theo **`fetchedAt`** (ngữ nghĩa sẵn có của `ObservationQueryOptions`), không phải `sourceReceivedAt`. Hai thứ khác nhau: một bản ghi ShipInfo có `sourceReceivedAt` 14 giờ trước nhưng `fetchedAt` vừa xong vẫn lọt cửa sổ — đúng như mong muốn.
+
+### Xác minh trên dữ liệu THẬT (Mongo, MMSI 636018086)
+
+```
+POSITION ứng viên: shipfinder@2026-08-14T16:39:41Z | shipinfo@2026-08-13T20:11:07Z
+→ winner   : shipfinder | FRESHER_SOURCE_TIMESTAMP | LIVE
+  observedAt 16:39:41Z   fetchedAt 16:40:41.985Z      (hai mốc KHÁC nhau)
+  heading 58 · navStatus "Moored"
+  rejected  [{ shipinfo, 6a7ef08d311b00bbac1ef270, STALER_TIMESTAMP }]
+```
+
+Đúng như §N.1 dự đoán, và **không** phải vì priority — ShipFinder có `defaultPriority` **tệ hơn** (55 vs 45). Có test khoá điều này.
+
+---
+
 ## Phụ lục · Cách tái lập bằng chứng
 
 ```js

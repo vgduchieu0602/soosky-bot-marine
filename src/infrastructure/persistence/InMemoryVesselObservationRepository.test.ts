@@ -222,6 +222,131 @@ test("saveMany giữ đúng thứ tự và tự dedupe TRONG cùng một mẻ", 
   assert.equal(repo.size, 2);
 });
 
+// ---- findLatestPerSourceByVesselAndType (P8.2) ----------------------------
+
+test("mới nhất của MỖI nguồn — không nguồn nào bị nguồn khác đẩy ra", async () => {
+  const clock = { current: T0 };
+  const repo = repoAt(clock);
+
+  // shipinfo cũ -> shipfinder cũ -> shipinfo mới -> shipfinder mới
+  await repo.save(position({ source: VesselSource.SHIPINFO, fetchedAt: T0, lat: 1.1 }));
+  await repo.save(position({ source: VesselSource.SHIPFINDER, fetchedAt: T0, lat: 2.1 }));
+  clock.current = new Date(T0.getTime() + 60 * 60 * 1000);
+  await repo.save(position({ source: VesselSource.SHIPINFO, fetchedAt: clock.current, lat: 1.2 }));
+  await repo.save(position({ source: VesselSource.SHIPFINDER, fetchedAt: clock.current, lat: 2.2 }));
+  assert.equal(repo.size, 4);
+
+  const latest = await repo.findLatestPerSourceByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION
+  );
+
+  assert.equal(latest.length, 2, "đúng một bản ghi cho mỗi nguồn");
+  assert.deepEqual(
+    latest.map((o) => [o.source, (o.data as { lat: number }).lat]),
+    [
+      [VesselSource.SHIPFINDER, 2.2],
+      [VesselSource.SHIPINFO, 1.2],
+    ]
+  );
+});
+
+test("khắc phục đúng khoảng trống của findLatestByVesselAndType", async () => {
+  const repo = repoAt({ current: T0 });
+  await repo.save(position({ source: VesselSource.SHIPINFO, lat: 1.1 }));
+  await repo.save(position({ source: VesselSource.SHIPFINDER, lat: 2.1 }));
+
+  // Method cũ chỉ trả MỘT bản ghi -> mọi nguồn khác biến mất.
+  const single = await repo.findLatestByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION
+  );
+  assert.ok(single);
+  const perSource = await repo.findLatestPerSourceByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION
+  );
+  assert.equal(perSource.length, 2, "method mới giữ đủ mọi nguồn");
+});
+
+test("thứ tự trả về TẤT ĐỊNH, sắp theo tên nguồn", async () => {
+  const repo = repoAt({ current: T0 });
+  await repo.save(position({ source: VesselSource.SHIPINFO, lat: 1.1 }));
+  await repo.save(position({ source: VesselSource.VESSELFINDER, lat: 3.1 }));
+  await repo.save(position({ source: VesselSource.SHIPFINDER, lat: 2.1 }));
+
+  const latest = await repo.findLatestPerSourceByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION
+  );
+  assert.deepEqual(
+    latest.map((o) => o.source),
+    [VesselSource.SHIPFINDER, VesselSource.SHIPINFO, VesselSource.VESSELFINDER]
+  );
+});
+
+test("since cắt bản ghi trước mốc", async () => {
+  const clock = { current: T0 };
+  const repo = repoAt(clock);
+
+  await repo.save(position({ source: VesselSource.SHIPINFO, fetchedAt: T0 }));
+  clock.current = new Date(T0.getTime() + 3 * 60 * 60 * 1000);
+  await repo.save(position({ source: VesselSource.SHIPFINDER, fetchedAt: clock.current, lat: 2.1 }));
+
+  const recent = await repo.findLatestPerSourceByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION,
+    { since: new Date(T0.getTime() + 60 * 60 * 1000) }
+  );
+  assert.deepEqual(recent.map((o) => o.source), [VesselSource.SHIPFINDER]);
+});
+
+test("INVALID bị loại mặc định; includeInvalid=true mới thấy", async () => {
+  const clock = { current: T0 };
+  const repo = repoAt(clock);
+
+  await repo.save(position({ source: VesselSource.SHIPINFO, fetchedAt: T0, lat: 1.1 }));
+  clock.current = new Date(T0.getTime() + 60 * 60 * 1000);
+  await repo.save(
+    position({
+      source: VesselSource.SHIPINFO,
+      fetchedAt: clock.current,
+      lat: 9.9,
+      status: ObservationValidationStatus.INVALID,
+    })
+  );
+
+  // Bản INVALID mới hơn KHÔNG được che mất bản VALID cũ hơn của cùng nguồn.
+  const usable = await repo.findLatestPerSourceByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION
+  );
+  assert.equal(usable.length, 1);
+  assert.equal((usable[0].data as { lat: number }).lat, 1.1);
+
+  const all = await repo.findLatestPerSourceByVesselAndType(
+    { mmsi: MMSI },
+    VesselObservationType.POSITION,
+    { includeInvalid: true }
+  );
+  assert.equal((all[0].data as { lat: number }).lat, 9.9);
+});
+
+test("lọc đúng nhóm; khoá rỗng -> rỗng", async () => {
+  const repo = repoAt({ current: T0 });
+  await repo.save(position({ source: VesselSource.SHIPINFO }));
+
+  assert.equal(
+    (await repo.findLatestPerSourceByVesselAndType({ mmsi: MMSI }, VesselObservationType.VOYAGE))
+      .length,
+    0
+  );
+  assert.equal(
+    (await repo.findLatestPerSourceByVesselAndType({}, VesselObservationType.POSITION)).length,
+    0
+  );
+});
+
 test("cửa sổ dedupe: IDENTITY/PARTICULARS dài hơn POSITION", () => {
   const config = DEFAULT_OBSERVATION_DEDUPE_CONFIG;
   assert.equal(config.windowMsByType[VesselObservationType.POSITION], 5 * 60 * 1000);

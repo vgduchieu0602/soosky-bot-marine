@@ -99,12 +99,9 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     key: VesselObservationKey,
     options: ObservationQueryOptions = {}
   ): Promise<readonly VesselSourceObservation[]> {
-    const identifiers: Record<string, unknown>[] = [];
-    if (key.mmsi !== undefined) identifiers.push({ mmsi: key.mmsi });
-    if (key.imo !== undefined) identifiers.push({ imo: key.imo });
-    if (identifiers.length === 0) return Object.freeze([]);
-
-    return this.query({ $or: identifiers }, options);
+    const filter = MongoVesselObservationRepository.vesselFilter(key);
+    if (filter === null) return Object.freeze([]);
+    return this.query(filter, options);
   }
 
   async findRecentBySource(
@@ -123,10 +120,47 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     return found[0] ?? null;
   }
 
-  private async query(
+  /**
+   * Mới nhất của MỖI nguồn, bằng một `aggregate` duy nhất:
+   *   $match -> $sort fetchedAt DESC -> $group theo source lấy $first
+   * Index `{mmsi:1, type:1, fetchedAt:-1}` (đã có sẵn) phục vụ đúng $match + $sort này.
+   *
+   * `limit` cố tình bị bỏ qua: số kết quả do số nguồn quyết định.
+   */
+  async findLatestPerSourceByVesselAndType(
+    key: VesselObservationKey,
+    type: VesselObservationType,
+    options: ObservationQueryOptions = {}
+  ): Promise<readonly VesselSourceObservation[]> {
+    const filter = MongoVesselObservationRepository.vesselFilter(key);
+    if (filter === null) return Object.freeze([]);
+
+    const criteria = MongoVesselObservationRepository.buildCriteria(filter, { ...options, type });
+
+    const rows = await VesselObservationModel.aggregate<{ doc: ObservationDoc }>([
+      { $match: criteria },
+      { $sort: { fetchedAt: -1 } },
+      { $group: { _id: "$source", doc: { $first: "$$ROOT" } } },
+      // Sắp theo tên nguồn -> kết quả tất định, không phụ thuộc thứ tự nhóm của Mongo.
+      { $sort: { _id: 1 } },
+    ]).exec();
+
+    return Object.freeze(rows.map((row) => MongoVesselObservationRepository.toEntity(row.doc)));
+  }
+
+  /** `null` = khoá rỗng, không truy vấn gì cả. */
+  private static vesselFilter(key: VesselObservationKey): Record<string, unknown> | null {
+    const identifiers: Record<string, unknown>[] = [];
+    if (key.mmsi !== undefined) identifiers.push({ mmsi: key.mmsi });
+    if (key.imo !== undefined) identifiers.push({ imo: key.imo });
+    return identifiers.length === 0 ? null : { $or: identifiers };
+  }
+
+  /** Dùng chung cho `find` và `aggregate` -> hai đường không thể lệch luật lọc. */
+  private static buildCriteria(
     filter: Record<string, unknown>,
     options: ObservationQueryOptions
-  ): Promise<readonly VesselSourceObservation[]> {
+  ): Record<string, unknown> {
     const criteria: Record<string, unknown> = { ...filter };
     if (options.type !== undefined) criteria.type = options.type;
     if (options.since !== undefined) criteria.fetchedAt = { $gte: options.since };
@@ -134,6 +168,14 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     if (options.includeInvalid !== true) {
       criteria.validationStatus = { $ne: ObservationValidationStatus.INVALID };
     }
+    return criteria;
+  }
+
+  private async query(
+    filter: Record<string, unknown>,
+    options: ObservationQueryOptions
+  ): Promise<readonly VesselSourceObservation[]> {
+    const criteria = MongoVesselObservationRepository.buildCriteria(filter, options);
 
     const docs = await VesselObservationModel.find(criteria)
       .sort({ fetchedAt: -1 })

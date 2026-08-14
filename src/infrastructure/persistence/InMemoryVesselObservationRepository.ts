@@ -107,6 +107,36 @@ export class InMemoryVesselObservationRepository implements IVesselObservationRe
     return found[0] ?? null;
   }
 
+  /**
+   * Mới nhất của MỖI nguồn. `limit` cố tình bị bỏ qua: số kết quả do số nguồn
+   * quyết định, không do người gọi.
+   */
+  async findLatestPerSourceByVesselAndType(
+    key: VesselObservationKey,
+    type: VesselObservationType,
+    options: ObservationQueryOptions = {}
+  ): Promise<readonly VesselSourceObservation[]> {
+    // Không truyền limit -> lấy hết ứng viên rồi mới gom theo nguồn.
+    const all = await this.findRecentByVessel(key, {
+      since: options.since,
+      includeInvalid: options.includeInvalid,
+      type,
+      limit: Number.MAX_SAFE_INTEGER,
+    });
+
+    // `all` đã sắp mới nhất trước -> bản gặp đầu tiên của mỗi nguồn là bản mới nhất.
+    const latestBySource = new Map<VesselSource, VesselSourceObservation>();
+    for (const observation of all) {
+      if (!latestBySource.has(observation.source)) {
+        latestBySource.set(observation.source, observation);
+      }
+    }
+
+    return Object.freeze(
+      [...latestBySource.values()].sort((a, b) => a.source.localeCompare(b.source))
+    );
+  }
+
   /** Toàn bộ bản ghi, mới nhất trước — chỉ dùng cho test/kiểm tra. */
   all(): readonly VesselSourceObservation[] {
     return Object.freeze(this.stored.map((entry) => entry.observation));
