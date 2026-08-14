@@ -21,6 +21,10 @@ import { connectMongo } from "./infrastructure/persistence/mongoose/connection";
 
 import { ProviderRegistry } from "./application/providers/ProviderRegistry";
 import { SourceRuntimeManager } from "./application/runtime/SourceRuntimeManager";
+import { IVesselObservationRepository } from "./application/observations/IVesselObservationRepository";
+import { ObservationRecorder } from "./application/observations/ObservationRecorder";
+import { InMemoryVesselObservationRepository } from "./infrastructure/persistence/InMemoryVesselObservationRepository";
+import { MongoVesselObservationRepository } from "./infrastructure/persistence/MongoVesselObservationRepository";
 import { VesselFinderProvider } from "./infrastructure/providers/VesselFinderProvider";
 
 import { GetVesselDetails } from "./application/use-cases/GetVesselDetails";
@@ -55,6 +59,14 @@ export interface Container {
    * Xem CRAWL_RUNTIME.md §9.
    */
   crawlRuntime: SourceRuntimeManager;
+  /**
+   * Kho lời khai của các nguồn (P5). SONG SONG với `repository` legacy, KHÔNG
+   * thay thế: crawler hiện tại vẫn ghi thẳng vào vessels/latestpositions như cũ.
+   * Xem OBSERVATION_STORAGE.md §10.
+   */
+  observationRepository: IVesselObservationRepository;
+  /** Cửa duy nhất để provider mới ghi observation. Chưa ai gọi ở P5. */
+  observationRecorder: ObservationRecorder;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -148,6 +160,15 @@ export async function buildContainer(): Promise<Container> {
   //    khi có crawler thật để đo. Không đụng nhịp nghỉ của legacy use case.
   const crawlRuntime = new SourceRuntimeManager();
 
+  // 5) Kho observation (P5). Collection RIÊNG `vessel_observations` — không
+  //    đụng vessels/latestpositions/vesselpositions, không backfill dữ liệu cũ.
+  //    Không có MongoDB -> giữ RAM: đường JSON file là để chạy thử, nhật ký
+  //    nhiều nguồn ghi ra file phẳng thì vừa chậm vừa vô dụng.
+  const observationRepository: IVesselObservationRepository = config.mongoUri
+    ? new MongoVesselObservationRepository()
+    : new InMemoryVesselObservationRepository();
+  const observationRecorder = new ObservationRecorder({ repository: observationRepository });
+
   return {
     config,
     repository,
@@ -160,5 +181,7 @@ export async function buildContainer(): Promise<Container> {
     cleanupStalePositions,
     providerRegistry,
     crawlRuntime,
+    observationRepository,
+    observationRecorder,
   };
 }
