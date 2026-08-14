@@ -19,6 +19,9 @@ import { JsonWatchlistRepository } from "./infrastructure/persistence/JsonWatchl
 import { MongoWatchlistRepository } from "./infrastructure/persistence/MongoWatchlistRepository";
 import { connectMongo } from "./infrastructure/persistence/mongoose/connection";
 
+import { ProviderRegistry } from "./application/providers/ProviderRegistry";
+import { VesselFinderProvider } from "./infrastructure/providers/VesselFinderProvider";
+
 import { GetVesselDetails } from "./application/use-cases/GetVesselDetails";
 import { CrawlFleetPositions } from "./application/use-cases/CrawlFleetPositions";
 import { ScanArea } from "./application/use-cases/ScanArea";
@@ -38,6 +41,12 @@ export interface Container {
   manageWatchlist: ManageWatchlist;
   enrichVesselTypes: EnrichVesselTypes;
   cleanupStalePositions: CleanupStalePositions;
+  /**
+   * Sổ đăng ký provider multi-source (P3). Hiện KHÔNG use case nào dùng — đường
+   * legacy vẫn tiêm thẳng IVesselDetailsSource/IAreaScanner như cũ. Expose ra
+   * đây để phase sau có chỗ cắm resolver. Xem PROVIDER_ARCHITECTURE.md §6.
+   */
+  providerRegistry: ProviderRegistry;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -115,6 +124,17 @@ export async function buildContainer(): Promise<Container> {
     staleAfterMs: config.positionStaleAfterMs,
   });
 
+  // 3) Sổ đăng ký provider (P3) — SONG SONG với wiring legacy ở trên, không
+  //    thay thế nó. VesselFinderProvider BỌC lại đúng 2 source vừa tạo, nên
+  //    không phát sinh thêm một request nào lên upstream.
+  //    Chỉ đăng ký provider CÓ THẬT: AISStream (bot chưa nối) và MyShipTracking
+  //    (chưa có client) cố ý vắng mặt — capability tồn tại không có nghĩa là có
+  //    implementation. Xem PROVIDER_ARCHITECTURE.md §2.
+  const providerRegistry = new ProviderRegistry();
+  providerRegistry.register(
+    new VesselFinderProvider({ detailsSource, areaScanner: mapSource })
+  );
+
   return {
     config,
     repository,
@@ -125,5 +145,6 @@ export async function buildContainer(): Promise<Container> {
     manageWatchlist,
     enrichVesselTypes,
     cleanupStalePositions,
+    providerRegistry,
   };
 }
