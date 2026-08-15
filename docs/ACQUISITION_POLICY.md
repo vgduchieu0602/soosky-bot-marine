@@ -27,6 +27,26 @@ Không implement orchestrator · không client MyShipTracking · không gọi AP
 
 ---
 
+## A.1 Vị trí của tài liệu này trong bức tranh lớn
+
+Tài liệu này nói về **một con tàu đã biết định danh**. Câu hỏi *"có những tàu nào?"* thuộc tầng khác, đứng phía trước:
+
+```mermaid
+flowchart LR
+    D["Discovery<br/>(P10 · chưa viết)"] --> K["Known Vessel"]
+    K --> F["Free Acquisition<br/>(P9.1–P9.4 · tài liệu NÀY)"]
+    F --> P["Paid Fallback<br/>(P9.5 · cổng có, client chưa)"]
+
+    style F fill:#e3f2fd
+    style P fill:#ffebee
+```
+
+Discovery cập nhật danh bạ tàu; chính sách làm giàu quyết định tàu nào **đến hạn**; rồi mới tới `AcquireVesselData`. ⛔ Discovery **không** gọi provider trực tiếp — xem [GLOBAL_DISCOVERY_ARCHITECTURE.md §5](./GLOBAL_DISCOVERY_ARCHITECTURE.md).
+
+Luật của P9 **không đổi** vì có thêm tầng đó: vẫn local-first, vẫn tối đa 2 lần chạm nguồn free, vẫn mặc định từ chối trả tiền.
+
+---
+
 ## B. Local-first — nguyên tắc gốc
 
 Acquisition **không bao giờ** bắt đầu bằng network.
