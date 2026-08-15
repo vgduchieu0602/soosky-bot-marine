@@ -1020,6 +1020,90 @@ Ngân sách thời gian · single-flight (§K) · chặn theo lần thử **gi�
 
 ---
 
+## P9.5 · Cổng trả tiền — thiết kế
+
+Audit đầy đủ: [MYSHIPTRACKING_AUDIT.md](./sources/MYSHIPTRACKING_AUDIT.md) → kết luận **🟡 GO WITH LIMITATIONS**.
+
+| Thành phần | File |
+|---|---|
+| Bảng giá trị trả tiền theo field | `src/application/acquisition/PaidSourceCapability.ts` |
+| Ngưỡng + ảnh chụp ngân sách | `src/application/acquisition/PaidFallbackPolicy.ts` |
+| Cổng — **hàm thuần** | `src/application/acquisition/PaidFallbackGate.ts` |
+| Dịch missing → requirement (dùng chung) | `src/application/acquisition/acquisitionRequirements.ts` |
+
+⛔ **Không** client MyShipTracking · **không** provider · **không** đăng ký registry · **không** runtime config mới · **không** gọi API. `AcquireFreeVesselData` vẫn **FREE-ONLY**; `FreeSourceSelector` vẫn loại mọi nguồn không phải `FREE` ở cổng đầu tiên.
+
+### Chuỗi dự kiến (chưa nối)
+
+```mermaid
+flowchart LR
+    A["AcquireFreeVesselData<br/>(P9.4 · FREE ONLY)"] --> B{"vẫn chưa đủ?"}
+    B -->|đủ| D["xong · 0 đồng"]
+    B -->|chưa| G["PaidFallbackGate<br/>(P9.5 · hàm thuần)"]
+    G -->|DENY| E["trả best-effort<br/>satisfied=false"]
+    G -->|ALLOW| P["MyShipTracking<br/>⏸ P9.6, chưa tồn tại"]
+
+    style D fill:#e8f5e9
+    style E fill:#fff3e0
+    style P fill:#ffebee
+```
+
+Wrapper `AcquireVesselData` ghép hai tầng là việc của phase sau — cố ý **không** nhét paid vào class hiện tại.
+
+### Chín cổng, theo thứ tự cố định
+
+| # | Cổng | DENY khi | Mã |
+|---|---|---|---|
+| 1 | **Cho phép** | `allowPaidFallback !== true` | `PAID_NOT_ALLOWED` |
+| 2 | Local | `sufficiency.satisfied` | `LOCAL_ALREADY_SUFFICIENT` |
+| 3 | **Free đã cạn** | `freeOutcome !== NO_FREE_SOURCE_AVAILABLE` | `FREE_OPTIONS_NOT_EXHAUSTED` |
+| 4 | Lượt này | đã gọi paid trong request | `PAID_ALREADY_ATTEMPTED` |
+| 5 | Cửa sổ chặn | còn trong TTL | `RECENT_PAID_ATTEMPT` |
+| 6 | Định danh | khoá rỗng | `NO_PAID_CAPABILITY` |
+| 7 | Capability | mọi field thiếu đều `UNSUPPORTED` | `NO_PAID_CAPABILITY` |
+| 8 | Giá trị | chỉ còn field free đã có | `ENRICHMENT_ONLY_NEED` |
+| 9 | Ngân sách | tắt / `0` / **`null`** | `BUDGET_EXHAUSTED` · `BUDGET_UNKNOWN` |
+
+**Mặc định từ chối.** Mọi đường ra đều là DENY trừ đúng một đường qua cả chín cổng. Chi phí của một `ALLOW` sai là tiền thật; chi phí của một `DENY` sai chỉ là `satisfied: false`.
+
+⚠️ **Cổng 3 là chỗ dễ rò tiền nhất.** Chỉ `NO_FREE_SOURCE_AVAILABLE` mở được cửa. `ATTEMPT_BUDGET_EXHAUSTED` nghĩa là *ta hết lượt*, không phải *hết nguồn* — cho qua ở đó là biến ngân sách free thành đường tắt sang tiền thật: cứ để nó cạn rồi mua.
+
+⚠️ **Cổng 9 đứng CUỐI có chủ ý.** Báo "hết tiền" khi thật ra API không có field đó là chẩn đoán sai, và nó khiến người vận hành đi nạp quota một cách vô ích.
+
+### Đáng tiền hay không
+
+| Mức | Nghĩa | Mở cổng? |
+|---|---|---|
+| `CRITICAL` | free không giải được **và** nhu cầu chính hỏng nếu thiếu — hiện chỉ nhóm vị trí | ✅ |
+| `USEFUL` | 0/3 nguồn free CONFIRMED, nhưng thiếu không chặn gì — `gt`, `eta`, cảng | ✅ |
+| `ENRICHMENT_ONLY` | free **đã** cấp được — mua là mua lại | ❌ |
+| `UNSUPPORTED` | paid cũng không có — `heading` | ❌ |
+
+Field không được audit khai tường minh → mặc định `UNSUPPORTED`. "Chưa xét" không được phép thành "cứ gọi thử xem".
+
+### Ngân sách
+
+`PaidBudgetSnapshot { enabled, remainingCalls }` — cổng chỉ **đọc**, không đếm, không trừ, không ghi sổ. ⛔ Không `costScore`, không ledger, không billing.
+
+⚠️ **`remainingCalls = null` → DENY, không phải vô hạn.** MyShipTracking **không công bố giá**; "chắc là còn" là một canh bạc bằng tiền thật.
+
+### Chặn theo lần đã gọi
+
+| Nhóm | TTL | Nguồn gốc |
+|---|---|---|
+| vị trí | **30 phút** | `liveMaxAgeMs` — trước mốc đó thứ vừa mua vẫn `LIVE` |
+| còn lại | **24 giờ** | `POSITION_STALE_AFTER_MS` — `builtYear` không đổi trong ngày |
+
+Chặn **bất kể kết quả**, kể cả `NOT_FOUND`: nguồn vừa nói "không có tàu này" thì hỏi lại sau vài giây cho ra đúng câu đó.
+
+`maxPaidAttemptsPerRequest = 1` — `response=extended` trả cả bốn nhóm trong một response, không có endpoint nào để xâu chuỗi.
+
+### Chưa làm
+
+Client/provider/runtime MyShipTracking · wrapper `AcquireVesselData` · nguồn nuôi `PaidBudgetSnapshot` · lưu lần gọi paid giữa các lượt · nâng matrix lên CONFIRMED (**cần POC**, không phải đọc tài liệu).
+
+---
+
 ## Q. Đề xuất phạm vi P9.2
 
 | # | Hạng mục | Ghi chú |

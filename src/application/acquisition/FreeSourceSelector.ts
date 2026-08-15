@@ -21,7 +21,6 @@
 import {
   VesselField,
   VesselFieldGroup,
-  getFieldGroup,
   getFieldsInGroup,
 } from "../../domain/value-objects/VesselField";
 import { VesselObservationKey } from "../../domain/observations/VesselObservation";
@@ -47,12 +46,16 @@ import {
   AttemptScope,
   attemptMatchesVessel,
 } from "./AcquisitionAttempt";
-import { DataNeed, getGroupsForNeed } from "./DataNeed";
+import { DataNeed } from "./DataNeed";
+import {
+  GROUP_MINIMUM_FIELDS,
+  toAcquisitionRequirements,
+} from "./acquisitionRequirements";
 import {
   DEFAULT_FREE_SOURCE_SELECTION_POLICY,
   FreeSourceSelectionPolicy,
 } from "./FreeSourceSelectionPolicy";
-import { MissingReason, SufficiencyResult } from "./SufficiencyTypes";
+import { SufficiencyResult } from "./SufficiencyTypes";
 import {
   AcquisitionRequirement,
   FreeSourceSelectionResult,
@@ -96,27 +99,6 @@ const OPERATION_FLAG_BY_GROUP: Readonly<
   [VesselFieldGroup.VOYAGE]: "voyage",
   [VesselFieldGroup.IDENTITY]: null,
 });
-
-/**
- * Field TỐI THIỂU để coi một nguồn giải được cả NHÓM (khi người gọi không chỉ
- * đích danh field nào). Khớp đúng định nghĩa "đủ" của P9.2 §D.
- */
-const GROUP_MINIMUM_FIELDS: Readonly<Record<VesselFieldGroup, readonly VesselField[] | null>> =
-  Object.freeze({
-    // Cần cả mốc NGUỒN, không chỉ toạ độ. Vị trí không rõ tuổi rơi vào bậc
-    // NO_SOURCE_TIME của resolver -> không bao giờ đủ tươi, nên nguồn không
-    // khai được `positionReceivedAt` thì gọi nó cũng không giải quyết gì.
-    [VesselFieldGroup.POSITION]: Object.freeze([
-      VesselField.LAT,
-      VesselField.LNG,
-      VesselField.POSITION_RECEIVED_AT,
-    ]),
-    [VesselFieldGroup.IDENTITY]: Object.freeze([VesselField.NAME]),
-    [VesselFieldGroup.VOYAGE]: Object.freeze([VesselField.DESTINATION]),
-    // `null` = "bất kỳ field nào của nhóm cũng được" (P9.2: particulars trần
-    // chỉ đòi có gì đó dùng được).
-    [VesselFieldGroup.PARTICULARS]: null,
-  });
 
 const HEALTH_RANK: Readonly<Record<SourceHealthState, number>> = Object.freeze({
   [SourceHealthState.HEALTHY]: 0,
@@ -164,7 +146,7 @@ export class FreeSourceSelector {
       return { next: null, skipped: Object.freeze([]) };
     }
 
-    const requirements = this.toRequirements(input.sufficiency, input.need);
+    const requirements = toAcquisitionRequirements(input.sufficiency, input.need, this.policy);
     if (requirements.length === 0) {
       return { next: null, skipped: Object.freeze([]) };
     }
@@ -197,63 +179,6 @@ export class FreeSourceSelector {
   }
 
   // ---- missing -> requirement ----------------------------------------------
-
-  /**
-   * Dịch "thiếu cái gì" (P9.2) sang "cần lấy được cái gì" (P9.3).
-   *
-   * `NO_CURRENT_VESSEL` KHÔNG có nghĩa "gọi mọi nguồn": nó suy ra đúng bộ yêu
-   * cầu MẶC ĐỊNH của need, y hệt bộ mà P9.2 dùng để nói "đủ" — hai tầng phải
-   * nói về cùng một thứ.
-   */
-  private toRequirements(
-    sufficiency: SufficiencyResult,
-    need: DataNeed
-  ): readonly AcquisitionRequirement[] {
-    const collected: AcquisitionRequirement[] = [];
-
-    for (const item of sufficiency.missing) {
-      if (item.reason === MissingReason.NO_CURRENT_VESSEL) {
-        for (const group of getGroupsForNeed(need.type)) collected.push({ group });
-        // ⚠️ Phải kèm CẢ field người gọi chỉ đích danh. Chưa có canonical thì
-        // P9.2 chỉ kịp nói "không có gì" — nó không liệt kê từng field thiếu.
-        // Bỏ qua chỗ này thì "cần builtYear" trên một con tàu chưa có dữ liệu
-        // sẽ rơi về yêu cầu particulars CHUNG, và ta chọn phải nguồn không cấp
-        // được builtYear.
-        for (const field of need.requiredFields ?? []) {
-          collected.push({ group: getFieldGroup(field), field });
-        }
-        continue;
-      }
-      if (item.group === undefined) continue;
-
-      switch (item.reason) {
-        // Cả nhóm vắng, hoặc vị trí có mà quá cũ -> cùng một yêu cầu: lấy nhóm đó.
-        case MissingReason.MISSING_GROUP:
-        case MissingReason.POSITION_NOT_FRESH_ENOUGH:
-          collected.push({ group: item.group });
-          break;
-        case MissingReason.MISSING_REQUIRED_FIELD:
-        case MissingReason.VOYAGE_TOO_OLD:
-        case MissingReason.FIELD_TOO_OLD:
-          collected.push({ group: item.group, field: item.field });
-          break;
-      }
-    }
-
-    // Bỏ trùng rồi sắp tất định -> `missing` xáo trộn không đổi kết quả.
-    const unique = new Map<string, AcquisitionRequirement>();
-    for (const requirement of collected) {
-      unique.set(`${requirement.group}|${requirement.field ?? "*"}`, requirement);
-    }
-
-    return Object.freeze(
-      [...unique.values()].sort((a, b) => {
-        const rank = this.groupRank(a.group) - this.groupRank(b.group);
-        if (rank !== 0) return rank;
-        return (a.field ?? "").localeCompare(b.field ?? "");
-      })
-    );
-  }
 
   // ---- cổng lọc -------------------------------------------------------------
 
