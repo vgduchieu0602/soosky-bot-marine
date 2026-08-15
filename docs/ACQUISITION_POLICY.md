@@ -822,6 +822,97 @@ Chọn nguồn · health · ngân sách · chặn theo lần thử gần nhất 
 
 ---
 
+## P9.3 · Trạng thái implementation
+
+Hiện thực **mục 3** của §Q. Vẫn **chưa chạm mạng**: selector trả về *kế hoạch*, không thực hiện nó.
+
+| Thành phần | File |
+|---|---|
+| Bản ghi lần thử | `src/application/acquisition/AcquisitionAttempt.ts` |
+| Kiểu kế hoạch + mã đóng | `src/application/acquisition/SourceSelectionTypes.ts` |
+| Chính sách | `src/application/acquisition/FreeSourceSelectionPolicy.ts` |
+| Bộ chọn — **hàm thuần** | `src/application/acquisition/FreeSourceSelector.ts` |
+
+Resolver, kho canonical, provider, runtime, matrix, checker P9.2 — **không bị đụng**. Không dependency mới.
+
+### Ranh giới đã giữ
+
+Không import: provider/client · `CollectVesselObservations` · repository · `Date.now()`. Sức khoẻ vào bằng **hàm `healthOf(source)`** thay vì `SourceRuntimeManager`, nên selector *không thể* gọi `recordFailure`/`enterCooldown` — vòng đời health thuộc P4.
+
+Chỉ trả **một** plan. Sau khi gọi, P9.4 phải resolve lại → hỏi sufficiency lại → hỏi selector lại. Đó chính là cách §H được bảo đảm: mỗi vòng phải *chứng minh vẫn còn thiếu* mới được đi tiếp.
+
+### Năm cổng lọc — thứ tự cố định
+
+| # | Cổng | Loại bỏ khi | Mã |
+|---|---|---|---|
+| 1 | Chi phí | không phải `FREE` | `UNSUPPORTED_NEED` |
+| 2 | **Capability** | không `CONFIRMED` field/operation cần | `NO_REQUIRED_CAPABILITY` |
+| 3 | Định danh | không tra được bằng khoá đang có | `UNSUPPORTED_IDENTIFIER` |
+| 4 | Đã thử | lượt này / còn trong cửa sổ | `ALREADY_ATTEMPTED_THIS_REQUEST` · `RECENTLY_ATTEMPTED` |
+| 5 | Sức khoẻ | `DISABLED` / `COOLDOWN` | `SOURCE_DISABLED` · `SOURCE_COOLDOWN` |
+
+Capability đứng **trước** sức khoẻ: nguồn khoẻ mà không cấp được thứ đang thiếu thì khoẻ cũng vô ích.
+
+Chỉ nhận `CONFIRMED`. `CANDIDATE` là suy đoán chưa POC — dựa vào nó để **tự động** đi crawl là biến phỏng đoán thành hành động.
+
+### Thứ tự sắp xếp
+
+```
+1. coverage (giải được nhiều yêu cầu hơn)
+2. positionPreference  ← chỉ khi vị trí đang thiếu
+3. dynamicGroupOrder   (position > voyage > identity > particulars)
+4. sức khoẻ (HEALTHY > DEGRADED)
+5. defaultPriority
+6. tên nguồn
+```
+
+⚠️ **Bảng ưu tiên vị trí đứng TRƯỚC sức khoẻ** — khác thứ tự gợi ý trong spec P9.3 §29. Lý do: preference mã hoá *nguồn nào giải được bài toán*, không phải *nguồn nào đang tiện*. ShipInfo `HEALTHY` vẫn trễ ~14 giờ nên không bao giờ cho vị trí `LIVE`; ShipFinder `DEGRADED` thì còn cơ hội. Chọn nguồn khoẻ hơn ở đây là tiêu một request để chắc chắn vẫn chưa đủ.
+
+`defaultPriority` chỉ là tie-break thứ 5 — nó **không** được phép đảo ngược preference vị trí.
+
+### Nhóm position đòi cả `positionReceivedAt`
+
+Yêu cầu "lấy vị trí" (không chỉ đích danh field) cần **`lat` + `lng` + `positionReceivedAt`** đều `CONFIRMED`.
+
+Hệ quả đo được: **VesselFinder bị loại khỏi mọi need vị trí** — `lrpd` là chuỗi tương đối `"0 min ago"` nên chỉ `CANDIDATE`. Vị trí không có mốc nguồn rơi vào bậc `NO_SOURCE_TIME` của resolver, tức **không bao giờ đủ tươi** — gọi nó không giải quyết gì. Đây là cổng §E.4 xuất hiện **tự nhiên từ capability**, không cần bảng loại trừ riêng.
+
+⚠️ Ngoại lệ §E.4 (`position === null` thì cho gọi nguồn trễ một lần để nâng đáy) **chưa cài**: nó cần biết canonical hiện tại chứ không chỉ `SufficiencyResult`. Hiện `MISSING_GROUP(position)` và `POSITION_NOT_FRESH_ENOUGH` được xử lý như nhau.
+
+### Chặn theo lần đã thử
+
+Phân biệt bằng **cờ `scope`**, không đoán theo thời gian:
+
+| Scope | Outcome | Cửa sổ | Nguồn gốc |
+|---|---|---|---|
+| `CURRENT_REQUEST` | mọi outcome | chặn vô điều kiện | hàng rào chống vòng lặp |
+| `RECENT` | `NOT_FOUND` | **15 phút** | `cooldownMs` của ShipInfo/ShipFinder |
+| `RECENT` | `SUCCESS` | **30 phút** | `liveMaxAgeMs` — trước mốc đó thứ vừa lấy vẫn `LIVE` |
+| `RECENT` | `FAILED` | **không chặn** | health P4 đã tự bật COOLDOWN; chặn chồng thì không ai biết tầng nào đang khoá |
+
+Attempt của tàu **khác** không chặn tàu này. So khớp bằng định danh canonical, không mờ.
+
+### Kết quả trên matrix thật
+
+| Thiếu | Chọn | Vì sao |
+|---|---|---|
+| vị trí cũ | `shipfinder` | `BEST_POSITION_SOURCE` — thắng dù `defaultPriority` kém hơn ShipInfo |
+| vị trí cũ, chỉ có IMO | `shipinfo` | ShipFinder loại `UNSUPPORTED_IDENTIFIER` (`/ship/detail/imo/` trả 404) |
+| vị trí cũ, ShipFinder cooldown | `shipinfo` | ⛔ không reset cooldown |
+| `builtYear` · `deadweight` | `shipinfo` | `ONLY_SOURCE_FOR_REQUIRED_FIELD` |
+| `destination` | `shipfinder` | `ONLY_SOURCE_FOR_REQUIRED_FIELD` |
+| `eta` · `grossTonnage` | **`null`** | không nguồn free nào `CONFIRMED` — ⛔ không rơi sang paid |
+| `length` | `vesselfinder` | xem cảnh báo dưới |
+| FULL: vị trí + `destination` + `builtYear` | `shipfinder` | coverage 2 vs 1 |
+| `NO_CURRENT_VESSEL` + FULL | `shipfinder` | phủ cả bốn nhóm trong **một** request |
+
+⚠️ **`length` cho ra `vesselfinder`, không phải `shipfinder`.** Cả hai đều `CONFIRMED` kích thước (ShipInfo `UNSUPPORTED` vì đảo số không nhất quán), và **không có bằng chứng đo đạc nào** nói bên nào chính xác hơn — nên không tạo bảng ưu tiên riêng và `defaultPriority` (20 < 55) quyết. Khác hẳn vị trí, nơi bằng chứng có thật (trễ 14 giờ vs vài phút) nên **mới** có `positionPreference`. Muốn ShipFinder thắng ở đây thì cần một POC so sánh kích thước giữa hai nguồn trước.
+
+### Chưa làm
+
+Ngân sách attempt/thời gian · single-flight · cổng paid · orchestrator. Toàn bộ thuộc §Q mục 4–8.
+
+---
+
 ## Q. Đề xuất phạm vi P9.2
 
 | # | Hạng mục | Ghi chú |
