@@ -12,7 +12,9 @@
 // ============================================================================
 
 import { VesselObservationKey } from "../../domain/observations/VesselObservation";
+import { VesselField } from "../../domain/value-objects/VesselField";
 import { VesselSource } from "../../domain/value-objects/VesselSource";
+import { SourceErrorCategory } from "../runtime/SourceError";
 import { CollectOperation } from "../use-cases/CollectVesselObservations";
 
 export const AcquisitionOutcome = {
@@ -45,6 +47,22 @@ export const AttemptScope = {
 
 export type AttemptScope = (typeof AttemptScope)[keyof typeof AttemptScope];
 
+/**
+ * Mã chi tiết khi `outcome = FAILED`.
+ *
+ * Ba mã cuối KHÔNG phải lỗi của nguồn: hai mã đầu là khoảng trống giữa capability
+ * matrix (nói nguồn *về lý thuyết* làm được gì) và `ProviderRegistry` (nói code
+ * có tồn tại hay không); hai mã cổng runtime là chặn phía ta, chưa hề chạm mạng.
+ * Gộp hết vào `FAILED` mà không giữ mã thì không phân biệt được "nguồn hỏng" với
+ * "ta lắp thiếu provider".
+ */
+export type AcquisitionFailureCode =
+  | SourceErrorCategory
+  | "SOURCE_COOLDOWN"
+  | "SOURCE_DISABLED"
+  | "NO_PROVIDER"
+  | "UNSUPPORTED_OPERATION";
+
 export interface AcquisitionAttempt {
   readonly source: VesselSource;
   readonly operation: CollectOperation;
@@ -53,6 +71,10 @@ export interface AcquisitionAttempt {
   readonly attemptedAt: Date;
   readonly outcome: AcquisitionOutcome;
   readonly scope: AttemptScope;
+  /** Chỉ có khi `FAILED`. Mã đóng, không phải câu chữ cho người đọc. */
+  readonly failureCode?: AcquisitionFailureCode;
+  /** Field mà lần gọi này nhắm tới — lấy nguyên từ `SourceAttemptPlan`. */
+  readonly targetFields?: readonly VesselField[];
 }
 
 /**

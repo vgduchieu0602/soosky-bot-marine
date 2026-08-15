@@ -913,6 +913,113 @@ Ngân sách attempt/thời gian · single-flight · cổng paid · orchestrator.
 
 ---
 
+## P9.4 · Trạng thái implementation
+
+Hiện thực **mục 4** của §Q — vòng orchestration **đồng bộ, có chặn**. Đây là phase đầu tiên của §9 thực sự **chạm mạng**.
+
+| Thành phần | File |
+|---|---|
+| Ngân sách | `src/application/acquisition/FreeAcquisitionPolicy.ts` |
+| Vòng orchestration | `src/application/use-cases/AcquireFreeVesselData.ts` |
+| CLI chạy tay | `src/interfaces/cli/acquireFreePoc.ts` |
+
+Sửa nhỏ ở hai tầng trước: `SourceAttemptPlan` mang thêm `identifier` (selector là nơi duy nhất biết nguồn tra được bằng khoá nào), `CheckLocalVesselSufficiency` trả kèm `vessel` (tránh đọc canonical hai lần mỗi vòng), `AcquisitionAttempt` mang thêm `failureCode` + `targetFields`.
+
+### Vòng chạy
+
+```
+đọc local -> đủ? -> DỪNG (0 request)
+          -> chưa -> [ngân sách?] -> chọn nguồn -> gọi -> ghi observation
+                  -> có bản ghi mới? -> resolve/store canonical
+                  -> đọc lại -> đủ? -> DỪNG : lặp
+```
+
+Sufficiency được hỏi lại sau **mỗi** lần chạm nguồn — không phải chỉ đầu và cuối. Đó là điều bảo đảm điều kiện dừng: mỗi vòng phải *chứng minh vẫn còn thiếu* mới được đi tiếp.
+
+### Không nhân bản luật
+
+Orchestrator **không chứa** một dòng nào của bốn tầng nó ghép:
+
+| Luật | Sống ở |
+|---|---|
+| `position.freshness` bao nhiêu là đủ | P9.2 checker |
+| nguồn nào nên gọi | P9.3 selector |
+| ai thắng khi hai nguồn bất đồng | P8 resolver |
+| cooldown/retry/nhịp nghỉ/ghi observation | P3/P4/P5 qua `CollectVesselObservations` |
+
+Cụ thể: **không** `registry.get()`, **không** `provider.getX()`, **không** `if (need POSITION)`, **không** `if (ShipFinder mới hơn)`.
+
+### Ngân sách
+
+`maxAttemptsPerRequest = 2` (§I.1). Đếm **mọi** lần chạm nguồn, kể cả `NOT_FOUND` và lỗi — chỉ đếm lần thành công thì một nguồn hỏng liên tục sẽ không bao giờ tiêu hết ngân sách.
+
+Ngân sách **thời gian** chưa cài: timeout từng request đã do P4 quản (`timeoutMs` theo nguồn). Giới hạn đã biết — xấu nhất hai lần ≈ 56 giây, và người gọi chờ thật.
+
+### Quy kết quả về ba mã
+
+| Từ `CollectVesselObservations` | Outcome | `failureCode` | Resolve lại? |
+|---|---|---|---|
+| `RECORDED`, có bản ghi `SAVED` | `SUCCESS` | — | ✅ |
+| `RECORDED`, toàn bộ bị dedupe | `SUCCESS` | — | ❌ canonical không thể đổi |
+| `NOT_FOUND` | `NOT_FOUND` | — | ❌ không có bản ghi mới |
+| `NO_PROVIDER` / `UNSUPPORTED_OPERATION` | `FAILED` | mã tương ứng | ❌ |
+| `SourceRequestError` | `FAILED` | `SourceErrorCategory` | ❌ |
+| `SourceUnavailableError` | `FAILED` | `SOURCE_COOLDOWN` / `SOURCE_DISABLED` | ❌ |
+| lỗi khác | **ném lên** | — | — |
+
+⚠️ Ném với lỗi lạ là có chủ ý: nuốt hết rồi gọi là `FAILED` sẽ biến một cái bug thành "nguồn hôm nay hơi chập".
+
+⚠️ `NO_PROVIDER` là **khoảng trống thật** giữa capability matrix (nguồn *về lý thuyết* làm được gì) và `ProviderRegistry` (code có tồn tại không). Selector chọn theo matrix nên có thể trỏ vào nguồn chưa lắp adapter. Ghi mã rồi đi tiếp thay vì ném — vòng sau selector tự loại nguồn đó.
+
+### Lỗi đã sửa ở P9.3
+
+`NO_CURRENT_VESSEL` từng làm **rơi mất `requiredFields`**: chưa có canonical thì P9.2 chỉ kịp nói "không có gì", không liệt kê từng field. Hệ quả đo được — "cần `builtYear`" trên một con tàu chưa có dữ liệu rơi về yêu cầu particulars **chung** và chọn phải nguồn không cấp được `builtYear`. Đã sửa trong `toRequirements`, có test khoá.
+
+### Điều kiện dừng
+
+| Mã | Nghĩa |
+|---|---|
+| `LOCAL_DATA_SUFFICIENT` | đủ ngay từ đầu — **0 request** |
+| `SATISFIED_AFTER_ACQUISITION` | đủ sau khi lấy thêm |
+| `NO_FREE_SOURCE_AVAILABLE` | hết nguồn free đáng thử — ⛔ **không** mở đường cho nguồn trả tiền |
+| `ATTEMPT_BUDGET_EXHAUSTED` | hết ngân sách; có thể còn nguồn chưa thử |
+
+`satisfied: false` **không phải lỗi** — trả về dữ liệu local tốt nhất kèm cờ và `sufficiency.missing`.
+
+### POC trên nguồn THẬT
+
+`npm run acquire:free:poc -- --mmsi=636018086 --need=POSITION`
+
+```
+📡 1 lần chạm nguồn:  shipfinder GET_POSITION -> SUCCESS
+✅ satisfied=true · SATISFIED_AFTER_ACQUISITION
+   position  33.74975,-118.20882 [LIVE] ← shipfinder
+```
+
+ShipInfo **không** bị gọi dù `defaultPriority` tốt hơn (45 vs 55). Đúng ca §P.1.
+
+`--need=FULL --fields=builtYear`:
+
+```
+📡 2 lần chạm nguồn:
+   shipfinder GET_DETAILS -> SUCCESS   nhắm: beam,destination,draught,lat,length,lng,name,positionReceivedAt
+   shipinfo   GET_DETAILS -> SUCCESS   nhắm: builtYear
+✅ satisfied=true
+
+   position     [LIVE] ← shipfinder     length 179 ← shipfinder
+   builtYear    2010   ← shipinfo       destination "LONG BEACH, US" ← shipfinder
+```
+
+Đúng hai request, và canonical là thứ **không nguồn nào tự mình cho được**.
+
+⚠️ Chạy **không** đặt `SHIPFINDER_SOURCE_UTC_OFFSET_MINUTES` thì ShipFinder trả `NOT_FOUND` cho `GET_POSITION` — provider cố ý không phát nhóm position khi chưa khai múi giờ (P7.1). Vòng lặp khi đó dùng hết ngân sách và dừng ở `ATTEMPT_BUDGET_EXHAUSTED` với vị trí `STALE` của ShipInfo. Hành vi đúng, nhưng mã `NOT_FOUND` ở đây nói *thiếu cấu hình* chứ không phải *nguồn không có tàu* — khoảng mờ đáng thu hẹp ở phase sau.
+
+### Chưa làm
+
+Ngân sách thời gian · single-flight (§K) · chặn theo lần thử **giữa các lượt** (`recentAttempts` đã có tham số nhưng chưa ai lưu — §J.3) · cổng paid (§L) · API · scheduler.
+
+---
+
 ## Q. Đề xuất phạm vi P9.2
 
 | # | Hạng mục | Ghi chú |

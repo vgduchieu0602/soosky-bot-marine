@@ -16,6 +16,7 @@
     "shipinfo:poc": "ts-node src/interfaces/cli/shipinfoPoc.ts",
     "shipfinder:smoke": "ts-node src/interfaces/cli/shipfinderSmoke.ts",
     "shipfinder:poc": "ts-node src/interfaces/cli/shipfinderPoc.ts",
+    "acquire:free:poc": "ts-node src/interfaces/cli/acquireFreePoc.ts",
     "test": "node -r ts-node/register --test \"src/**/*.test.ts\"",
     "reset-indexes": "ts-node src/interfaces/cli/resetIndexes.ts",
     "start:prod": "node dist/interfaces/http/server.js"

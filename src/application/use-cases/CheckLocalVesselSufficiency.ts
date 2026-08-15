@@ -30,6 +30,17 @@ export interface CheckLocalVesselSufficiencyDeps {
   now?: () => Date;
 }
 
+export interface LocalSufficiencyCheck {
+  readonly sufficiency: SufficiencyResult;
+  /**
+   * Bản canonical đã đọc, `null` khi chưa có gì.
+   *
+   * Trả kèm CÓ CHỦ Ý: use case này vừa đọc nó xong, vứt đi rồi bắt người gọi tra
+   * lại là một truy vấn thừa cho mỗi vòng của tầng acquisition.
+   */
+  readonly vessel: ResolvedCurrentVessel | null;
+}
+
 export class CheckLocalVesselSufficiency {
   private readonly repository: ICurrentVesselRepository;
   private readonly checker: LocalDataSufficiencyChecker;
@@ -46,11 +57,11 @@ export class CheckLocalVesselSufficiency {
    *         con tàu nào; đó là lỗi người gọi, không phải "chưa có dữ liệu".
    * @throws InvalidDataNeedError khi need sai hình dạng (checker kiểm).
    */
-  async execute(key: VesselObservationKey, need: DataNeed): Promise<SufficiencyResult> {
+  async execute(key: VesselObservationKey, need: DataNeed): Promise<LocalSufficiencyCheck> {
     const vessel = await this.lookup(key);
     // Đọc đồng hồ MỘT LẦN cho cả lượt kiểm: hai field so với hai mốc `now` khác
     // nhau có thể cho kết quả không nhất quán.
-    return this.checker.check(vessel, need, this.now());
+    return { sufficiency: this.checker.check(vessel, need, this.now()), vessel };
   }
 
   /**

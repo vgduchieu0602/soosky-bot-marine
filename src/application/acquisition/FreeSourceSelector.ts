@@ -21,9 +21,15 @@
 import {
   VesselField,
   VesselFieldGroup,
+  getFieldGroup,
   getFieldsInGroup,
 } from "../../domain/value-objects/VesselField";
 import { VesselObservationKey } from "../../domain/observations/VesselObservation";
+import {
+  VesselIdentifier,
+  imoIdentifier,
+  mmsiIdentifier,
+} from "../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../domain/value-objects/VesselSource";
 import {
   FieldSupportStatus,
@@ -120,9 +126,22 @@ const HEALTH_RANK: Readonly<Record<SourceHealthState, number>> = Object.freeze({
   [SourceHealthState.DISABLED]: 3,
 });
 
+/** `mmsiIdentifier`/`imoIdentifier` ném khi giá trị rác — ở đây rác chỉ nghĩa là "không dùng được". */
+function tryIdentifier(
+  build: (value: string) => VesselIdentifier,
+  value: string
+): VesselIdentifier | null {
+  try {
+    return build(value);
+  } catch {
+    return null;
+  }
+}
+
 interface Candidate {
   readonly source: VesselSource;
   readonly capability: Readonly<SourceCapability>;
+  readonly identifier: VesselIdentifier;
   /** Yêu cầu mà nguồn này giải được. Rỗng -> không phải ứng viên. */
   readonly covered: readonly AcquisitionRequirement[];
   readonly healthRank: number;
@@ -195,6 +214,14 @@ export class FreeSourceSelector {
     for (const item of sufficiency.missing) {
       if (item.reason === MissingReason.NO_CURRENT_VESSEL) {
         for (const group of getGroupsForNeed(need.type)) collected.push({ group });
+        // ⚠️ Phải kèm CẢ field người gọi chỉ đích danh. Chưa có canonical thì
+        // P9.2 chỉ kịp nói "không có gì" — nó không liệt kê từng field thiếu.
+        // Bỏ qua chỗ này thì "cần builtYear" trên một con tàu chưa có dữ liệu
+        // sẽ rơi về yêu cầu particulars CHUNG, và ta chọn phải nguồn không cấp
+        // được builtYear.
+        for (const field of need.requiredFields ?? []) {
+          collected.push({ group: getFieldGroup(field), field });
+        }
         continue;
       }
       if (item.group === undefined) continue;
@@ -260,7 +287,8 @@ export class FreeSourceSelector {
     // Cổng 3 — định danh. ShipFinder trả 404 cho /ship/detail/imo/{imo}; một
     // yêu cầu chỉ có IMO mà gọi nó là NOT_FOUND ĐƯỢC ĐẢM BẢO TRƯỚC. Chặn ở đây,
     // không để nó thành một request thật.
-    if (!FreeSourceSelector.supportsIdentifier(capability, input.key)) {
+    const identifier = FreeSourceSelector.identifierFor(capability, input.key);
+    if (identifier === null) {
       skipped.push({ source, reason: SourceSkipReason.UNSUPPORTED_IDENTIFIER });
       return null;
     }
@@ -287,6 +315,7 @@ export class FreeSourceSelector {
     return {
       source,
       capability,
+      identifier,
       covered: Object.freeze(covered),
       healthRank: HEALTH_RANK[health],
       positionRank: this.positionRank(source),
@@ -322,13 +351,27 @@ export class FreeSourceSelector {
     return minimum.every((field) => capability.fields[field] === FieldSupportStatus.CONFIRMED);
   }
 
-  private static supportsIdentifier(
+  /**
+   * Trục tra dùng được cho nguồn này, hoặc `null`.
+   *
+   * MMSI trước — mọi nguồn đang có provider đều tra được bằng MMSI, còn IMO thì
+   * không (ShipFinder trả 404). Định danh RÁC (dữ liệu cũ trong DB) bị coi như
+   * "không tra được" chứ KHÔNG ném: một khoá hỏng không được phép làm chết cả
+   * lượt acquisition khi nguồn khác vẫn còn dùng được.
+   */
+  private static identifierFor(
     capability: Readonly<SourceCapability>,
     key: VesselObservationKey
-  ): boolean {
-    if (key.mmsi !== undefined && capability.operations.searchByMmsi) return true;
-    if (key.imo !== undefined && capability.operations.searchByImo) return true;
-    return false;
+  ): VesselIdentifier | null {
+    if (key.mmsi !== undefined && capability.operations.searchByMmsi) {
+      const identifier = tryIdentifier(mmsiIdentifier, key.mmsi);
+      if (identifier !== null) return identifier;
+    }
+    if (key.imo !== undefined && capability.operations.searchByImo) {
+      const identifier = tryIdentifier(imoIdentifier, key.imo);
+      if (identifier !== null) return identifier;
+    }
+    return null;
   }
 
   /** `null` = không bị chặn. */
@@ -444,6 +487,7 @@ export class FreeSourceSelector {
       operation: positionOnly
         ? (ProviderOperation.GET_POSITION as CollectOperation)
         : (ProviderOperation.GET_DETAILS as CollectOperation),
+      identifier: winner.identifier,
       targetFields: FreeSourceSelector.targetFields(winner),
       reason: FreeSourceSelector.selectionReason(winner, runnerUp, candidateCount),
     };

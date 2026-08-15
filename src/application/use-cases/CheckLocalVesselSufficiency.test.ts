@@ -98,7 +98,7 @@ function useCaseFor(repository: InMemoryCurrentVesselRepository): CheckLocalVess
 
 test("tra bằng MMSI · dữ liệu đủ -> satisfied", async () => {
   const useCase = useCaseFor(await storeWith(vessel()));
-  const result = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.POSITION });
+  const { sufficiency: result } = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.POSITION });
 
   assert.equal(result.satisfied, true);
   assert.deepEqual([...result.missing], []);
@@ -107,8 +107,8 @@ test("tra bằng MMSI · dữ liệu đủ -> satisfied", async () => {
 test("tra bằng IMO · cùng con tàu, cùng kết quả", async () => {
   const useCase = useCaseFor(await storeWith(vessel()));
 
-  const byMmsi = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.IDENTITY });
-  const byImo = await useCase.execute({ imo: IMO }, { type: DataNeedType.IDENTITY });
+  const { sufficiency: byMmsi } = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.IDENTITY });
+  const { sufficiency: byImo } = await useCase.execute({ imo: IMO }, { type: DataNeedType.IDENTITY });
 
   assert.equal(byImo.satisfied, true);
   assert.deepEqual(byImo, byMmsi);
@@ -118,7 +118,7 @@ test("có cả hai khoá -> MMSI trước, khớp chiến lược của kho", as
   const repo = new InMemoryCurrentVesselRepository({ now: () => NOW });
   await repo.upsert(vessel());
 
-  const result = await useCaseFor(repo).execute(
+  const { sufficiency: result } = await useCaseFor(repo).execute(
     { mmsi: MMSI, imo: IMO },
     { type: DataNeedType.IDENTITY }
   );
@@ -127,18 +127,36 @@ test("có cả hai khoá -> MMSI trước, khớp chiến lược của kho", as
 
 test("MMSI không có nhưng IMO có -> vẫn tra được", async () => {
   const useCase = useCaseFor(await storeWith(vessel()));
-  const result = await useCase.execute(
+  const { sufficiency: result } = await useCase.execute(
     { mmsi: "000000000", imo: IMO },
     { type: DataNeedType.IDENTITY }
   );
   assert.equal(result.satisfied, true);
 });
 
+test("trả kèm vessel đã đọc -> người gọi không phải tra lại", async () => {
+  const useCase = useCaseFor(await storeWith(vessel()));
+  const { sufficiency, vessel: read } = await useCase.execute(
+    { mmsi: MMSI },
+    { type: DataNeedType.POSITION }
+  );
+
+  assert.equal(sufficiency.satisfied, true);
+  assert.equal(read?.identity?.name?.value, "AGIA DOXA");
+  assert.equal(read?.position?.source, VesselSource.SHIPFINDER);
+});
+
+test("kho rỗng -> vessel null, KHÔNG ném", async () => {
+  const useCase = useCaseFor(new InMemoryCurrentVesselRepository({ now: () => NOW }));
+  const { vessel: read } = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.POSITION });
+  assert.equal(read, null);
+});
+
 // ---- Chưa có tàu ----------------------------------------------------------
 
 test("kho rỗng -> NO_CURRENT_VESSEL, KHÔNG ném lỗi", async () => {
   const useCase = useCaseFor(new InMemoryCurrentVesselRepository({ now: () => NOW }));
-  const result = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.FULL });
+  const { sufficiency: result } = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.FULL });
 
   assert.equal(result.satisfied, false);
   assert.deepEqual([...result.missing], [{ reason: MissingReason.NO_CURRENT_VESSEL }]);
@@ -148,7 +166,7 @@ test("kho rỗng -> NO_CURRENT_VESSEL, KHÔNG ném lỗi", async () => {
 
 test("voyage null -> FULL thiếu nhóm voyage", async () => {
   const useCase = useCaseFor(await storeWith(vessel()));
-  const result = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.FULL });
+  const { sufficiency: result } = await useCase.execute({ mmsi: MMSI }, { type: DataNeedType.FULL });
 
   assert.equal(result.satisfied, false);
   assert.deepEqual(
@@ -159,7 +177,7 @@ test("voyage null -> FULL thiếu nhóm voyage", async () => {
 
 test("builtYear chỉ đích danh -> báo thiếu qua đường kho thật", async () => {
   const useCase = useCaseFor(await storeWith(vessel()));
-  const result = await useCase.execute(
+  const { sufficiency: result } = await useCase.execute(
     { mmsi: MMSI },
     { type: DataNeedType.PARTICULARS, requiredFields: [VesselField.BUILT_YEAR] }
   );
@@ -238,13 +256,13 @@ test("`now` tiêm vào -> cùng dữ liệu, đồng hồ khác, kết quả kh�
 
   const atNow = new CheckLocalVesselSufficiency({ repository: repo, now: () => NOW });
   assert.equal(
-    (await atNow.execute({ mmsi: MMSI }, { type: DataNeedType.VOYAGE })).satisfied,
+    (await atNow.execute({ mmsi: MMSI }, { type: DataNeedType.VOYAGE })).sufficiency.satisfied,
     true
   );
 
   const later = new Date(NOW.getTime() + 8 * 60 * 60 * 1000);
   const atLater = new CheckLocalVesselSufficiency({ repository: repo, now: () => later });
-  const result = await atLater.execute({ mmsi: MMSI }, { type: DataNeedType.VOYAGE });
+  const { sufficiency: result } = await atLater.execute({ mmsi: MMSI }, { type: DataNeedType.VOYAGE });
 
   assert.equal(result.satisfied, false);
   assert.equal(result.missing[0]?.reason, MissingReason.VOYAGE_TOO_OLD);

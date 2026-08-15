@@ -38,6 +38,11 @@ import { SHIPFINDER_PARSER_VERSION } from "./infrastructure/providers/shipfinder
 import { CollectVesselObservations } from "./application/use-cases/CollectVesselObservations";
 import { ResolveCurrentVessel } from "./application/use-cases/ResolveCurrentVessel";
 import { ResolveAndStoreCurrentVessel } from "./application/use-cases/ResolveAndStoreCurrentVessel";
+import { CheckLocalVesselSufficiency } from "./application/use-cases/CheckLocalVesselSufficiency";
+import { AcquireFreeVesselData } from "./application/use-cases/AcquireFreeVesselData";
+import { FreeSourceSelector } from "./application/acquisition/FreeSourceSelector";
+import { SourceHealthState } from "./application/runtime/SourceHealthTracker";
+import { usesCrawlRuntime } from "./application/runtime/SourceRuntimeConfig";
 import { VesselSource } from "./domain/value-objects/VesselSource";
 
 import { GetVesselDetails } from "./application/use-cases/GetVesselDetails";
@@ -90,6 +95,11 @@ export interface Container {
   collectVesselObservations: CollectVesselObservations;
   /** Manual use case; container chỉ đăng ký, không tự resolve hay gọi provider. */
   resolveAndStoreCurrentVessel: ResolveAndStoreCurrentVessel;
+  /**
+   * P9.4: vòng acquisition free CÓ CHẶN — local-first, tối đa 2 lần chạm nguồn,
+   * KHÔNG nguồn trả tiền. Chỉ gọi TAY qua `npm run acquire:free:poc`.
+   */
+  acquireFreeVesselData: AcquireFreeVesselData;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -237,6 +247,24 @@ export async function buildContainer(): Promise<Container> {
     },
   });
 
+  // 8) Acquisition free (P9.2–P9.4). Đăng ký TRƠ: dựng xong không đọc, không
+  //    ghi, không chạm mạng. Chỉ chạy khi có người gọi tay qua
+  //    `npm run acquire:free:poc`. Không scheduler, không cron, không queue.
+  const acquireFreeVesselData = new AcquireFreeVesselData({
+    checkLocal: new CheckLocalVesselSufficiency({ repository: currentVesselRepository }),
+    selector: new FreeSourceSelector(),
+    collect: collectVesselObservations,
+    resolveAndStore: resolveAndStoreCurrentVessel,
+    // CHỈ ĐỌC sức khoẻ. `getHealth` tạo runtime lười và NÉM với nguồn không đi
+    // qua crawl runtime (AISStream là stream dài hạn, UNKNOWN không phải nguồn
+    // thật). Selector không bao giờ hỏi tới chúng — chúng rớt từ cổng chi phí —
+    // nhưng chặn ở đây để một lần đổi thứ tự cổng sau này không làm nổ tiến trình.
+    healthOf: (source) =>
+      usesCrawlRuntime(source)
+        ? crawlRuntime.getHealth(source).state
+        : SourceHealthState.DISABLED,
+  });
+
   return {
     config,
     repository,
@@ -254,5 +282,6 @@ export async function buildContainer(): Promise<Container> {
     observationRecorder,
     collectVesselObservations,
     resolveAndStoreCurrentVessel,
+    acquireFreeVesselData,
   };
 }

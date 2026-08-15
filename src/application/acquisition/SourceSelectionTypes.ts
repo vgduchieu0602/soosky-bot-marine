@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { VesselField, VesselFieldGroup } from "../../domain/value-objects/VesselField";
+import { VesselIdentifier } from "../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../domain/value-objects/VesselSource";
 import { CollectOperation } from "../use-cases/CollectVesselObservations";
 
@@ -71,6 +72,15 @@ export interface SourceAttemptPlan {
    * có chúng, và `ProviderDetailsResult` vốn mang được cả bốn nhóm.
    */
   readonly operation: CollectOperation;
+  /**
+   * Trục tra CHO nguồn này — kèm sẵn trong kế hoạch để người thực thi không
+   * phải suy lại.
+   *
+   * Selector đã kiểm `searchByMmsi`/`searchByImo` ở cổng định danh, nên nó là
+   * nơi DUY NHẤT biết chắc nguồn này tra được bằng khoá nào. Bắt orchestrator
+   * suy lại là nhân bản luật capability ra chỗ thứ hai.
+   */
+  readonly identifier: VesselIdentifier;
   /**
    * Yêu cầu mà LẦN GỌI NÀY nhắm tới. Nhiều field đi chung một plan khi cùng một
    * nguồn giải được — một request, không phải mỗi field một request.

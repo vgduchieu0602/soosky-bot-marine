@@ -590,6 +590,33 @@ test("NO_CURRENT_VESSEL · suy ra yêu cầu MẶC ĐỊNH, không gọi mọi n
   assert.equal(result.next?.reason, SourceSelectionReason.BEST_CAPABILITY_MATCH);
 });
 
+test("NO_CURRENT_VESSEL · requiredFields KHÔNG được rơi rụng", () => {
+  // P9.2 chỉ kịp nói "không có gì" — nó không liệt kê từng field thiếu. Nếu
+  // selector bỏ qua `requiredFields` ở nhánh này, yêu cầu builtYear sẽ rơi về
+  // particulars CHUNG và chọn phải nguồn không cấp được builtYear.
+  const result = run({
+    need: { type: DataNeedType.PARTICULARS, requiredFields: [VesselField.BUILT_YEAR] },
+    missing: [{ reason: MissingReason.NO_CURRENT_VESSEL }],
+  });
+
+  assert.equal(result.next?.source, VesselSource.SHIPINFO);
+  assert.ok(
+    result.next?.targetFields.includes(VesselField.BUILT_YEAR),
+    "field đích danh phải nằm trong plan"
+  );
+});
+
+test("NO_CURRENT_VESSEL · requiredFields của nhóm khác cũng được giữ", () => {
+  const result = run({
+    need: { type: DataNeedType.FULL, requiredFields: [VesselField.HEADING] },
+    missing: [{ reason: MissingReason.NO_CURRENT_VESSEL }],
+  });
+
+  // Chỉ ShipFinder CONFIRMED heading -> nó phải phủ thêm yêu cầu đó.
+  assert.equal(result.next?.source, VesselSource.SHIPFINDER);
+  assert.ok(result.next?.targetFields.includes(VesselField.HEADING));
+});
+
 test("NO_CURRENT_VESSEL · need POSITION chỉ suy ra yêu cầu vị trí", () => {
   const result = run({
     need: { type: DataNeedType.POSITION },
