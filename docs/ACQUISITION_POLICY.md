@@ -772,6 +772,56 @@ P9.1 dừng ở đây. Không endpoint, không tên field, không giả định 
 
 ---
 
+## P9.2 · Trạng thái implementation
+
+Hiện thực **mục 1, 2 và 4 (một phần)** của §Q. Chỉ phần **local**: checker dừng **trước** ranh giới mạng.
+
+| Thành phần | File |
+|---|---|
+| Mô hình nhu cầu + kiểm hình dạng | `src/application/acquisition/DataNeed.ts` |
+| Kiểu kết quả, mã đóng | `src/application/acquisition/SufficiencyTypes.ts` |
+| Ngưỡng | `src/application/acquisition/SufficiencyPolicy.ts` |
+| Bộ kiểm — **hàm thuần** | `src/application/acquisition/LocalDataSufficiencyChecker.ts` |
+| Đường đọc | `src/application/use-cases/CheckLocalVesselSufficiency.ts` |
+
+Bốn resolver và kho canonical **không bị đụng**. Không dependency mới.
+
+### Ranh giới đã giữ
+
+Checker **không import**: capability matrix · runtime/health · provider registry · repository · `Date.now()`. Nó nhận `(vessel, need, now)` và trả `SufficiencyResult`.
+
+Ranh giới đó là thật, không phải hình thức: nếu checker biết "hiện không nguồn free nào cấp được `eta`", nó sẽ bị cám dỗ trả `satisfied: true` cho một field đang **thiếu** — biến *không lấy được* thành *không cần*. Checker chỉ báo **thiếu**; ai lấy được và có đáng lấy không là câu hỏi của P9.3.
+
+### Điểm khác biệt so với §D — không có
+
+Mọi luật §D được cài đúng nguyên văn. Ba chỗ §D chưa nói rõ, P9.2 chốt như sau:
+
+| Tình huống | Quyết định | Vì sao |
+|---|---|---|
+| Nhóm particulars **tồn tại nhưng mọi field null** | `MISSING_GROUP` | một `ResolvedParticulars` rỗng không nói được gì về con tàu — như không có |
+| `FLAG` được yêu cầu đích danh | có `flagCode` **hoặc** `flagName` là đủ | resolver phân xử hai nửa RIÊNG; đòi cả hai sẽ loại con tàu chỉ mới biết `"LR"` mà chưa biết `"Liberia"` |
+| `currentPortArrivalAt` / `nextPortEta` được yêu cầu | luôn `MISSING_REQUIRED_FIELD` | `VesselField` hợp lệ nhưng `ResolvedVoyage` cố ý không phân xử (§R.3 của RESOLVER_POLICY) — báo thiếu là **đúng sự thật**, không phải lỗi cấu hình |
+
+### Báo thiếu một lần
+
+Nhóm đã thiếu nguyên khối thì **không** báo lại từng field của nhóm đó. `POSITION` + `requiredFields: [heading, speed]` với `position === null` cho **một** dòng `MISSING_GROUP`, không phải ba.
+
+### Ngưỡng — không có số rời trong code
+
+`voyageMaxAgeMs` và `draughtMaxAgeMs` **tham chiếu** `DEFAULT_POSITION_RESOLVER_POLICY.recentMaxAgeMs` (6 giờ = `SCAN_INTERVAL_MS` mặc định) thay vì viết lại `6 * 60 * 60 * 1000`. Đổi nhịp quét thì hai chỗ không thể trôi khỏi nhau.
+
+Độ tươi vị trí **không** có ngưỡng ms ở đây — `SufficiencyPolicy` chỉ khai **bậc nào được chấp nhận** (`[LIVE]` cho `POSITION`, `[LIVE, RECENT]` cho `FULL`). Bậc do `PositionResolver` tính và đóng dấu vào `ResolvedPosition.freshness`; tính lại là dựng bộ luật thứ hai cho cùng một câu hỏi.
+
+### Lệch đồng hồ
+
+`ageMs()` kẹp về `0` khi `fetchedAt` ở tương lai. Loại một con tàu vì 5 giây lệch đồng hồ giữa bot và DB là phản ứng sai với một vấn đề không tồn tại.
+
+### Còn thiếu gì
+
+Chọn nguồn · health · ngân sách · chặn theo lần thử gần nhất · single-flight · paid gate · orchestrator. Toàn bộ thuộc §Q mục 3, 4, 5, 6, 7, 8 — **chưa viết**.
+
+---
+
 ## Q. Đề xuất phạm vi P9.2
 
 | # | Hạng mục | Ghi chú |
