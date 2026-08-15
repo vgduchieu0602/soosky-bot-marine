@@ -23,8 +23,11 @@ import { ProviderRegistry } from "./application/providers/ProviderRegistry";
 import { SourceRuntimeManager } from "./application/runtime/SourceRuntimeManager";
 import { IVesselObservationRepository } from "./application/observations/IVesselObservationRepository";
 import { ObservationRecorder } from "./application/observations/ObservationRecorder";
+import { ICurrentVesselRepository } from "./application/current/ICurrentVesselRepository";
 import { InMemoryVesselObservationRepository } from "./infrastructure/persistence/InMemoryVesselObservationRepository";
 import { MongoVesselObservationRepository } from "./infrastructure/persistence/MongoVesselObservationRepository";
+import { InMemoryCurrentVesselRepository } from "./infrastructure/persistence/InMemoryCurrentVesselRepository";
+import { MongoCurrentVesselRepository } from "./infrastructure/persistence/MongoCurrentVesselRepository";
 import { VesselFinderProvider } from "./infrastructure/providers/VesselFinderProvider";
 import { ShipInfoClient } from "./infrastructure/providers/shipinfo/ShipInfoClient";
 import { ShipInfoProvider } from "./infrastructure/providers/shipinfo/ShipInfoProvider";
@@ -33,6 +36,8 @@ import { ShipFinderClient } from "./infrastructure/providers/shipfinder/ShipFind
 import { ShipFinderProvider } from "./infrastructure/providers/shipfinder/ShipFinderProvider";
 import { SHIPFINDER_PARSER_VERSION } from "./infrastructure/providers/shipfinder/ShipFinderParser";
 import { CollectVesselObservations } from "./application/use-cases/CollectVesselObservations";
+import { ResolveCurrentVessel } from "./application/use-cases/ResolveCurrentVessel";
+import { ResolveAndStoreCurrentVessel } from "./application/use-cases/ResolveAndStoreCurrentVessel";
 import { VesselSource } from "./domain/value-objects/VesselSource";
 
 import { GetVesselDetails } from "./application/use-cases/GetVesselDetails";
@@ -73,6 +78,8 @@ export interface Container {
    * Xem OBSERVATION_STORAGE.md §10.
    */
   observationRepository: IVesselObservationRepository;
+  /** Kho canonical current (P8.5), tách hẳn observation append-only và legacy. */
+  currentVesselRepository: ICurrentVesselRepository;
   /** Cửa duy nhất để provider mới ghi observation. Chưa ai gọi ở P5. */
   observationRecorder: ObservationRecorder;
   /**
@@ -81,6 +88,8 @@ export interface Container {
    * không cron, không bulk crawl.
    */
   collectVesselObservations: CollectVesselObservations;
+  /** Manual use case; container chỉ đăng ký, không tự resolve hay gọi provider. */
+  resolveAndStoreCurrentVessel: ResolveAndStoreCurrentVessel;
 }
 
 export async function buildContainer(): Promise<Container> {
@@ -183,6 +192,16 @@ export async function buildContainer(): Promise<Container> {
     : new InMemoryVesselObservationRepository();
   const observationRecorder = new ObservationRecorder({ repository: observationRepository });
 
+  // 5.5) Canonical current (P8.5). Chỉ có use case manual sử dụng dependency
+  // này; khởi tạo không crawl, không resolve và không ghi legacy collection.
+  const currentVesselRepository: ICurrentVesselRepository = config.mongoUri
+    ? new MongoCurrentVesselRepository()
+    : new InMemoryCurrentVesselRepository();
+  const resolveAndStoreCurrentVessel = new ResolveAndStoreCurrentVessel({
+    resolve: new ResolveCurrentVessel({ repository: observationRepository }),
+    repository: currentVesselRepository,
+  });
+
   // 6) ShipInfo (P6.4). Đăng ký provider là thao tác TRƠ: registry chỉ ghi sổ,
   //    không tự chạy gì. Mọi lời gọi mạng của ShipInfo bắt buộc đi qua
   //    CollectVesselObservations -> SourceRequestExecutor (P4).
@@ -231,7 +250,9 @@ export async function buildContainer(): Promise<Container> {
     providerRegistry,
     crawlRuntime,
     observationRepository,
+    currentVesselRepository,
     observationRecorder,
     collectVesselObservations,
+    resolveAndStoreCurrentVessel,
   };
 }
