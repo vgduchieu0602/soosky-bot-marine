@@ -58,3 +58,23 @@ test("reads and validates bounded AIS resolver concurrency", () => {
   assert.throws(() => loadConfig({ AIS_RESOLVE_CONCURRENCY: "0" }), /AIS_RESOLVE_CONCURRENCY/);
   assert.throws(() => loadConfig({ AIS_RESOLVE_CONCURRENCY: "1.5" }), /AIS_RESOLVE_CONCURRENCY/);
 });
+
+test("AIS-5.1: cửa sổ gộp mặc định là 60s, không còn 10s", () => {
+  // Số document ghi mỗi tàu mỗi ngày = 86.400 / cửa sổ(giây). 10s đo được là
+  // 8.640 doc/tàu/ngày — không chạy nổi ở quy mô toàn cầu.
+  const defaults = loadConfig({});
+  assert.equal(defaults.aisCoalesceWindowMs, 60_000);
+  assert.ok(
+    defaults.aisCoalesceWindowMs >= 60_000,
+    "cửa sổ gộp dưới 60s làm khối lượng ghi vượt ngưỡng đã đo ở AIS-5"
+  );
+
+  // Ba núm còn lại GIỮ NGUYÊN ở phase này: không vặn nhiều biến cùng lúc thì
+  // mới quy được kết quả đo về đúng một thay đổi.
+  assert.equal(defaults.aisMaxBufferedVessels, 50_000);
+  assert.equal(defaults.aisFlushBatchSize, 500);
+  assert.equal(defaults.aisResolveConcurrency, 10);
+
+  assert.equal(loadConfig({ AIS_COALESCE_WINDOW_MS: "30000" }).aisCoalesceWindowMs, 30_000);
+  assert.throws(() => loadConfig({ AIS_COALESCE_WINDOW_MS: "0" }), /AIS_COALESCE_WINDOW_MS/);
+});

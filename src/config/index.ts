@@ -67,6 +67,15 @@ export interface AppConfig {
    * Chu kỳ gộp AIS, ms. Trong một cửa sổ, mỗi MMSI chỉ giữ vị trí MỚI NHẤT —
    * các điểm trung gian bị bỏ CÓ CHỦ Ý (buffer phục vụ map hiện tại, không
    * phải lịch sử hành trình).
+   *
+   * ⚠️ ĐÂY LÀ NÚM VẶN QUAN TRỌNG NHẤT của toàn bộ đường ống AIS, vì dedupe theo
+   * vân tay KHÔNG chặn được vị trí AIS (mỗi frame mang một `sourceReceivedAt`
+   * khác nhau). Số document ghi xuống Mongo = số entry ra khỏi buffer =
+   * `86.400 / (cửa sổ tính bằng giây)` mỗi tàu mỗi ngày.
+   *
+   * Mặc định 60.000 (AIS-5.1). Trước đó là 10.000 — đo được là 8.640 vị trí/
+   * tàu/ngày, tức ~5.000 insert/giây và ~432 GB cho 50.000 tàu ở retention 48
+   * giờ. Xem docs/AIS_LOAD_AND_RETENTION.md §"Production load gate".
    */
   aisCoalesceWindowMs: number;
   /**
@@ -200,7 +209,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     }),
     // Không có mặc định, và KHÔNG hardcode hostname production ở bất kỳ đâu.
     marineAisWsUrl: str(env, "MARINE_AIS_WS_URL"),
-    aisCoalesceWindowMs: positiveNum(env, "AIS_COALESCE_WINDOW_MS", 10_000),
+    aisCoalesceWindowMs: positiveNum(env, "AIS_COALESCE_WINDOW_MS", 60_000),
     aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
     aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),
     aisResolveConcurrency: positiveInteger(env, "AIS_RESOLVE_CONCURRENCY", 10),

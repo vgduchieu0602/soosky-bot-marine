@@ -190,8 +190,173 @@ function sampleObservationBytes(): { position: number; identity: number } {
   return { position: size(position), identity: size(identity) };
 }
 
+// ---------------------------------------------------------------------------
+//  Chế độ BỘ NHỚ · nhiều kịch bản (AIS-5.1)
+// ---------------------------------------------------------------------------
+
+interface MemorySample {
+  heapUsed: number;
+  rss: number;
+}
+
+function sample(): MemorySample {
+  const usage = process.memoryUsage();
+  return { heapUsed: usage.heapUsed, rss: usage.rss };
+}
+
+/** Chạy GC nếu runtime cho phép. Không có thì thôi — số đo thành cận TRÊN. */
+function collectGarbage(): boolean {
+  const gc = (globalThis as { gc?: () => void }).gc;
+  if (gc === undefined) return false;
+  gc();
+  return true;
+}
+
+interface ScenarioResult {
+  vessels: number;
+  events: number;
+  coalescedEntries: number;
+  evictions: number;
+  evictedDirty: number;
+  maxBuffered: number;
+  before: MemorySample;
+  peak: MemorySample;
+  after: MemorySample;
+}
+
+/**
+ * Đo BỘ NHỚ của buffer, KHÔNG chạy ingest/resolve.
+ *
+ * ⚠️ Cố ý bỏ đường persistence: kho in-memory quét TUYẾN TÍNH, nên ở 50.000 tàu
+ * nó đo chính bộ giả lập chứ không đo Mongo, và mất hàng giờ. Tốc độ ghi thật
+ * là việc của `marine-ais:mongo-load-poc`.
+ */
+function runMemoryScenario(
+  vessels: number,
+  events: number,
+  drainEvery: number,
+  maxVessels: number,
+  batchSize: number
+): ScenarioResult {
+  collectGarbage();
+  const before = sample();
+
+  const buffer = new AisCoalescingBuffer({ maxVessels, batchSize, now: () => FETCHED_AT });
+  let coalescedEntries = 0;
+  const peak: MemorySample = { ...before };
+
+  const observe = (): void => {
+    const current = sample();
+    if (current.heapUsed > peak.heapUsed) peak.heapUsed = current.heapUsed;
+    if (current.rss > peak.rss) peak.rss = current.rss;
+  };
+
+  for (let i = 0; i < events; i += 1) {
+    const vesselIndex = i % vessels;
+    buffer.accept(
+      i % DEFAULTS.staticEveryNth === 0
+        ? identityEvent(vesselIndex)
+        : positionEvent(vesselIndex, Math.floor(i / vessels))
+    );
+
+    if ((i + 1) % drainEvery === 0) {
+      observe(); // đỉnh nằm NGAY TRƯỚC lúc rút: mọi ô còn ôm object chưa ai lấy
+      for (;;) {
+        const batch = buffer.drainBatch();
+        if (batch === null) break;
+        coalescedEntries += batch.entries.length;
+      }
+    }
+    if (i % 25_000 === 0) observe();
+  }
+
+  observe();
+  for (;;) {
+    const batch = buffer.drainBatch();
+    if (batch === null) break;
+    coalescedEntries += batch.entries.length;
+  }
+
+  collectGarbage();
+  const after = sample();
+  const stats = buffer.getStats();
+
+  return {
+    vessels,
+    events,
+    coalescedEntries,
+    evictions: stats.evictions,
+    evictedDirty: stats.evictedDirty,
+    maxBuffered: stats.maxObservedBufferedVessels,
+    before,
+    peak,
+    after,
+  };
+}
+
+function printScenario(result: ScenarioResult, maxVessels: number): void {
+  const perVessel =
+    result.maxBuffered === 0
+      ? 0
+      : Math.round((result.peak.heapUsed - result.before.heapUsed) / result.maxBuffered);
+
+  console.log(`\n── ${result.vessels.toLocaleString("en-US")} tàu · ${result.events.toLocaleString("en-US")} sự kiện`);
+  console.log(`   entry sau gộp      : ${result.coalescedEntries.toLocaleString("en-US")} (×${ratio(result.coalescedEntries, result.events)})`);
+  console.log(`   đỉnh tàu trong buffer: ${result.maxBuffered.toLocaleString("en-US")} / trần ${maxVessels.toLocaleString("en-US")}`);
+  console.log(`   đuổi               : ${result.evictions.toLocaleString("en-US")} (mất dữ liệu chờ: ${result.evictedDirty.toLocaleString("en-US")})`);
+  console.log(`   heapUsed  trước/đỉnh/sau : ${mib(result.before.heapUsed)} / ${mib(result.peak.heapUsed)} / ${mib(result.after.heapUsed)}`);
+  console.log(`   rss       trước/đỉnh/sau : ${mib(result.before.rss)} / ${mib(result.peak.rss)} / ${mib(result.after.rss)}`);
+  console.log(`   ≈ heap/tàu ở đỉnh  : ${perVessel} B (ước lượng, KHÔNG phải hằng số)`);
+}
+
+async function runScenarios(args: string[]): Promise<void> {
+  const raw = args.find((arg) => arg.startsWith("--scenarios="))!.slice("--scenarios=".length);
+  const scenarios = raw
+    .split(",")
+    .map((part) => Number(part.trim()))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .map(Math.floor);
+
+  if (scenarios.length === 0) {
+    console.error("❌ --scenarios cần danh sách số dương, VD --scenarios=10000,25000,50000");
+    process.exit(1);
+  }
+
+  const maxVessels = readNumberFlag(args, "max-vessels", DEFAULTS.maxVessels);
+  const batchSize = readNumberFlag(args, "batch-size", DEFAULTS.batchSize);
+  const eventsPerVessel = readNumberFlag(args, "events-per-vessel", 4);
+  const drainEvery = readNumberFlag(args, "drain-every", DEFAULTS.drainEvery);
+  const gcAvailable = collectGarbage();
+
+  console.log(
+    `\n🧠 Đo bộ nhớ buffer AIS · kịch bản ${scenarios.join(", ")}\n` +
+      `   trần=${maxVessels} mẻ=${batchSize} sự kiện/tàu=${eventsPerVessel} rút mỗi ${drainEvery}\n` +
+      `   GC tường minh: ${gcAvailable ? "CÓ" : "KHÔNG (số đo là cận TRÊN — chạy với --expose-gc để sạch hơn)"}\n` +
+      `   ⚠️ Chỉ đo buffer. Tốc độ ghi thật xem marine-ais:mongo-load-poc.`
+  );
+
+  const results: ScenarioResult[] = [];
+  for (const vessels of scenarios) {
+    results.push(
+      runMemoryScenario(vessels, vessels * eventsPerVessel, drainEvery, maxVessels, batchSize)
+    );
+    printScenario(results[results.length - 1], maxVessels);
+  }
+
+  const bounded = results.every((result) => result.maxBuffered <= maxVessels);
+  const peakRss = Math.max(...results.map((result) => result.peak.rss));
+  console.log(`\n📌 RSS đỉnh trên mọi kịch bản: ${mib(peakRss)}`);
+  console.log(`${bounded ? "✅" : "❌"} Buffer nằm trong trần ở MỌI kịch bản.`);
+  process.exit(bounded ? 0 : 1);
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  if (args.some((arg) => arg.startsWith("--scenarios="))) {
+    await runScenarios(args);
+    return;
+  }
+
   const vessels = readNumberFlag(args, "vessels", DEFAULTS.vessels);
   const events = readNumberFlag(args, "events", DEFAULTS.events);
   const batchSize = readNumberFlag(args, "batch-size", DEFAULTS.batchSize);

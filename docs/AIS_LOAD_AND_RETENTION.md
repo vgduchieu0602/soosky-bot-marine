@@ -253,19 +253,207 @@ Hai lớp chặn của `mongo-load-poc`: bắt buộc `--confirm`, **và** từ 
 
 ## 12. Sẵn sàng cho phase Map chưa?
 
-**Chưa — còn một quyết định phải chốt.**
+Câu trả lời của AIS-5 là "chưa, còn phải chốt cửa sổ gộp và đo trên Mongo thật".
+**AIS-5.1 đã làm cả hai** — xem §13.
+
+---
+
+# PRODUCTION LOAD GATE (AIS-5.1)
+
+> Chốt cấu hình vận hành và đo thật, trước khi cho AIS toàn cầu chạm workload
+> giống production. Không thêm feature, không bật gì tự động.
+
+## 13. Mặc định mới
+
+| Biến | Trước | Sau | |
+|---|---|---|---|
+| `AIS_COALESCE_WINDOW_MS` | 10.000 | **60.000** | ĐỔI — 10 s đã được §8 chứng minh không chạy nổi ở quy mô toàn cầu |
+| `AIS_MAX_BUFFERED_VESSELS` | 50.000 | 50.000 | giữ |
+| `AIS_FLUSH_BATCH_SIZE` | 500 | 500 | giữ |
+| `AIS_RESOLVE_CONCURRENCY` | 10 | 10 | giữ |
+
+Chỉ vặn **một** biến. Vặn nhiều biến cùng lúc thì không quy được kết quả đo về
+đâu cả. `config/index.ts`, `.env.example` và `config/index.test.ts` đã đồng nhất;
+có test khoá cả bốn giá trị.
+
+**Chưa chọn 300.000** — 60 s là mốc đầu tiên để đo, và §16 cho thấy nó đủ cho
+một dải quy mô thật.
+
+## 14. Bộ nhớ buffer — đo được
+
+```bash
+node --expose-gc -r ts-node/register src/interfaces/cli/marineAisLoadSim.ts \
+     --scenarios=10000,25000,50000
+```
+
+Chế độ này chỉ đo **buffer**, cố ý không chạy ingest/resolve: kho in-memory quét
+tuyến tính nên ở 50.000 tàu nó đo bộ giả lập chứ không đo Mongo. Tốc độ ghi thật
+là việc của §16. GC tường minh có bật; không có `--expose-gc` thì số đo thành cận trên.
+
+| Tàu | sự kiện | entry sau gộp | heapUsed trước → **đỉnh** → sau | RSS trước → **đỉnh** → sau | ≈ heap/tàu ở đỉnh | đuổi |
+|---|---|---|---|---|---|---|
+| **10.000** | 40.000 | 39.250 | 126,9 → **143,4** → 128,8 MiB | 208,7 → **212,6** → 210,5 MiB | 1.732 B | 0 |
+| **25.000** | 100.000 | 98.125 | 127,0 → **154,5** → 131,2 MiB | 213,5 → **225,6** → 217,8 MiB | 1.154 B | 0 |
+| **50.000** | 200.000 | 196.250 | 127,0 → **178,7** → 135,5 MiB | 216,0 → **247,4** → 229,6 MiB | 1.085 B | 0 |
+
+Đọc bảng:
+
+- **Không rò rỉ đơn điệu.** Sau mỗi kịch bản heap về lại 129–136 MiB. Phần dôi
+  6,7 MiB qua ba lần chạy là backing store của `Map`/`Set` mà V8 không trả lại —
+  có trần, không tăng theo thời gian.
+- **Chi phí mỗi tàu GIẢM khi quy mô tăng** (1.732 → 1.085 B): phần cố định được
+  chia đều ra. Con số này là **ước lượng**, không phải hằng số — nó gồm cả rác
+  chưa thu giữa hai lần GC.
+- Trần 50.000 giữ đúng ở mọi kịch bản, không đuổi lần nào.
+- ⚠️ Nền heap ~127 MiB là của **ts-node** (trình biên dịch TypeScript nằm trong
+  RAM), không phải của bot. Chạy `dist/` đã build thì nền thấp hơn nhiều.
+
+## 15. Kho Mongo — số thật
+
+Đo trên database thử nghiệm sau §16 (48.000 observation, 10.000 canonical):
+
+| | logical | trên đĩa | index | **B/document (đĩa + index)** |
+|---|---|---|---|---|
+| `vessel_observations` | 30,2 MiB (658 B/doc) | 7,2 MiB | 11,0 MiB | **397 B** |
+| `canonical_current_vessels` | 6,8 MiB (709 B/doc) | 2,0 MiB | 0,4 MiB | **250 B** |
+
+Hai điều đáng chú ý:
+
+1. WiredTiger nén dữ liệu **~4,2 lần** (30,2 → 7,2 MiB). Ước lượng 0,5 KB/doc ở
+   §8 hoá ra hơi cao; số thật là **397 B**.
+2. 🔴 **Index đã lớn hơn dữ liệu** (11,0 vs 7,2 MiB) và index thì không nén tốt.
+   Ở quy mô lớn, thứ quyết định không phải dung lượng đĩa mà là **index có nằm
+   vừa RAM không** — 144 triệu document sẽ kéo theo ~33 GB index.
+
+TTL đã hoạt động đúng trên Mongo thật:
+
+```
+indexes: _id_ | mmsi_1_type_1_fetchedAt_-1 | imo_1_type_1_fetchedAt_-1
+       | source_1_fetchedAt_-1 | fingerprint_1_fetchedAt_-1 | expiresAt_1 TTL=0
+
+fetchedAt : 2026-08-16T11:31:58.410Z
+expiresAt : 2026-08-18T11:31:58.410Z      ← đúng +48 giờ
+```
+
+## 16. Mongo load POC — kết quả
+
+```bash
+npm run marine-ais:mongo-load-poc -- --confirm --vessels=... --events=... \
+        --drain-every=... --max-seconds=... --max-rss-mb=...
+```
+
+Chạy trên MongoDB **local dev** (Windows, một node, không replica set), qua
+`ts-node`, database `soosky_bot_load_test`.
+
+| | **A · 2.000 tàu** | **B · 10.000 tàu** |
+|---|---|---|
+| frame tổng hợp | 20.000 | 40.000 |
+| entry sau gộp | 8.000 (×0,40) | 40.000 (×1,00)¹ |
+| observation ghi | 8.000 | 40.000 |
+| observation trùng | **0** | **0** |
+| thời gian | 19,3 s | 102,5 s |
+| **observation/giây** | **415** | **390** |
+| tàu resolve/giây | 415 | 390 |
+| mẻ | 16 | 80 |
+| thời lượng mẻ (500 entry) | min 837 · p50 **1.098** · p95 2.598 · max 2.598 ms | min 789 · p50 **1.265** · p95 **1.763** · max 2.094 ms |
+| ms/tàu resolve | 2,2 | 2,5 |
+| **RSS đỉnh** | 591,8 MiB | **880,6 MiB** |
+| **heapUsed đỉnh** | 476,8 MiB | **698,2 MiB** |
+| đuổi khỏi buffer | 0 | 0 |
+
+¹ Tỉ lệ gộp ×1,00 ở kịch bản B là do nhịp cấp dữ liệu tổng hợp (mỗi tàu xuất
+hiện đúng một lần trong một cửa sổ rút), không phải do hệ thống mất khả năng gộp.
+
+**Trễ mẻ ỔN ĐỊNH.** Ở B, p95 (1.763 ms) chỉ gấp 1,4 lần p50, và `max` không rơi
+vào mẻ cuối ⇒ không có xu hướng xấu đi theo kích thước collection. Điều kiện
+dừng sớm (trễ tăng liên tục / vượt `--max-rss-mb` / hết giờ) **không** kích hoạt
+ở cả hai kịch bản.
+
+**Trần công suất đo được: ~390–415 observation/giây** cho toàn đường ống
+(bulk insert + 4 aggregate + upsert canonical mỗi tàu).
+
+## 17. 🔴 Cửa sổ gộp phải khớp với số tàu
+
+Với cửa sổ `W` giây, tốc độ ghi cần thiết là `số_tàu / W`:
+
+| Số tàu | cần ở **60 s** | so với 390/giây đo được | doc/tàu/ngày | kho ở 48 h (397 B/doc) |
+|---|---|---|---|---|
+| 10.000 | 167/giây | **43 %** ✅ | 1.440 | **11,4 GB** |
+| 25.000 | 417/giây | **107 %** ⚠️ chạm trần | 1.440 | 28,6 GB |
+| 50.000 | 833/giây | **214 %** ❌ | 1.440 | 57 GB |
+
+Quy tắc chọn cửa sổ — nhắm tốc độ ghi ≈ **170/giây** (dưới 45 % công suất đo được):
+
+```
+cửa sổ (giây) ≈ số tàu / 170
+```
+
+| Quy mô mục tiêu | `AIS_COALESCE_WINDOW_MS` | ghi/giây | kho ở 48 h |
+|---|---|---|---|
+| ≤ 10.000 tàu | **60000** (mặc định mới) | 167 | ~11 GB |
+| ~25.000 tàu | **150000** | 167 | ~11 GB |
+| ~50.000 tàu | **300000** | 167 | ~11 GB |
+
+Trễ 300 giây vẫn nằm gọn trong bậc `LIVE` (≤ 30 phút) của resolver ⇒ chất lượng
+map **không đổi**, trong khi khối lượng ghi giảm 5 lần.
+
+⚠️ Mọi con số trên đo trên **máy dev Windows, Mongo một node, chạy qua ts-node**.
+VPS thật với `dist/` đã build và Mongo được tinh chỉnh sẽ nhanh hơn — nhưng
+đừng giả định gấp 5 lần. Chạy lại POC trên chính VPS trước khi chốt.
+
+## 18. Hướng dẫn VPS
+
+Bộ nhớ của bot bị chặn bởi `AIS_MAX_BUFFERED_VESSELS`, **nhưng** Node, driver
+Mongo, và OS đều cần chỗ thở. Số đo:
+
+| | đo được |
+|---|---|
+| chỉ buffer, 50.000 tàu | RSS đỉnh **247 MiB** |
+| toàn đường ống ingest, 10.000 tàu | RSS đỉnh **881 MiB** · heap đỉnh 698 MiB |
+
+⇒ Đường **ingest** tốn RAM gấp ~3,5 lần buffer đơn thuần (mongoose document,
+pool kết nối, kết quả resolve đang bay với `AIS_RESOLVE_CONCURRENCY=10`).
+Lập kế hoạch theo con số **881 MiB**, không theo 247 MiB.
+
+**Headroom tối thiểu khuyến nghị:** RSS đỉnh đo được × hệ số an toàn 2 ⇒
+**≥ 2 GB RAM cho riêng tiến trình bot**, và Mongo tính riêng. Đây là suy ra từ
+số đo trên máy dev — **đo lại trên chính VPS** trước khi chốt kích thước máy.
+
+Theo dõi tối thiểu (không cần Grafana/Prometheus ở phase này):
+
+| Chỉ số | Vì sao |
+|---|---|
+| `RSS`, `heapUsed` | rò rỉ, và khoảng cách tới `max_memory_restart` |
+| CPU | resolve là phần tốn CPU nhất |
+| độ trễ thao tác Mongo | p50/p95 của mẻ — dấu hiệu sớm nhất khi quá tải |
+| dung lượng đĩa | TTL chỉ chặn phần đuôi, index vẫn tăng |
+| `evictions` / `evictedDirty` của buffer | > 0 nghĩa là **đang mất dữ liệu thật** |
+| số lần ghi observation thất bại | chưa có bộ đếm riêng — xem §19 |
+
+**PM2:** `max_memory_restart` là một cái van hợp lý khi triển khai, nhưng
+**chưa chốt con số** vì chưa biết kích thước VPS. Đừng ghi cứng 512M/1G vào repo
+trước khi đo trên máy thật.
+
+## 19. Cổng vào MAP-1
 
 | Điều kiện | |
 |---|---|
-| Kho observation có trần | ✅ TTL theo (nguồn, nhóm) |
-| Frame thô không lưu | ✅ |
-| Canonical không TTL | ✅ |
-| Bộ nhớ buffer có trần | ✅ đo được |
-| Khuếch đại ghi/đọc đã đo | ✅ |
-| **Tốc độ ghi ở cửa sổ 10 s chịu được** | ❌ **phải nâng cửa sổ gộp trước** |
-| Số đo trên Mongo thật | ❌ chưa chạy |
+| Cửa sổ gộp mặc định ≥ 60 s | ✅ 60.000, có test khoá |
+| Mô phỏng 50.000 tàu vẫn nằm trong trần | ✅ đỉnh đúng 50.000, đuổi 0 |
+| POC Mongo chạy được ở cấu hình đã chốt | ✅ ở **≤ 10.000 tàu**; ❌ ở 50.000 với cửa sổ 60 s |
+| Không rò rỉ bộ nhớ đơn điệu | ✅ heap về nền sau mỗi kịch bản |
+| Trễ mẻ đủ ổn định | ✅ p95 = 1,4 × p50, không xấu đi theo thời gian |
+| Không có hàng đợi vô hạn | ✅ buffer giữ trạng thái mới nhất, không xếp mẻ |
+| Đã ghi lại khuyến nghị | ✅ §17, §18 |
 
-Việc phải làm trước khi mở phase Map: (a) chốt `AIS_COALESCE_WINDOW_MS`, (b) chạy `mongo-load-poc` trên database thử nghiệm để xác nhận tốc độ ghi và độ trễ resolve ở cấu hình đã chốt.
+**Kết luận: MAP-1 mở được, KÈM ĐIỀU KIỆN.** Cấu hình mặc định 60 s đã được đo
+là an toàn tới khoảng **10.000–15.000 tàu hoạt động**. Muốn chạy toàn cầu
+(50.000+) thì phải đặt `AIS_COALESCE_WINDOW_MS=300000` **và** chạy lại POC trên
+chính VPS đích — bảng §17 là công thức, không phải lời hứa.
+
+Nợ còn lại sau AIS-5.1: chưa có bộ đếm `persistFailures` riêng; index của
+`vessel_observations` sẽ vượt RAM trước khi đĩa đầy; kịch bản canonical bị ghi
+đè `position: null` ở §9 mục 2 vẫn chưa xử lý.
 
 ---
 

@@ -138,18 +138,44 @@ async function main(): Promise<void> {
     resolveConcurrency: config.aisResolveConcurrency,
   });
 
+  const maxRssMb = readNumberFlag(args, "max-rss-mb", 0);
   const batchDurations: number[] = [];
   const resolveDurations: number[] = [];
   let saved = 0;
   let duplicates = 0;
   let resolvedVessels = 0;
+  let coalescedEntries = 0;
+  let peakRss = process.memoryUsage().rss;
+  let peakHeap = process.memoryUsage().heapUsed;
   const deadline = Date.now() + maxSeconds * 1000;
   let stoppedEarly = false;
+  let stopReason = "";
+
+  /**
+   * Điều kiện dừng SỚM. Cố ý là ba phép so đơn giản trong chính vòng lặp —
+   * không daemon, không watchdog, không thư viện giám sát.
+   */
+  const shouldStop = (): string | null => {
+    if (Date.now() > deadline) return `hết ${maxSeconds}s`;
+    const rssMb = process.memoryUsage().rss / 1024 / 1024;
+    if (maxRssMb > 0 && rssMb > maxRssMb) return `RSS ${rssMb.toFixed(0)}MB vượt --max-rss-mb=${maxRssMb}`;
+    // Trễ mẻ TĂNG LIÊN TỤC: 5 mẻ gần nhất đều chậm hơn gấp 3 lần trung vị đầu
+    // kỳ -> hệ thống đang không theo kịp, dừng thay vì cắm đầu chạy tiếp.
+    if (batchDurations.length >= 15) {
+      const baseline = percentile(batchDurations.slice(0, 10), 0.5);
+      const recent = batchDurations.slice(-5);
+      if (baseline > 0 && recent.every((duration) => duration > baseline * 3)) {
+        return `trễ mẻ tăng liên tục (baseline p50 ${baseline}ms, 5 mẻ gần nhất ${recent.join("/")}ms)`;
+      }
+    }
+    return null;
+  };
 
   const drain = async (): Promise<void> => {
     for (;;) {
       const batch = buffer.drainBatch();
       if (batch === null) return;
+      coalescedEntries += batch.entries.length;
       const started = Date.now();
       const result = await ingest.execute(batch);
       const elapsed = Date.now() - started;
@@ -158,38 +184,63 @@ async function main(): Promise<void> {
       saved += result.observationsSaved;
       duplicates += result.observationsSkippedDuplicate;
       resolvedVessels += result.vesselsResolved;
-      if (Date.now() > deadline) {
+
+      const usage = process.memoryUsage();
+      peakRss = Math.max(peakRss, usage.rss);
+      peakHeap = Math.max(peakHeap, usage.heapUsed);
+
+      const reason = shouldStop();
+      if (reason !== null) {
         stoppedEarly = true;
+        stopReason = reason;
         return;
       }
     }
   };
 
   const started = Date.now();
+  let eventsFed = 0;
   for (let i = 0; i < events && !stoppedEarly; i += 1) {
     buffer.accept(positionEvent(i % vessels, Math.floor(i / vessels)));
+    eventsFed += 1;
     if ((i + 1) % drainEvery === 0) await drain();
   }
   if (!stoppedEarly) await drain();
   const elapsedMs = Date.now() - started;
 
+  const seconds = elapsedMs / 1000;
   console.log("\n📊 Kết quả");
-  console.log(`   thời gian          : ${(elapsedMs / 1000).toFixed(1)} s${stoppedEarly ? " (dừng vì hết giờ)" : ""}`);
+  console.log(`   thời gian          : ${seconds.toFixed(1)} s${stoppedEarly ? ` (DỪNG SỚM: ${stopReason})` : ""}`);
+  console.log(`   frame tổng hợp     : ${eventsFed.toLocaleString("en-US")}`);
+  console.log(`   entry sau gộp      : ${coalescedEntries.toLocaleString("en-US")}`);
   console.log(`   observation ghi    : ${saved.toLocaleString("en-US")}`);
   console.log(`   observation trùng  : ${duplicates.toLocaleString("en-US")}`);
-  console.log(`   observation/giây   : ${Math.round(saved / (elapsedMs / 1000)).toLocaleString("en-US")}`);
-  console.log(`   tàu resolve        : ${resolvedVessels.toLocaleString("en-US")}`);
+  console.log(`   observation/giây   : ${Math.round(saved / seconds).toLocaleString("en-US")}`);
+  console.log(`   tàu resolve        : ${resolvedVessels.toLocaleString("en-US")}  (${Math.round(resolvedVessels / seconds).toLocaleString("en-US")}/giây)`);
   console.log(`   mẻ                 : ${batchDurations.length}`);
-  console.log(
-    `   thời lượng mẻ      : min ${Math.min(...batchDurations)}ms · p50 ${percentile(batchDurations, 0.5)}ms · max ${Math.max(...batchDurations)}ms`
-  );
-  console.log(`   ≈ ms / tàu resolve : ${percentile(resolveDurations, 0.5).toFixed(1)}`);
-  console.log(
-    `   ước lượng thao tác Mongo: ${batchDurations.length} bulk insert + ` +
-      `${resolvedVessels * 4} aggregate + ${resolvedVessels}–${resolvedVessels * 2} findOne canonical`
-  );
+  if (batchDurations.length > 0) {
+    console.log(
+      `   thời lượng mẻ      : min ${Math.min(...batchDurations)}ms · p50 ${percentile(batchDurations, 0.5)}ms · ` +
+        `p95 ${percentile(batchDurations, 0.95)}ms · max ${Math.max(...batchDurations)}ms`
+    );
+    console.log(`   ≈ ms / tàu resolve : ${percentile(resolveDurations, 0.5).toFixed(1)}`);
+  }
 
-  process.exit(0);
+  console.log("\n📖 Khuếch đại (đếm theo hợp đồng của code, không phải profiler Mongo)");
+  console.log(`   GHI  : ${eventsFed} frame -> ${coalescedEntries} entry -> ${saved} document`);
+  console.log(`   ĐỌC  : ${resolvedVessels * 4} aggregate + ${resolvedVessels}–${resolvedVessels * 2} findOne canonical`);
+  console.log(`   bulk insert: ${batchDurations.length} lệnh`);
+
+  console.log("\n🧠 Bộ nhớ");
+  console.log(`   RSS đỉnh           : ${(peakRss / 1024 / 1024).toFixed(1)} MiB`);
+  console.log(`   heapUsed đỉnh      : ${(peakHeap / 1024 / 1024).toFixed(1)} MiB`);
+  console.log(`   RSS cuối           : ${(process.memoryUsage().rss / 1024 / 1024).toFixed(1)} MiB`);
+
+  const bufferStats = buffer.getStats();
+  console.log(`   đỉnh tàu buffer    : ${bufferStats.maxObservedBufferedVessels.toLocaleString("en-US")}`);
+  console.log(`   đuổi khỏi buffer   : ${bufferStats.evictions.toLocaleString("en-US")} (mất dữ liệu chờ: ${bufferStats.evictedDirty.toLocaleString("en-US")})`);
+
+  process.exit(stoppedEarly && stopReason !== `hết ${maxSeconds}s` ? 1 : 0);
 }
 
 void main().catch((error) => {
