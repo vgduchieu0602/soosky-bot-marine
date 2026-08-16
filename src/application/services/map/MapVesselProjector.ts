@@ -21,23 +21,39 @@ import {
   evaluateMapReadiness,
 } from "./MapVesselReadiness";
 
-export interface MapVessel {
+/**
+ * Payload MỎNG cho một chấm trên map.
+ *
+ * ⛔ KHÔNG mang: `rejected` (danh sách nguồn thua), `reason`, `observationId`,
+ *    `contentHash`, `particulars`, `voyage`, `SourceMetadata`. Chúng là dữ liệu
+ *    phân xử — hữu ích khi debug một con tàu, vô dụng khi vẽ mười nghìn chấm,
+ *    và là thứ thổi payload từ vài trăm byte lên vài kilobyte mỗi tàu.
+ *
+ * ⚠️ Ở đây dùng `lon` (không phải `lng` của canonical): đây là payload MAP, và
+ *    cả GeoJSON lẫn contract của Marine API đều gọi là `lon`. Việc quy đổi nằm
+ *    gọn trong file này, không rò ra chỗ khác.
+ */
+export interface MapVesselItem {
   readonly mmsi: string;
   readonly imo: string | null;
   readonly vesselName: string | null;
   readonly vesselTypeCode: number | null;
   readonly lat: number;
-  /** ⚠️ Canonical dùng `lng`. Đổi tên sang `lon` là việc của adapter Marine API. */
-  readonly lng: number;
+  readonly lon: number;
   readonly course: number | null;
   readonly speed: number | null;
-  readonly navStatus: NavigationStatus | null;
-  /** Mốc NGUỒN khai — thứ duy nhất dùng để tính tuổi. */
+  /** Tách `{code, text}` thành hai field phẳng — người vẽ map cần một trong hai. */
+  readonly navStatusCode: number | null;
+  readonly navStatusText: string | null;
+  /** Mốc NGUỒN khai. Người đọc tính tuổi từ đây, KHÔNG cache bậc độ tươi. */
   readonly observedAt: Date;
-  /** Nguồn thắng ở nhóm POSITION. Giữ lại để debug map. */
-  readonly positionSource: string;
-  /** Tuổi tại thời điểm chiếu. Người đọc KHÔNG được cache lại con số này. */
-  readonly ageMs: number;
+}
+
+function navStatusOf(status: NavigationStatus | null | undefined): {
+  code: number | null;
+  text: string | null;
+} {
+  return { code: status?.code ?? null, text: status?.text ?? null };
 }
 
 /**
@@ -49,7 +65,7 @@ export function projectMapVessel(
   vessel: ResolvedCurrentVessel,
   now: Date,
   policy: MapReadinessPolicy = DEFAULT_MAP_READINESS_POLICY
-): MapVessel | null {
+): MapVesselItem | null {
   const readiness = evaluateMapReadiness(vessel, now, policy);
   if (!readiness.ready) return null;
 
@@ -57,6 +73,7 @@ export function projectMapVessel(
   const resolved = vessel.position!;
   const report = resolved.position;
   const identity = vessel.identity;
+  const navStatus = navStatusOf(report.navStatus);
 
   return {
     mmsi: vessel.vesselKey.mmsi!,
@@ -64,13 +81,12 @@ export function projectMapVessel(
     vesselName: identity?.name?.value ?? null,
     vesselTypeCode: identity?.vesselTypeCode?.value ?? null,
     lat: report.lat,
-    lng: report.lng,
+    lon: report.lng,
     course: report.course ?? null,
     speed: report.speed ?? null,
-    navStatus: report.navStatus ?? null,
+    navStatusCode: navStatus.code,
+    navStatusText: navStatus.text,
     observedAt: resolved.observedAt!,
-    positionSource: resolved.source,
-    ageMs: readiness.ageMs!,
   };
 }
 
@@ -79,8 +95,8 @@ export function projectMapVessels(
   vessels: readonly ResolvedCurrentVessel[],
   now: Date,
   policy: MapReadinessPolicy = DEFAULT_MAP_READINESS_POLICY
-): readonly MapVessel[] {
-  const out: MapVessel[] = [];
+): readonly MapVesselItem[] {
+  const out: MapVesselItem[] = [];
   for (const vessel of vessels) {
     const projected = projectMapVessel(vessel, now, policy);
     if (projected !== null) out.push(projected);

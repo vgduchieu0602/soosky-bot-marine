@@ -254,12 +254,46 @@ test("projector bóc giá trị khỏi provenance, giữ tên canonical `lng`", 
   assert.equal(projected?.vesselName, "AGIA DOXA");
   assert.equal(projected?.vesselTypeCode, 70);
   assert.equal(projected?.lat, 10);
-  assert.equal(projected?.lng, 106, "canonical dùng `lng`; đổi sang `lon` là việc của adapter");
+  // Payload map dùng `lon`; canonical vẫn là `lng`. Quy đổi gói gọn trong projector.
+  assert.equal(projected?.lon, 106);
   assert.equal(projected?.speed, 12.3);
   assert.equal(projected?.course, 87);
-  assert.deepEqual(projected?.navStatus, { code: 0, text: "Under way using engine" });
-  assert.equal(projected?.positionSource, VesselSource.AISSTREAM);
-  assert.equal(projected?.ageMs, 60_000);
+  assert.equal(projected?.navStatusCode, 0);
+  assert.equal(projected?.navStatusText, "Under way using engine");
+});
+
+test("§30 payload MỎNG: không mang dữ liệu phân xử", () => {
+  const projected = projectMapVessel(vessel({ identity: { name: "AGIA DOXA" } }), NOW)!;
+  assert.deepEqual(
+    Object.keys(projected).sort(),
+    [
+      "course",
+      "imo",
+      "lat",
+      "lon",
+      "mmsi",
+      "navStatusCode",
+      "navStatusText",
+      "observedAt",
+      "speed",
+      "vesselName",
+      "vesselTypeCode",
+    ],
+    "thêm field vào payload map là quyết định phải cân nhắc, không phải tiện tay"
+  );
+  for (const banned of [
+    "rejected",
+    "reason",
+    "observationId",
+    "contentHash",
+    "particulars",
+    "voyage",
+    "metadata",
+    "freshness",
+    "source",
+  ]) {
+    assert.equal(banned in projected, false, `payload map không được mang \`${banned}\``);
+  }
 });
 
 test("projector trả null khi chưa đủ điều kiện — không phát object thiếu toạ độ", () => {
