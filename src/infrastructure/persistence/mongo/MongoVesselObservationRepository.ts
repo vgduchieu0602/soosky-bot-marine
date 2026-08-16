@@ -17,6 +17,11 @@ import {
   dedupeCutoff,
 } from "../../../application/services/observation/ObservationPolicy";
 import { observationFingerprint } from "../../../application/services/observation/observationFingerprint";
+import {
+  DEFAULT_OBSERVATION_RETENTION_CONFIG,
+  ObservationRetentionConfig,
+  observationExpiresAt,
+} from "../../../application/services/observation/ObservationRetentionPolicy";
 import { ObservationValidationStatus } from "../../../domain/enums/ObservationValidation";
 import {
   VesselObservationKey,
@@ -47,15 +52,18 @@ interface ObservationDoc {
 
 export interface MongoVesselObservationRepositoryDeps {
   dedupeConfig?: ObservationDedupeConfig;
+  retentionConfig?: ObservationRetentionConfig;
   now?: () => Date;
 }
 
 export class MongoVesselObservationRepository implements IVesselObservationRepository {
   private readonly dedupeConfig: ObservationDedupeConfig;
+  private readonly retentionConfig: ObservationRetentionConfig;
   private readonly now: () => Date;
 
   constructor(deps: MongoVesselObservationRepositoryDeps = {}) {
     this.dedupeConfig = deps.dedupeConfig ?? DEFAULT_OBSERVATION_DEDUPE_CONFIG;
+    this.retentionConfig = deps.retentionConfig ?? DEFAULT_OBSERVATION_RETENTION_CONFIG;
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -71,9 +79,7 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
       return { status: ObservationSaveStatus.SKIPPED_DUPLICATE, fingerprint };
     }
 
-    const created = await VesselObservationModel.create(
-      MongoVesselObservationRepository.toDoc(observation, fingerprint)
-    );
+    const created = await VesselObservationModel.create(this.toDoc(observation, fingerprint));
     return {
       status: ObservationSaveStatus.SAVED,
       fingerprint,
@@ -127,7 +133,7 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
         ? []
         : await VesselObservationModel.insertMany(
             toInsert.map(([fingerprint, candidate]) =>
-              MongoVesselObservationRepository.toDoc(candidate.observation, fingerprint)
+              this.toDoc(candidate.observation, fingerprint)
             ),
             { ordered: true }
           );
@@ -241,11 +247,27 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     return Object.freeze(docs.map(MongoVesselObservationRepository.toEntity));
   }
 
-  private static toDoc(
+  /**
+   * `expiresAt` được tính Ở ĐÂY, không ở domain: TTL là vòng đời của bản ghi
+   * trong kho, không phải một sự thật về con tàu. Retention `null` -> field
+   * VẮNG MẶT, và TTL index của Mongo bỏ qua document không có field đó.
+   */
+  private toDoc(
     observation: VesselSourceObservation,
     fingerprint: string
   ): Record<string, unknown> {
+    const expiresAt = observationExpiresAt(
+      {
+        source: observation.source,
+        type: observation.type,
+        validationStatus: observation.validation.status,
+        fetchedAt: observation.fetchedAt,
+      },
+      this.retentionConfig
+    );
+
     return {
+      ...(expiresAt === null ? {} : { expiresAt }),
       source: observation.source,
       type: observation.type,
       mmsi: observation.vesselKey.mmsi ?? null,

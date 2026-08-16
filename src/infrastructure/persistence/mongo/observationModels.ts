@@ -51,6 +51,15 @@ const observationSchema = new Schema(
 
     /** SHA-256 của (source, type, khoá tàu, dữ liệu chuẩn hoá, sourceReceivedAt). */
     fingerprint: { type: String, required: true },
+
+    /**
+     * Mốc TTL, do `ObservationRetentionPolicy` quyết định ở tầng repository.
+     *
+     * ⚠️ KHÔNG `required`, và đó là cả cơ chế migration: document THIẾU field
+     * này (bản ghi có trước AIS-5, hoặc nhóm được giữ vô thời hạn) không bao giờ
+     * bị TTL monitor đụng tới. Không cần backfill hàng triệu dòng lúc khởi động.
+     */
+    expiresAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
@@ -64,6 +73,14 @@ observationSchema.index({ mmsi: 1, type: 1, fetchedAt: -1 });
 observationSchema.index({ imo: 1, type: 1, fetchedAt: -1 });
 observationSchema.index({ source: 1, fetchedAt: -1 });
 observationSchema.index({ fingerprint: 1, fetchedAt: -1 });
+
+// TTL: Mongo xoá document khi `expiresAt` đã qua (`expireAfterSeconds: 0` nghĩa
+// là "hạn nằm ngay trong field", không phải "xoá sau 0 giây kể từ khi tạo").
+//
+// ⚠️ Việc xoá KHÔNG tức thời: TTL monitor chạy nền ~60 giây một lượt và còn phụ
+// thuộc tải. Nên tuyệt đối đừng coi TTL là hàng rào ĐÚNG ĐẮN — nó là hàng rào
+// DUNG LƯỢNG. Luật freshness của resolver mới là thứ bảo vệ canonical.
+observationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export const VesselObservationModel = model(
   "VesselObservation",

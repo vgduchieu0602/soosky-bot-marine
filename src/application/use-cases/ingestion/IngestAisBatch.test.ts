@@ -47,7 +47,9 @@ function batch(...entries: ReturnType<typeof entry>[]): AisCoalescedBatch {
 class RecordingRepository implements IVesselObservationRepository {
   calls: Array<readonly VesselSourceObservation[]> = [];
   async save(): Promise<ObservationSaveResult> { throw new Error("save must not be used"); }
-  async saveMany(observations: readonly VesselSourceObservation[]) {
+  async saveMany(
+    observations: readonly VesselSourceObservation[]
+  ): Promise<readonly ObservationSaveResult[]> {
     this.calls = [...this.calls, observations];
     return observations.map((observation) => ({
       status: ObservationSaveStatus.SAVED,
@@ -77,8 +79,99 @@ test("persists identity and position in one saveMany call, then resolves the MMS
   assert.deepEqual(result, {
     inputEntries: 1, observationsCreated: 2, observationsSaved: 2,
     observationsSkippedDuplicate: 0, vesselsAffected: 1, vesselsResolved: 1,
-    vesselsResolveFailed: 0,
+    vesselsResolveFailed: 0, vesselsSkippedUnchanged: 0,
   });
+});
+
+/** Repository giả: mọi observation đều bị coi là trùng vân tay. */
+class AllDuplicateRepository extends RecordingRepository {
+  override async saveMany(
+    observations: readonly VesselSourceObservation[]
+  ): Promise<readonly ObservationSaveResult[]> {
+    this.calls = [...this.calls, observations];
+    return observations.map((observation) => ({
+      status: ObservationSaveStatus.SKIPPED_DUPLICATE,
+      fingerprint: `${observation.vesselKey.mmsi}:${observation.type}`,
+    }));
+  }
+}
+
+test("§25 mẻ toàn bản trùng -> KHÔNG resolve tàu nào", async () => {
+  const repository = new AllDuplicateRepository();
+  const resolved: string[] = [];
+  const ingest = new IngestAisBatch({
+    repository,
+    resolveAndStore: { execute: async ({ mmsi }: { mmsi?: string }) => { resolved.push(mmsi!); } },
+    resolveConcurrency: 2,
+  });
+
+  const result = await ingest.execute(batch(entry("636018086", "both"), entry("305803000", "position")));
+
+  // Vẫn GHI thử (dedupe là việc của repository), nhưng không tốn lượt đọc nào
+  // cho canonical: không có gì mới thì không có gì để phân xử lại.
+  assert.equal(repository.calls.length, 1);
+  assert.deepEqual(resolved, []);
+  assert.equal(result.observationsSkippedDuplicate, 3);
+  assert.equal(result.observationsSaved, 0);
+  assert.equal(result.vesselsAffected, 0);
+  assert.equal(result.vesselsResolved, 0);
+  assert.equal(result.vesselsSkippedUnchanged, 2);
+});
+
+test("§26 A toàn trùng, B có vị trí mới -> CHỈ B được resolve", async () => {
+  const resolved: string[] = [];
+  const repository = new RecordingRepository();
+  // A trùng hết, B mới hoàn toàn.
+  repository.saveMany = async (observations: readonly VesselSourceObservation[]) => {
+    repository.calls = [...repository.calls, observations];
+    return observations.map((observation) => ({
+      status:
+        observation.vesselKey.mmsi === "A"
+          ? ObservationSaveStatus.SKIPPED_DUPLICATE
+          : ObservationSaveStatus.SAVED,
+      fingerprint: `${observation.vesselKey.mmsi}:${observation.type}`,
+    }));
+  };
+
+  const ingest = new IngestAisBatch({
+    repository,
+    resolveAndStore: { execute: async ({ mmsi }: { mmsi?: string }) => { resolved.push(mmsi!); } },
+    resolveConcurrency: 2,
+  });
+
+  const result = await ingest.execute(batch(entry("A", "both"), entry("B", "position")));
+
+  assert.deepEqual(resolved, ["B"]);
+  assert.equal(result.vesselsAffected, 1);
+  assert.equal(result.vesselsSkippedUnchanged, 1);
+});
+
+test("một tàu chỉ cần MỘT nhóm mới là đủ để được resolve", async () => {
+  const resolved: string[] = [];
+  const repository = new RecordingRepository();
+  // Identity trùng, position mới — cùng một MMSI.
+  repository.saveMany = async (observations: readonly VesselSourceObservation[]) => {
+    repository.calls = [...repository.calls, observations];
+    return observations.map((observation) => ({
+      status:
+        observation.type === "IDENTITY"
+          ? ObservationSaveStatus.SKIPPED_DUPLICATE
+          : ObservationSaveStatus.SAVED,
+      fingerprint: `${observation.vesselKey.mmsi}:${observation.type}`,
+    }));
+  };
+
+  const ingest = new IngestAisBatch({
+    repository,
+    resolveAndStore: { execute: async ({ mmsi }: { mmsi?: string }) => { resolved.push(mmsi!); } },
+    resolveConcurrency: 1,
+  });
+
+  const result = await ingest.execute(batch(entry("636018086", "both")));
+
+  assert.deepEqual(resolved, ["636018086"]);
+  assert.equal(result.vesselsAffected, 1);
+  assert.equal(result.vesselsSkippedUnchanged, 0);
 });
 
 test("bounds resolution concurrency and reports a per-vessel resolve failure without losing persisted observations", async () => {
