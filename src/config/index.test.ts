@@ -59,6 +59,17 @@ test("reads and validates bounded AIS resolver concurrency", () => {
   assert.throws(() => loadConfig({ AIS_RESOLVE_CONCURRENCY: "1.5" }), /AIS_RESOLVE_CONCURRENCY/);
 });
 
+test("DETAIL-2: ba núm làm mới detail có mặc định và có kiểm tra", () => {
+  const defaults = loadConfig({});
+  assert.equal(defaults.detailRefreshTimeoutMs, 10_000);
+  assert.equal(defaults.detailRefreshMaxSources, 2);
+  assert.equal(defaults.detailRefreshCooldownMs, 5 * 60 * 1000);
+
+  assert.equal(loadConfig({ DETAIL_REFRESH_MAX_SOURCES: "3" }).detailRefreshMaxSources, 3);
+  assert.throws(() => loadConfig({ DETAIL_REFRESH_MAX_SOURCES: "0" }), /DETAIL_REFRESH_MAX_SOURCES/);
+  assert.throws(() => loadConfig({ DETAIL_REFRESH_TIMEOUT_MS: "0" }), /DETAIL_REFRESH_TIMEOUT_MS/);
+});
+
 test("AIS-5.1: cửa sổ gộp mặc định là 60s, không còn 10s", () => {
   // Số document ghi mỗi tàu mỗi ngày = 86.400 / cửa sổ(giây). 10s đo được là
   // 8.640 doc/tàu/ngày — không chạy nổi ở quy mô toàn cầu.

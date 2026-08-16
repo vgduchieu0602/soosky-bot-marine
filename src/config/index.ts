@@ -87,6 +87,25 @@ export interface AppConfig {
   aisFlushBatchSize: number;
   /** Số resolver canonical tối đa chạy đồng thời cho một mẻ AIS. */
   aisResolveConcurrency: number;
+  /**
+   * Trần thời gian cho TOÀN BỘ một lượt làm mới detail — không phải mỗi nguồn.
+   *
+   * Ba nguồn × timeout riêng của từng nguồn sẽ thành 30–60 giây treo trên đầu
+   * người dùng cho một cú bấm. Ngân sách là của cả lượt.
+   */
+  detailRefreshTimeoutMs: number;
+  /**
+   * Số nguồn tối đa được HỎI RA NGOÀI trong một lượt làm mới.
+   *
+   * Mỗi lượt là một request thật lên site người ta; nguồn thứ ba hiếm khi thêm
+   * được gì mà hai nguồn đầu chưa có.
+   */
+  detailRefreshMaxSources: number;
+  /**
+   * Vừa làm mới xong thì nghỉ ngần này trước khi hỏi nguồn lại cho cùng
+   * (tàu, nhóm). Hàng rào chống bấm 20 lần thành 20 lượt crawl.
+   */
+  detailRefreshCooldownMs: number;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -213,6 +232,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
     aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
     aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),
     aisResolveConcurrency: positiveInteger(env, "AIS_RESOLVE_CONCURRENCY", 10),
+    detailRefreshTimeoutMs: positiveNum(env, "DETAIL_REFRESH_TIMEOUT_MS", 10_000),
+    detailRefreshMaxSources: positiveInteger(env, "DETAIL_REFRESH_MAX_SOURCES", 2),
+    detailRefreshCooldownMs: positiveNum(env, "DETAIL_REFRESH_COOLDOWN_MS", 5 * 60 * 1000),
   };
 }
 
