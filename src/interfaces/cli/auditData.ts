@@ -7,8 +7,8 @@
 //  nghi ngờ data sai, không cần sửa code / viết script tạm nữa.
 // ============================================================================
 
-import { buildContainer } from "../../container";
-import { BoundingBox } from "../../application/ports/Geo";
+import { buildContainer } from "../../bootstrap/container";
+import { BoundingBox } from "../../application/contracts/providers/Geo";
 
 function inAnyBox(lat: number, lon: number, boxes: BoundingBox[]): boolean {
   if (boxes.length === 0) return true; // không có bbox cấu hình -> không check

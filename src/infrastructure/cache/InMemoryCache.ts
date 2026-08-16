@@ -3,7 +3,7 @@
 //  implements ICache rồi đổi 1 dòng trong container.
 // ============================================================================
 
-import { ICache } from "../../application/ports/ICache";
+import { ICache } from "../../application/contracts/providers/ICache";
 
 interface Entry {
   value: unknown;

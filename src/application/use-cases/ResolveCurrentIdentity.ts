@@ -11,16 +11,16 @@
 //  storage.
 // ============================================================================
 
-import { IVesselObservationRepository } from "../observations/IVesselObservationRepository";
-import { IdentityResolver, ResolvedIdentity } from "../resolver/IdentityResolver";
+import { IVesselObservationRepository } from "../contracts/repositories/IVesselObservationRepository";
+import { IdentityResolver, ResolvedIdentity } from "../services/resolution/IdentityResolver";
 import {
   DEFAULT_IDENTITY_RESOLVER_POLICY,
   IdentityResolverPolicy,
-} from "../resolver/StaticResolverPolicy";
+} from "../services/resolution/StaticResolverPolicy";
 import {
   VesselObservationKey,
   VesselObservationType,
-} from "../../domain/observations/VesselObservation";
+} from "../../domain/entities/VesselObservation";
 
 export interface ResolveCurrentIdentityDeps {
   repository: IVesselObservationRepository;

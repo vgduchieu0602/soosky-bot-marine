@@ -16,9 +16,9 @@
 import {
   CurrentVesselSaveStatus,
   ICurrentVesselRepository,
-} from "../current/ICurrentVesselRepository";
-import { ResolvedCurrentVessel } from "../resolver/ResolvedCurrentVessel";
-import { VesselObservationKey } from "../../domain/observations/VesselObservation";
+} from "../contracts/repositories/ICurrentVesselRepository";
+import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
+import { VesselObservationKey } from "../../domain/entities/VesselObservation";
 import { ResolveCurrentVessel } from "./ResolveCurrentVessel";
 
 export const ResolveAndStoreStatus = {

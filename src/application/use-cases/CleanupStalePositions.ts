@@ -7,7 +7,7 @@
 //    • lịch sử lộ trình (positions) -> GIỮ (dữ liệu audit)
 // ============================================================================
 
-import { IVesselRepository } from "../ports/IVesselRepository";
+import { IVesselRepository } from "../contracts/repositories/IVesselRepository";
 
 export interface CleanupStalePositionsDeps {
   repo: IVesselRepository;

@@ -9,7 +9,7 @@
 
 import mongoose from "mongoose";
 import * as dotenv from "dotenv";
-import { VesselModel, PositionModel, LatestPositionModel } from "../../infrastructure/persistence/mongoose/models";
+import { VesselModel, PositionModel, LatestPositionModel } from "../../infrastructure/persistence/mongo/models";
 
 dotenv.config();
 

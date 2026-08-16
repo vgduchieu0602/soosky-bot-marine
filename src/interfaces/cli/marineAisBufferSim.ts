@@ -14,10 +14,10 @@
 //  ⚠️ Sự kiện là TỔNG HỢP, không chạm WebSocket, không chạm Mongo.
 // ============================================================================
 
-import { AisCoalescingBuffer } from "../../infrastructure/ais/AisCoalescingBuffer";
-import { MarineAisNormalizedEvent } from "../../infrastructure/ais/MarineAisWebSocketClient";
+import { AisCoalescingBuffer } from "../../application/services/ingestion/AisCoalescingBuffer";
+import { MarineAisNormalizedEvent } from "../../infrastructure/integrations/marine-ais/MarineAisWebSocketClient";
 import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
+import { VesselSource } from "../../domain/enums/VesselSource";
 
 const DEFAULTS = {
   vessels: 10_000,

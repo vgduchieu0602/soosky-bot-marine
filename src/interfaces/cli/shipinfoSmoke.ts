@@ -13,11 +13,11 @@
 // ============================================================================
 
 import { HttpClient } from "../../infrastructure/http/HttpClient";
-import { ShipInfoClient } from "../../infrastructure/providers/shipinfo/ShipInfoClient";
+import { ShipInfoClient } from "../../infrastructure/integrations/shipinfo/ShipInfoClient";
 import {
   ShipInfoParseError,
   parseShipInfoHtml,
-} from "../../infrastructure/providers/shipinfo/ShipInfoParser";
+} from "../../infrastructure/integrations/shipinfo/ShipInfoParser";
 
 /** Tàu đã dùng trong audit P6.1. */
 const DEFAULT_SAMPLE = ["9467976", "8642957"];

@@ -5,9 +5,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { CleanupStalePositions } from "./CleanupStalePositions";
-import { InMemoryVesselRepository } from "../../infrastructure/persistence/InMemoryVesselRepository";
-import { Vessel } from "../../domain/entities/Vessel";
-import { VesselPosition } from "../../domain/entities/VesselPosition";
+import { InMemoryVesselRepository } from "../../infrastructure/persistence/memory/InMemoryVesselRepository";
+import { Vessel } from "../../legacy/entities/Vessel";
+import { VesselPosition } from "../../legacy/entities/VesselPosition";
 
 const HOUR_MS = 60 * 60 * 1000;
 const NOW = new Date("2026-07-30T12:00:00.000Z");

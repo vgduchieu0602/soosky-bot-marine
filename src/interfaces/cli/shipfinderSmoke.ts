@@ -14,12 +14,12 @@
 // ============================================================================
 
 import { HttpClient } from "../../infrastructure/http/HttpClient";
-import { ShipFinderClient } from "../../infrastructure/providers/shipfinder/ShipFinderClient";
+import { ShipFinderClient } from "../../infrastructure/integrations/shipfinder/ShipFinderClient";
 import {
   SHIPFINDER_PARSER_VERSION,
   ShipFinderParseError,
   parseShipFinderHtml,
-} from "../../infrastructure/providers/shipfinder/ShipFinderParser";
+} from "../../infrastructure/integrations/shipfinder/ShipFinderParser";
 
 function usage(): void {
   console.log("👉 Cách dùng: npm run shipfinder:smoke -- --mmsi=<MMSI>");

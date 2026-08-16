@@ -20,30 +20,30 @@
 
 import {
   ObservationSaveResult,
-} from "../observations/IVesselObservationRepository";
-import { ObservationRecorder } from "../observations/ObservationRecorder";
-import { ProviderRegistry } from "../providers/ProviderRegistry";
+} from "../contracts/repositories/IVesselObservationRepository";
+import { ObservationRecorder } from "../services/observation/ObservationRecorder";
+import { ProviderRegistry } from "../services/acquisition/ProviderRegistry";
 import {
   ProviderDetailsResult,
   ProviderPositionResult,
-} from "../providers/ProviderResults";
+} from "../contracts/providers/ProviderResults";
 import {
   ProviderOperation,
   VesselDataProvider,
   providerSupportsOperation,
-} from "../providers/VesselDataProvider";
+} from "../contracts/providers/VesselDataProvider";
 import {
   SourceErrorCategory,
   SourceRequestError,
   notFoundError,
-} from "../runtime/SourceError";
-import { SourceHealthSnapshot } from "../runtime/SourceHealthTracker";
-import { SourceRuntimeManager } from "../runtime/SourceRuntimeManager";
+} from "../services/crawl-runtime/SourceError";
+import { SourceHealthSnapshot } from "../services/crawl-runtime/SourceHealthTracker";
+import { SourceRuntimeManager } from "../services/crawl-runtime/SourceRuntimeManager";
 import {
   VesselIdentifier,
   formatVesselIdentifier,
 } from "../../domain/value-objects/VesselIdentifier";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
+import { VesselSource } from "../../domain/enums/VesselSource";
 
 export const CollectStatus = {
   /** Nguồn có tàu; observation đã đi qua validation + dedupe. */

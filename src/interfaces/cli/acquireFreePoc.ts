@@ -19,10 +19,10 @@
 //  ⛔ KHÔNG ghi vào vessels / latestpositions / vesselpositions.
 // ============================================================================
 
-import { buildContainer } from "../../container";
-import { DataNeed, DataNeedType } from "../../application/acquisition/DataNeed";
+import { buildContainer } from "../../bootstrap/container";
+import { DataNeed, DataNeedType } from "../../application/services/acquisition/DataNeed";
 import { AcquisitionStopReason } from "../../application/use-cases/AcquireFreeVesselData";
-import { isVesselField, VesselField } from "../../domain/value-objects/VesselField";
+import { isVesselField, VesselField } from "../../domain/enums/VesselField";
 
 function usage(): void {
   console.log("👉 Cách dùng: npm run acquire:free:poc -- --mmsi=<MMSI> --need=<NEED> [--fields=a,b]");

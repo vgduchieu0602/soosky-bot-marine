@@ -12,12 +12,12 @@ import type { Express } from "express";
 import { createApp } from "./createApp";
 import { GetVesselDetails } from "../../application/use-cases/GetVesselDetails";
 import { ManageWatchlist } from "../../application/use-cases/ManageWatchlist";
-import { IVesselDetailsSource, VesselDetails } from "../../application/ports/IVesselDetailsSource";
-import { InMemoryVesselRepository } from "../../infrastructure/persistence/InMemoryVesselRepository";
-import { InMemoryWatchlistRepository } from "../../infrastructure/persistence/InMemoryWatchlistRepository";
+import { IVesselDetailsSource, VesselDetails } from "../../application/contracts/providers/IVesselDetailsSource";
+import { InMemoryVesselRepository } from "../../infrastructure/persistence/memory/InMemoryVesselRepository";
+import { InMemoryWatchlistRepository } from "../../infrastructure/persistence/memory/InMemoryWatchlistRepository";
 import { InMemoryCache } from "../../infrastructure/cache/InMemoryCache";
-import { Vessel } from "../../domain/entities/Vessel";
-import { VesselPosition } from "../../domain/entities/VesselPosition";
+import { Vessel } from "../../legacy/entities/Vessel";
+import { VesselPosition } from "../../legacy/entities/VesselPosition";
 import { Errors } from "../../domain/errors/AppError";
 
 const API_KEY = "test-key";

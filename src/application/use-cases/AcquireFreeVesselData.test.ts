@@ -11,29 +11,29 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { VesselIdentity } from "../../domain/canonical/VesselIdentity";
-import { VesselParticulars } from "../../domain/canonical/VesselParticulars";
-import { VesselPositionReport } from "../../domain/canonical/VesselPositionReport";
-import { VesselVoyage } from "../../domain/canonical/VesselVoyage";
-import { VesselField } from "../../domain/value-objects/VesselField";
+import { VesselIdentity } from "../../domain/value-objects/VesselIdentity";
+import { VesselParticulars } from "../../domain/value-objects/VesselParticulars";
+import { VesselPositionReport } from "../../domain/value-objects/VesselPositionReport";
+import { VesselVoyage } from "../../domain/value-objects/VesselVoyage";
+import { VesselField } from "../../domain/enums/VesselField";
 import { VesselIdentifier } from "../../domain/value-objects/VesselIdentifier";
 import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
-import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/InMemoryCurrentVesselRepository";
-import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/InMemoryVesselObservationRepository";
-import { AcquisitionOutcome } from "../acquisition/AcquisitionAttempt";
-import { DataNeed, DataNeedType } from "../acquisition/DataNeed";
-import { FreeSourceSelector } from "../acquisition/FreeSourceSelector";
-import { ObservationRecorder } from "../observations/ObservationRecorder";
-import { ProviderRegistry } from "../providers/ProviderRegistry";
+import { VesselSource } from "../../domain/enums/VesselSource";
+import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
+import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+import { AcquisitionOutcome } from "../services/acquisition/AcquisitionAttempt";
+import { DataNeed, DataNeedType } from "../services/acquisition/DataNeed";
+import { FreeSourceSelector } from "../services/acquisition/FreeSourceSelector";
+import { ObservationRecorder } from "../services/observation/ObservationRecorder";
+import { ProviderRegistry } from "../services/acquisition/ProviderRegistry";
 import {
   ProviderDetailsResult,
   ProviderPositionResult,
-} from "../providers/ProviderResults";
-import { VesselDataProvider } from "../providers/VesselDataProvider";
-import { SourceErrorCategory, SourceRequestError } from "../runtime/SourceError";
-import { SourceHealthState } from "../runtime/SourceHealthTracker";
-import { SourceRuntimeManager } from "../runtime/SourceRuntimeManager";
+} from "../contracts/providers/ProviderResults";
+import { VesselDataProvider } from "../contracts/providers/VesselDataProvider";
+import { SourceErrorCategory, SourceRequestError } from "../services/crawl-runtime/SourceError";
+import { SourceHealthState } from "../services/crawl-runtime/SourceHealthTracker";
+import { SourceRuntimeManager } from "../services/crawl-runtime/SourceRuntimeManager";
 import { ResolveCurrentVessel } from "./ResolveCurrentVessel";
 import { AcquireFreeVesselData, AcquisitionStopReason } from "./AcquireFreeVesselData";
 import { CheckLocalVesselSufficiency } from "./CheckLocalVesselSufficiency";

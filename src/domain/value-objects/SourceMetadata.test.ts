@@ -5,7 +5,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createSourceMetadata, isValidConfidence, isValidDate } from "./SourceMetadata";
-import { VesselSource } from "./VesselSource";
+import { VesselSource } from "../enums/VesselSource";
 
 const FETCHED_AT = new Date("2026-08-12T00:00:00.000Z");
 

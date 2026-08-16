@@ -16,25 +16,25 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ObservationRecorder } from "../observations/ObservationRecorder";
-import { ProviderRegistry } from "../providers/ProviderRegistry";
-import { SourceHealthState } from "../runtime/SourceHealthTracker";
-import { SourceRuntimeManager } from "../runtime/SourceRuntimeManager";
-import { FreeSourceSelector } from "../acquisition/FreeSourceSelector";
-import { AcquisitionOutcome } from "../acquisition/AcquisitionAttempt";
-import { DataNeedType } from "../acquisition/DataNeed";
-import { VesselField } from "../../domain/value-objects/VesselField";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
-import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/InMemoryCurrentVesselRepository";
-import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/InMemoryVesselObservationRepository";
-import { ShipFinderClient } from "../../infrastructure/providers/shipfinder/ShipFinderClient";
-import { SHIPFINDER_PARSER_VERSION } from "../../infrastructure/providers/shipfinder/ShipFinderParser";
-import { ShipFinderProvider } from "../../infrastructure/providers/shipfinder/ShipFinderProvider";
+import { ObservationRecorder } from "../services/observation/ObservationRecorder";
+import { ProviderRegistry } from "../services/acquisition/ProviderRegistry";
+import { SourceHealthState } from "../services/crawl-runtime/SourceHealthTracker";
+import { SourceRuntimeManager } from "../services/crawl-runtime/SourceRuntimeManager";
+import { FreeSourceSelector } from "../services/acquisition/FreeSourceSelector";
+import { AcquisitionOutcome } from "../services/acquisition/AcquisitionAttempt";
+import { DataNeedType } from "../services/acquisition/DataNeed";
+import { VesselField } from "../../domain/enums/VesselField";
+import { VesselSource } from "../../domain/enums/VesselSource";
+import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
+import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+import { ShipFinderClient } from "../../infrastructure/integrations/shipfinder/ShipFinderClient";
+import { SHIPFINDER_PARSER_VERSION } from "../../infrastructure/integrations/shipfinder/ShipFinderParser";
+import { ShipFinderProvider } from "../../infrastructure/integrations/shipfinder/ShipFinderProvider";
 import {
   FIXTURE_FULL_VESSEL,
   FIXTURE_NOT_FOUND,
   FIXTURE_STRUCTURE_DRIFT,
-} from "../../infrastructure/providers/shipfinder/shipFinderFixtures";
+} from "../../infrastructure/integrations/shipfinder/shipFinderFixtures";
 import { AcquireFreeVesselData, AcquisitionStopReason } from "./AcquireFreeVesselData";
 import { CheckLocalVesselSufficiency } from "./CheckLocalVesselSufficiency";
 import { CollectVesselObservations } from "./CollectVesselObservations";

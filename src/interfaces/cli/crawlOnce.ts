@@ -3,7 +3,7 @@
 //  Chạy:  npm run crawl
 // ============================================================================
 
-import { buildContainer } from "../../container";
+import { buildContainer } from "../../bootstrap/container";
 
 async function main(): Promise<void> {
   const { crawlFleetPositions, config, repository } = await buildContainer();

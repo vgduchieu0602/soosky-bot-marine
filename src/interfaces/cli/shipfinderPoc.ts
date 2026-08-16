@@ -16,15 +16,15 @@
 //  KHÔNG ghi vào vessels / latestpositions / vesselpositions.
 // ============================================================================
 
-import { buildContainer } from "../../container";
-import { ProviderOperation } from "../../application/providers/VesselDataProvider";
+import { buildContainer } from "../../bootstrap/container";
+import { ProviderOperation } from "../../application/contracts/providers/VesselDataProvider";
 import { CollectStatus } from "../../application/use-cases/CollectVesselObservations";
 import {
   SourceRequestError,
   SourceUnavailableError,
-} from "../../application/runtime/SourceError";
+} from "../../application/services/crawl-runtime/SourceError";
 import { mmsiIdentifier } from "../../domain/value-objects/VesselIdentifier";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
+import { VesselSource } from "../../domain/enums/VesselSource";
 
 function usage(): void {
   console.log("👉 Cách dùng: npm run shipfinder:poc -- --mmsi=<MMSI> [--position]");

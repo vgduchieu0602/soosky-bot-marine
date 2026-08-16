@@ -10,16 +10,16 @@
 //  provider, không ghi DB.
 // ============================================================================
 
-import { IVesselObservationRepository } from "../observations/IVesselObservationRepository";
-import { ResolvedVoyage, VoyageResolver } from "../resolver/VoyageResolver";
+import { IVesselObservationRepository } from "../contracts/repositories/IVesselObservationRepository";
+import { ResolvedVoyage, VoyageResolver } from "../services/resolution/VoyageResolver";
 import {
   DEFAULT_VOYAGE_RESOLVER_POLICY,
   VoyageResolverPolicy,
-} from "../resolver/StaticResolverPolicy";
+} from "../services/resolution/StaticResolverPolicy";
 import {
   VesselObservationKey,
   VesselObservationType,
-} from "../../domain/observations/VesselObservation";
+} from "../../domain/entities/VesselObservation";
 
 export interface ResolveCurrentVoyageDeps {
   repository: IVesselObservationRepository;

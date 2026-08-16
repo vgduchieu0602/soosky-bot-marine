@@ -3,7 +3,7 @@
 //  Chạy:  npm run get 9811983    (IMO hoặc MMSI đều được)
 // ============================================================================
 
-import { buildContainer } from "../../container";
+import { buildContainer } from "../../bootstrap/container";
 
 async function main(): Promise<void> {
   const id = process.argv[2];

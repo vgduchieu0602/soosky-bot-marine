@@ -17,12 +17,12 @@
 
 import {
   ICurrentVesselRepository,
-} from "../current/ICurrentVesselRepository";
-import { ResolvedCurrentVessel } from "../resolver/ResolvedCurrentVessel";
-import { VesselObservationKey } from "../../domain/observations/VesselObservation";
-import { DataNeed } from "../acquisition/DataNeed";
-import { LocalDataSufficiencyChecker } from "../acquisition/LocalDataSufficiencyChecker";
-import { SufficiencyResult } from "../acquisition/SufficiencyTypes";
+} from "../contracts/repositories/ICurrentVesselRepository";
+import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
+import { VesselObservationKey } from "../../domain/entities/VesselObservation";
+import { DataNeed } from "../services/acquisition/DataNeed";
+import { LocalDataSufficiencyChecker } from "../services/acquisition/LocalDataSufficiencyChecker";
+import { SufficiencyResult } from "../services/acquisition/SufficiencyTypes";
 
 export interface CheckLocalVesselSufficiencyDeps {
   repository: ICurrentVesselRepository;

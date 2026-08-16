@@ -25,21 +25,21 @@ import {
   AcquisitionFailureCode,
   AcquisitionOutcome,
   AttemptScope,
-} from "../acquisition/AcquisitionAttempt";
-import { DataNeed } from "../acquisition/DataNeed";
+} from "../services/acquisition/AcquisitionAttempt";
+import { DataNeed } from "../services/acquisition/DataNeed";
 import {
   DEFAULT_FREE_ACQUISITION_POLICY,
   FreeAcquisitionPolicy,
-} from "../acquisition/FreeAcquisitionPolicy";
-import { FreeSourceSelector } from "../acquisition/FreeSourceSelector";
-import { SourceAttemptPlan } from "../acquisition/SourceSelectionTypes";
-import { SufficiencyResult } from "../acquisition/SufficiencyTypes";
-import { ObservationSaveStatus } from "../observations/IVesselObservationRepository";
-import { ResolvedCurrentVessel } from "../resolver/ResolvedCurrentVessel";
-import { SourceRequestError, SourceUnavailableError } from "../runtime/SourceError";
-import { SourceHealthState } from "../runtime/SourceHealthTracker";
-import { VesselObservationKey } from "../../domain/observations/VesselObservation";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
+} from "../services/acquisition/FreeAcquisitionPolicy";
+import { FreeSourceSelector } from "../services/acquisition/FreeSourceSelector";
+import { SourceAttemptPlan } from "../services/acquisition/SourceSelectionTypes";
+import { SufficiencyResult } from "../services/acquisition/SufficiencyTypes";
+import { ObservationSaveStatus } from "../contracts/repositories/IVesselObservationRepository";
+import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
+import { SourceRequestError, SourceUnavailableError } from "../services/crawl-runtime/SourceError";
+import { SourceHealthState } from "../services/crawl-runtime/SourceHealthTracker";
+import { VesselObservationKey } from "../../domain/entities/VesselObservation";
+import { VesselSource } from "../../domain/enums/VesselSource";
 import { CheckLocalVesselSufficiency } from "./CheckLocalVesselSufficiency";
 import { CollectStatus, CollectVesselObservations } from "./CollectVesselObservations";
 import { ResolveAndStoreCurrentVessel } from "./ResolveAndStoreCurrentVessel";

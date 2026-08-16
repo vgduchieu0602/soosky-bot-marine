@@ -5,7 +5,7 @@
 //  private worker through the VPS service manager when regions change.
 // ============================================================================
 
-import { buildContainer } from "../../container";
+import { buildContainer } from "../../bootstrap/container";
 
 async function main(): Promise<void> {
   const { scanArea, config } = await buildContainer();

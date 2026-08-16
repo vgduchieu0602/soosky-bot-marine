@@ -6,7 +6,7 @@
 //  request gửi lên upstream luôn đoán được — muốn enrich thì phải chạy lệnh này.
 // ============================================================================
 
-import { buildContainer } from "../../container";
+import { buildContainer } from "../../bootstrap/container";
 
 async function main(): Promise<void> {
   const { enrichVesselTypes } = await buildContainer();

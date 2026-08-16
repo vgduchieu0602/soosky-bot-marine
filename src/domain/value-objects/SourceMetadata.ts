@@ -15,7 +15,7 @@
 //  hiện tại. A1 không migrate DB — xem CANONICAL_VESSEL_MODEL.md §6.
 // ============================================================================
 
-import { VesselSource } from "./VesselSource";
+import { VesselSource } from "../enums/VesselSource";
 
 export interface SourceMetadata {
   /** Nguồn đã cung cấp bản ghi này. */

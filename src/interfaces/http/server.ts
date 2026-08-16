@@ -14,7 +14,7 @@
 // ============================================================================
 
 import path from "path";
-import { buildContainer } from "../../container";
+import { buildContainer } from "../../bootstrap/container";
 import { IntervalScheduler } from "../../infrastructure/scheduler/IntervalScheduler";
 import { createApp } from "./createApp";
 

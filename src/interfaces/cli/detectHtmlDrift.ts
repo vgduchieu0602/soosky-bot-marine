@@ -8,7 +8,7 @@
 // ============================================================================
 
 import { HttpClient } from "../../infrastructure/http/HttpClient";
-import { analyzeHtml, DriftResult } from "../../infrastructure/datasources/htmlDrift";
+import { analyzeHtml, DriftResult } from "../../infrastructure/integrations/vesselfinder/htmlDrift";
 
 const BASE = "https://www.vesselfinder.com/vessels/details";
 const DELAY_MS = 2000; // ~1 req / 2s — an toàn, không phải spam

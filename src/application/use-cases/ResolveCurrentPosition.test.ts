@@ -7,17 +7,17 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { VesselPositionReport } from "../../domain/canonical/VesselPositionReport";
-import { ObservationValidationStatus } from "../../domain/observations/ObservationValidation";
+import { VesselPositionReport } from "../../domain/value-objects/VesselPositionReport";
+import { ObservationValidationStatus } from "../../domain/enums/ObservationValidation";
 import {
   PositionObservation,
   VesselObservationType,
-} from "../../domain/observations/VesselObservation";
+} from "../../domain/entities/VesselObservation";
 import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/value-objects/VesselSource";
-import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/InMemoryVesselObservationRepository";
-import { DEFAULT_POSITION_RESOLVER_POLICY } from "../resolver/PositionResolverPolicy";
-import { ResolutionReason } from "../resolver/ResolverTypes";
+import { VesselSource } from "../../domain/enums/VesselSource";
+import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+import { DEFAULT_POSITION_RESOLVER_POLICY } from "../services/resolution/PositionResolverPolicy";
+import { ResolutionReason } from "../services/resolution/ResolverTypes";
 import { ResolveCurrentPosition } from "./ResolveCurrentPosition";
 
 const MMSI = "636018086";

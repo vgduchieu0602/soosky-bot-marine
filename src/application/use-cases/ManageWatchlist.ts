@@ -4,7 +4,7 @@
 //  Dùng cho các API /watchlist. Có validate ID trước khi thêm.
 // ============================================================================
 
-import { IWatchlistRepository } from "../ports/IWatchlistRepository";
+import { IWatchlistRepository } from "../contracts/repositories/IWatchlistRepository";
 import { Errors } from "../../domain/errors/AppError";
 
 export class ManageWatchlist {

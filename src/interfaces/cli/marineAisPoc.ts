@@ -20,7 +20,7 @@ import {
   MarineAisClientEvent,
   MarineAisNormalizedEvent,
   MarineAisWebSocketClient,
-} from "../../infrastructure/ais/MarineAisWebSocketClient";
+} from "../../infrastructure/integrations/marine-ais/MarineAisWebSocketClient";
 
 const DEFAULT_MAX_MESSAGES = 20;
 const DEFAULT_MAX_SECONDS = 60;

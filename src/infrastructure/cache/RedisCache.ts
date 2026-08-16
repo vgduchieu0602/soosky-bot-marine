@@ -11,7 +11,7 @@
 // ============================================================================
 
 import Redis from "ioredis";
-import { ICache } from "../../application/ports/ICache";
+import { ICache } from "../../application/contracts/providers/ICache";
 
 export class RedisCache implements ICache {
   private readonly client: Redis;
