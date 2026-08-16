@@ -13,17 +13,17 @@ import assert from "node:assert/strict";
 import {
   CurrentVesselSaveResult,
   ICurrentVesselRepository,
-} from "../contracts/repositories/ICurrentVesselRepository";
-import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
-import { ObservationValidationStatus } from "../../domain/enums/ObservationValidation";
+} from "../../contracts/repositories/ICurrentVesselRepository";
+import { ResolvedCurrentVessel } from "../../services/resolution/ResolvedCurrentVessel";
+import { ObservationValidationStatus } from "../../../domain/enums/ObservationValidation";
 import {
   VesselObservationType,
   VesselSourceObservation,
-} from "../../domain/entities/VesselObservation";
-import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/enums/VesselSource";
-import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
-import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+} from "../../../domain/entities/VesselObservation";
+import { createSourceMetadata } from "../../../domain/value-objects/SourceMetadata";
+import { VesselSource } from "../../../domain/enums/VesselSource";
+import { InMemoryCurrentVesselRepository } from "../../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
+import { InMemoryVesselObservationRepository } from "../../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
 import { ResolveCurrentVessel } from "./ResolveCurrentVessel";
 import {
   ResolveAndStoreCurrentVessel,

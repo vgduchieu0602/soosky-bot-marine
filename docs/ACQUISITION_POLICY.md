@@ -802,7 +802,7 @@ Hiện thực **mục 1, 2 và 4 (một phần)** của §Q. Chỉ phần **loca
 | Kiểu kết quả, mã đóng | `src/application/acquisition/SufficiencyTypes.ts` |
 | Ngưỡng | `src/application/acquisition/SufficiencyPolicy.ts` |
 | Bộ kiểm — **hàm thuần** | `src/application/acquisition/LocalDataSufficiencyChecker.ts` |
-| Đường đọc | `src/application/use-cases/CheckLocalVesselSufficiency.ts` |
+| Đường đọc | `src/application/use-cases/acquisition/CheckLocalVesselSufficiency.ts` |
 
 Bốn resolver và kho canonical **không bị đụng**. Không dependency mới.
 
@@ -940,7 +940,7 @@ Hiện thực **mục 4** của §Q — vòng orchestration **đồng bộ, có 
 | Thành phần | File |
 |---|---|
 | Ngân sách | `src/application/acquisition/FreeAcquisitionPolicy.ts` |
-| Vòng orchestration | `src/application/use-cases/AcquireFreeVesselData.ts` |
+| Vòng orchestration | `src/application/use-cases/acquisition/AcquireFreeVesselData.ts` |
 | CLI chạy tay | `src/interfaces/cli/acquireFreePoc.ts` |
 
 Sửa nhỏ ở hai tầng trước: `SourceAttemptPlan` mang thêm `identifier` (selector là nơi duy nhất biết nguồn tra được bằng khoá nào), `CheckLocalVesselSufficiency` trả kèm `vessel` (tránh đọc canonical hai lần mỗi vòng), `AcquisitionAttempt` mang thêm `failureCode` + `targetFields`.

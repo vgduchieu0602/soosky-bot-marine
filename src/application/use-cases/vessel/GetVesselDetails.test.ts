@@ -5,11 +5,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GetVesselDetails } from "./GetVesselDetails";
-import { ICache } from "../contracts/providers/ICache";
-import { IVesselDetailsSource, VesselDetails } from "../contracts/providers/IVesselDetailsSource";
-import { InMemoryVesselRepository } from "../../infrastructure/persistence/memory/InMemoryVesselRepository";
-import { Vessel } from "../../legacy/entities/Vessel";
-import { VesselPosition } from "../../legacy/entities/VesselPosition";
+import { ICache } from "../../contracts/cache/ICache";
+import { IVesselDetailsSource, VesselDetails } from "../../contracts/providers/IVesselDetailsSource";
+import { InMemoryVesselRepository } from "../../../infrastructure/persistence/memory/InMemoryVesselRepository";
+import { Vessel } from "../../../legacy/entities/Vessel";
+import { VesselPosition } from "../../../legacy/entities/VesselPosition";
 
 const ID = "222222222";
 

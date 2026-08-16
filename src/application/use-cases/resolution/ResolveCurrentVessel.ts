@@ -18,9 +18,9 @@
 //  Tầng này KHÔNG phân xử gì cả. Nó không biết luật của nhóm nào.
 // ============================================================================
 
-import { IVesselObservationRepository } from "../contracts/repositories/IVesselObservationRepository";
-import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
-import { VesselObservationKey } from "../../domain/entities/VesselObservation";
+import { IVesselObservationRepository } from "../../contracts/repositories/IVesselObservationRepository";
+import { ResolvedCurrentVessel } from "../../services/resolution/ResolvedCurrentVessel";
+import { VesselObservationKey } from "../../../domain/entities/VesselObservation";
 import { ResolveCurrentIdentity } from "./ResolveCurrentIdentity";
 import { ResolveCurrentParticulars } from "./ResolveCurrentParticulars";
 import { ResolveCurrentPosition } from "./ResolveCurrentPosition";

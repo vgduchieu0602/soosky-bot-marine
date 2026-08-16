@@ -5,10 +5,10 @@
 //  constructor (Dependency Injection).
 // ============================================================================
 
-import { IVesselDetailsSource, VesselDetails } from "../contracts/providers/IVesselDetailsSource";
-import { IVesselRepository } from "../contracts/repositories/IVesselRepository";
-import { ICache } from "../contracts/providers/ICache";
-import { Errors } from "../../domain/errors/AppError";
+import { IVesselDetailsSource, VesselDetails } from "../../contracts/providers/IVesselDetailsSource";
+import { IVesselRepository } from "../../contracts/repositories/IVesselRepository";
+import { ICache } from "../../contracts/cache/ICache";
+import { Errors } from "../../../domain/errors/AppError";
 
 export interface GetVesselDetailsDeps {
   detailsSource: IVesselDetailsSource;

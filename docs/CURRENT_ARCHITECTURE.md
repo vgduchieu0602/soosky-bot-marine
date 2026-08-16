@@ -78,7 +78,7 @@ Cả hai domain đều hardcode dưới dạng `private readonly BASE` trong cla
 ### 2.2 VesselFinder được gọi ở đâu (call graph)
 
 `VesselFinderHtmlSource.getDetails()` được gọi từ 3 chỗ:
-- `GetVesselDetails.execute()` → [GetVesselDetails.ts:46](../src/application/use-cases/GetVesselDetails.ts#L46) (chỉ khi cache miss)
+- `GetVesselDetails.execute()` → [GetVesselDetails.ts:46](../src/application/use-cases/vessel/GetVesselDetails.ts#L46) (chỉ khi cache miss)
 - `CrawlFleetPositions.execute()` → [CrawlFleetPositions.ts:44](../src/application/use-cases/CrawlFleetPositions.ts#L44) (vòng lặp watchlist)
 - `EnrichVesselTypes.runOnce()` → [EnrichVesselTypes.ts:63](../src/application/use-cases/EnrichVesselTypes.ts#L63) (batch tàu thiếu `type`)
 
@@ -272,7 +272,7 @@ Config mặc định (constructor) vs `.env`:
 
 ### 4.5 `CleanupStalePositions`
 
-[src/application/use-cases/CleanupStalePositions.ts](../src/application/use-cases/CleanupStalePositions.ts) — `deleteLatestPositionsOlderThan(now - staleAfterMs)`. Chỉ đụng `latestpositions`; `vessels` và `vesselpositions` giữ nguyên. Chu kỳ `POSITION_CLEANUP_EVERY_MS` (1h), ngưỡng `POSITION_STALE_AFTER_MS` (24h).
+[src/application/use-cases/vessel/CleanupStalePositions.ts](../src/application/use-cases/vessel/CleanupStalePositions.ts) — `deleteLatestPositionsOlderThan(now - staleAfterMs)`. Chỉ đụng `latestpositions`; `vessels` và `vesselpositions` giữ nguyên. Chu kỳ `POSITION_CLEANUP_EVERY_MS` (1h), ngưỡng `POSITION_STALE_AFTER_MS` (24h).
 
 Cùng ngưỡng đó cũng được HTTP `/positions` dùng để lọc lúc đọc ([createApp.ts:97](../src/interfaces/http/createApp.ts#L97)) → cleanup lỗi cũng không làm data cũ hiện lại.
 
@@ -596,8 +596,8 @@ Ghi chú về việc **chưa** làm:
 | Test | Phủ |
 |---|---|
 | `config/index.test.ts` | validate env số |
-| `application/use-cases/GetVesselDetails.test.ts` | cache hit/miss, validate id |
-| `application/use-cases/CleanupStalePositions.test.ts` | xoá latest, giữ history |
+| `application/use-cases/vessel/GetVesselDetails.test.ts` | cache hit/miss, validate id |
+| `application/use-cases/vessel/CleanupStalePositions.test.ts` | xoá latest, giữ history |
 | `application/use-cases/worldTiles.test.ts` | sinh tile, splitBox |
 | `infrastructure/datasources/htmlDrift.test.ts` | phát hiện drift |
 | `infrastructure/persistence/JsonFileVesselRepository.test.ts` | latest vs history |

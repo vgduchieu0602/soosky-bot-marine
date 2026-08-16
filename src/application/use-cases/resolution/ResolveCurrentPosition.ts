@@ -15,16 +15,16 @@
 
 import {
   IVesselObservationRepository,
-} from "../contracts/repositories/IVesselObservationRepository";
-import { PositionResolver, ResolvedPosition } from "../services/resolution/PositionResolver";
+} from "../../contracts/repositories/IVesselObservationRepository";
+import { PositionResolver, ResolvedPosition } from "../../services/resolution/PositionResolver";
 import {
   DEFAULT_POSITION_RESOLVER_POLICY,
   PositionResolverPolicy,
-} from "../services/resolution/PositionResolverPolicy";
+} from "../../services/resolution/PositionResolverPolicy";
 import {
   VesselObservationKey,
   VesselObservationType,
-} from "../../domain/entities/VesselObservation";
+} from "../../../domain/entities/VesselObservation";
 
 export interface ResolveCurrentPositionDeps {
   repository: IVesselObservationRepository;

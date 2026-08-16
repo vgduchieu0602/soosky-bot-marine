@@ -20,7 +20,7 @@
 
 import { buildContainer } from "../../bootstrap/container";
 import { ProviderOperation } from "../../application/contracts/providers/VesselDataProvider";
-import { CollectStatus } from "../../application/use-cases/CollectVesselObservations";
+import { CollectStatus } from "../../application/use-cases/observation/CollectVesselObservations";
 import {
   SourceRequestError,
   SourceUnavailableError,

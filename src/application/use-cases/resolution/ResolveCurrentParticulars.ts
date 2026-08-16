@@ -9,16 +9,16 @@
 //  Chỉ ĐỌC: không mạng, không provider, không ghi DB.
 // ============================================================================
 
-import { IVesselObservationRepository } from "../contracts/repositories/IVesselObservationRepository";
-import { ParticularsResolver, ResolvedParticulars } from "../services/resolution/ParticularsResolver";
+import { IVesselObservationRepository } from "../../contracts/repositories/IVesselObservationRepository";
+import { ParticularsResolver, ResolvedParticulars } from "../../services/resolution/ParticularsResolver";
 import {
   DEFAULT_PARTICULARS_RESOLVER_POLICY,
   ParticularsResolverPolicy,
-} from "../services/resolution/StaticResolverPolicy";
+} from "../../services/resolution/StaticResolverPolicy";
 import {
   VesselObservationKey,
   VesselObservationType,
-} from "../../domain/entities/VesselObservation";
+} from "../../../domain/entities/VesselObservation";
 
 export interface ResolveCurrentParticularsDeps {
   repository: IVesselObservationRepository;

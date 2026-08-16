@@ -9,7 +9,7 @@
 //  cực gần như không có tàu -> bỏ để đỡ tốn request.
 // ============================================================================
 
-import { BoundingBox } from "../../application/contracts/providers/Geo";
+import { BoundingBox } from "../../application/contracts/geo/Geo";
 
 const LAT_LIMIT = 84;
 const LON_LIMIT = 180;

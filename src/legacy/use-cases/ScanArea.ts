@@ -11,9 +11,9 @@
 //    • Bị chặn (403/429) -> hạ nhiệt DÀI rồi tiếp, không mất cả vòng.
 // ============================================================================
 
-import { IAreaScanner } from "../../application/contracts/providers/IAreaScanner";
+import { IAreaScanner } from "../../application/contracts/geo/IAreaScanner";
 import { IVesselRepository } from "../../application/contracts/repositories/IVesselRepository";
-import { BoundingBox } from "../../application/contracts/providers/Geo";
+import { BoundingBox } from "../../application/contracts/geo/Geo";
 import { Vessel } from "../entities/Vessel";
 import { VesselPosition } from "../entities/VesselPosition";
 import { splitBox, boxHeightDeg } from "./worldTiles";

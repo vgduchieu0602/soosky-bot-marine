@@ -8,8 +8,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BoundingBox } from "../../../application/contracts/providers/Geo";
-import { IAreaScanner, ScannedShip } from "../../../application/contracts/providers/IAreaScanner";
+import { BoundingBox } from "../../../application/contracts/geo/Geo";
+import { IAreaScanner, ScannedShip } from "../../../application/contracts/geo/IAreaScanner";
 import {
   IVesselDetailsSource,
   VesselDetails,

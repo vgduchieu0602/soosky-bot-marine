@@ -11,8 +11,8 @@
 // ============================================================================
 
 import { HttpClient } from "../../http/HttpClient";
-import { BoundingBox } from "../../../application/contracts/providers/Geo";
-import { IAreaScanner, ScannedShip } from "../../../application/contracts/providers/IAreaScanner";
+import { BoundingBox } from "../../../application/contracts/geo/Geo";
+import { IAreaScanner, ScannedShip } from "../../../application/contracts/geo/IAreaScanner";
 
 const COORD_DIV = 600000; // toạ độ trong binary = độ × 600000
 

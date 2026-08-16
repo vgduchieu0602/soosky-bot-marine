@@ -15,7 +15,7 @@
 //  ghi DB. Nó chỉ biết một nguồn và cách đọc nguồn đó.
 // ============================================================================
 
-import { BoundingBox } from "./Geo";
+import { BoundingBox } from "../geo/Geo";
 import { VesselIdentifier } from "../../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../../domain/enums/VesselSource";
 import {

@@ -1,5 +1,7 @@
 # Architecture
 
+This is the authoritative current architecture document. Earlier phase documents are historical or detailed references and do not override this structure.
+
 ## System responsibility
 
 `Soosky-bot-marine` consumes the Marine AIS WebSocket, crawls and enriches free vessel sources, normalizes source observations, resolves multi-source data, and maintains the canonical current vessel. Paid tracking ingestion is reserved for a future phase.
@@ -65,13 +67,32 @@ Mongo schema and Mongoose model remain together in each model module. A domain e
 
 A use case represents a complete application workflow, such as acquiring vessel data or resolving and storing a current vessel. A service supports one or more workflows with policy or orchestration logic.
 
+Use cases are grouped by responsibility:
+
+- `application/use-cases/acquisition/`
+- `application/use-cases/observation/`
+- `application/use-cases/resolution/`
+- `application/use-cases/vessel/`
+- `application/use-cases/watchlist/`
+
+No AIS ingestion use case exists yet; AIS-4 is the phase that may introduce one.
+
 Examples:
 
 - `AisCoalescingBuffer` is an application ingestion service.
 - `PositionResolver` is an application resolution service.
 - `MarineAisWebSocketClient` is an infrastructure adapter.
 
-Repository and provider interfaces live in `application/contracts/repositories/` and `application/contracts/providers/`. Concrete adapters implement those contracts from infrastructure.
+Contracts live next to their responsibility: repositories in `application/contracts/repositories/`, provider contracts in `application/contracts/providers/`, cache contracts in `application/contracts/cache/`, and geographic scanning primitives in `application/contracts/geo/`. Concrete adapters implement those contracts from infrastructure.
+
+## Bootstrap
+
+`bootstrap/container.ts` remains the composition root. It makes the two compatibility boundaries explicit:
+
+- `createLegacyDependencies.ts` wires the retained VesselFinder-oriented HTTP/CLI compatibility path.
+- `createCanonicalDependencies.ts` wires multi-source providers, observations, resolvers, and canonical current-vessel dependencies.
+
+Both factories only compose dependencies. They do not start a crawler, scheduler, or AIS client.
 
 ## Legacy code
 

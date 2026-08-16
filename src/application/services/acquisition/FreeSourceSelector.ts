@@ -39,7 +39,7 @@ import { getSourceCapability } from "./capabilities/capabilityQueries";
 import { SOURCE_CAPABILITY_MATRIX } from "./capabilities/sourceCapabilityMatrix";
 import { SourceHealthState } from "../crawl-runtime/SourceHealthTracker";
 import { ProviderOperation } from "../../contracts/providers/VesselDataProvider";
-import { CollectOperation } from "../../use-cases/CollectVesselObservations";
+import { CollectOperation } from "../../use-cases/observation/CollectVesselObservations";
 import {
   AcquisitionAttempt,
   AcquisitionOutcome,

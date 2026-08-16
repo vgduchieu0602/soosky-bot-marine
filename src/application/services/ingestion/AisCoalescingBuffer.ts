@@ -1,5 +1,5 @@
 // ============================================================================
-//  INFRASTRUCTURE · AisCoalescingBuffer — hãm vòi rồng AIS trước khi đụng DB
+//  APPLICATION · AisCoalescingBuffer — hãm vòi rồng AIS trước khi đụng DB
 // ----------------------------------------------------------------------------
 //      normalizedData (AIS-2)  ->  accept()  ->  [trạng thái MỚI NHẤT / MMSI]
 //                                            ->  drainBatch(limit)  ->  mẻ có trần

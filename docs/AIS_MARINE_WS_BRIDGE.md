@@ -298,8 +298,8 @@ In tối đa vài sample một dòng (mmsi, lat/lng hoặc name/type, `sourceRec
 
 | File | |
 |---|---|
-| `src/infrastructure/ais/MarineAisWebSocketClient.ts` | client |
-| `src/infrastructure/ais/MarineAisWebSocketClient.test.ts` | test với WS server giả ở localhost |
+| `src/infrastructure/integrations/marine-ais/MarineAisWebSocketClient.ts` | client |
+| `src/infrastructure/integrations/marine-ais/MarineAisWebSocketClient.test.ts` | test với WS server giả ở localhost |
 | `src/interfaces/cli/marineAisPoc.ts` | POC gọi tay, có trần |
 | `src/config/index.ts` | `marineAisWsUrl` |
 | `.env.example` | `MARINE_AIS_WS_URL` |

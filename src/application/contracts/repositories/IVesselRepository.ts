@@ -5,7 +5,7 @@
 
 import { Vessel } from "../../../legacy/entities/Vessel";
 import { VesselPosition } from "../../../legacy/entities/VesselPosition";
-import { BoundingBox } from "../providers/Geo";
+import { BoundingBox } from "../geo/Geo";
 
 export interface IVesselRepository {
   saveVessel(vessel: Vessel): Promise<void>;

@@ -15,7 +15,7 @@ import { VesselObservationKey } from "../../../domain/entities/VesselObservation
 import { VesselField } from "../../../domain/enums/VesselField";
 import { VesselSource } from "../../../domain/enums/VesselSource";
 import { SourceErrorCategory } from "../crawl-runtime/SourceError";
-import { CollectOperation } from "../../use-cases/CollectVesselObservations";
+import { CollectOperation } from "../../use-cases/observation/CollectVesselObservations";
 
 export const AcquisitionOutcome = {
   /** Nguồn trả dữ liệu, observation đã được ghi. */

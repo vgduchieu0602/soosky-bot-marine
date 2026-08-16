@@ -101,7 +101,7 @@ name: data.MetaData.ShipName
 
 ### Bot-side DTO
 
-`src/infrastructure/ais/MarineAisTypes.ts` sao chép **hình dạng**, không import code. Hai repository biên dịch độc lập; đổi lại, lệch contract phải bắt bằng audit + test chứ compiler không bắt hộ. `MarineAisMessageMapper.test.ts` giữ đúng vai đó.
+`src/infrastructure/integrations/marine-ais/MarineAisTypes.ts` sao chép **hình dạng**, không import code. Hai repository biên dịch độc lập; đổi lại, lệch contract phải bắt bằng audit + test chứ compiler không bắt hộ. `MarineAisMessageMapper.test.ts` giữ đúng vai đó.
 
 ---
 
@@ -318,10 +318,10 @@ AIS là **PUSH source**. Không ép nó vào `VesselDataProvider.fetch(identifie
 
 | File | Vai trò |
 |---|---|
-| `src/infrastructure/ais/MarineAisTypes.ts` | DTO ranh giới tích hợp + type guard hình dạng |
-| `src/infrastructure/ais/MarineAisMessageMapper.ts` | mapper **thuần** |
-| `src/infrastructure/ais/MarineAisMessageMapper.test.ts` | §17–§26 của yêu cầu |
-| `src/infrastructure/ais/marineAisPipeline.test.ts` | §27–§28: observation + resolver |
+| `src/infrastructure/integrations/marine-ais/MarineAisTypes.ts` | DTO ranh giới tích hợp + type guard hình dạng |
+| `src/infrastructure/integrations/marine-ais/MarineAisMessageMapper.ts` | mapper **thuần** |
+| `src/infrastructure/integrations/marine-ais/MarineAisMessageMapper.test.ts` | §17–§26 của yêu cầu |
+| `src/infrastructure/integrations/marine-ais/marineAisPipeline.test.ts` | §27–§28: observation + resolver |
 | `src/application/capabilities/sourceCapabilityMatrix.ts` | capability AISSTREAM theo bằng chứng mới |
 
 ---

@@ -8,7 +8,7 @@
 // ============================================================================
 
 import { buildContainer } from "../../bootstrap/container";
-import { BoundingBox } from "../../application/contracts/providers/Geo";
+import { BoundingBox } from "../../application/contracts/geo/Geo";
 
 function inAnyBox(lat: number, lon: number, boxes: BoundingBox[]): boolean {
   if (boxes.length === 0) return true; // không có bbox cấu hình -> không check

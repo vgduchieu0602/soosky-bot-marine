@@ -9,7 +9,7 @@
 
 import "dotenv/config";
 import * as path from "path";
-import { BoundingBox } from "../application/contracts/providers/Geo";
+import { BoundingBox } from "../application/contracts/geo/Geo";
 
 export interface AppConfig {
   dataDir: string;

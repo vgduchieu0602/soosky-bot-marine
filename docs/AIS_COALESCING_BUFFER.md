@@ -305,10 +305,10 @@ Node đơn luồng và `accept()`/`drainBatch()` đều đồng bộ → **khôn
 
 | File | |
 |---|---|
-| `src/infrastructure/ais/AisCoalescingBuffer.ts` | state thuần, không timer |
-| `src/infrastructure/ais/MarineAisIngestionCoordinator.ts` | dây nối client ↔ buffer + một timer |
-| `src/infrastructure/ais/AisCoalescingBuffer.test.ts` | luật gộp, đuổi, rút mẻ |
-| `src/infrastructure/ais/marineAisIngestion.test.ts` | WS giả → client → buffer → mẻ |
+| `src/application/services/ingestion/AisCoalescingBuffer.ts` | state thuần, không timer |
+| `src/infrastructure/integrations/marine-ais/MarineAisIngestionCoordinator.ts` | dây nối client ↔ buffer + một timer |
+| `src/application/services/ingestion/AisCoalescingBuffer.test.ts` | luật gộp, đuổi, rút mẻ |
+| `src/infrastructure/integrations/marine-ais/marineAisIngestion.test.ts` | WS giả → client → buffer → mẻ |
 | `src/interfaces/cli/marineAisBufferSim.ts` | mô phỏng tải tổng hợp, không mạng |
 | `src/config/index.ts` · `.env.example` | ba biến ở §11 |
 

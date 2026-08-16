@@ -21,7 +21,7 @@
 
 import { buildContainer } from "../../bootstrap/container";
 import { DataNeed, DataNeedType } from "../../application/services/acquisition/DataNeed";
-import { AcquisitionStopReason } from "../../application/use-cases/AcquireFreeVesselData";
+import { AcquisitionStopReason } from "../../application/use-cases/acquisition/AcquireFreeVesselData";
 import { isVesselField, VesselField } from "../../domain/enums/VesselField";
 
 function usage(): void {

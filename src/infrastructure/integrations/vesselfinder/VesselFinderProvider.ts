@@ -24,8 +24,8 @@
 //  P3 — xem PROVIDER_ARCHITECTURE.md §6/§8.
 // ============================================================================
 
-import { BoundingBox } from "../../../application/contracts/providers/Geo";
-import { IAreaScanner, ScannedShip } from "../../../application/contracts/providers/IAreaScanner";
+import { BoundingBox } from "../../../application/contracts/geo/Geo";
+import { IAreaScanner, ScannedShip } from "../../../application/contracts/geo/IAreaScanner";
 import { IVesselDetailsSource } from "../../../application/contracts/providers/IVesselDetailsSource";
 import {
   ProviderDetailsResult,

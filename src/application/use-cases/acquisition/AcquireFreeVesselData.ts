@@ -25,24 +25,24 @@ import {
   AcquisitionFailureCode,
   AcquisitionOutcome,
   AttemptScope,
-} from "../services/acquisition/AcquisitionAttempt";
-import { DataNeed } from "../services/acquisition/DataNeed";
+} from "../../services/acquisition/AcquisitionAttempt";
+import { DataNeed } from "../../services/acquisition/DataNeed";
 import {
   DEFAULT_FREE_ACQUISITION_POLICY,
   FreeAcquisitionPolicy,
-} from "../services/acquisition/FreeAcquisitionPolicy";
-import { FreeSourceSelector } from "../services/acquisition/FreeSourceSelector";
-import { SourceAttemptPlan } from "../services/acquisition/SourceSelectionTypes";
-import { SufficiencyResult } from "../services/acquisition/SufficiencyTypes";
-import { ObservationSaveStatus } from "../contracts/repositories/IVesselObservationRepository";
-import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
-import { SourceRequestError, SourceUnavailableError } from "../services/crawl-runtime/SourceError";
-import { SourceHealthState } from "../services/crawl-runtime/SourceHealthTracker";
-import { VesselObservationKey } from "../../domain/entities/VesselObservation";
-import { VesselSource } from "../../domain/enums/VesselSource";
+} from "../../services/acquisition/FreeAcquisitionPolicy";
+import { FreeSourceSelector } from "../../services/acquisition/FreeSourceSelector";
+import { SourceAttemptPlan } from "../../services/acquisition/SourceSelectionTypes";
+import { SufficiencyResult } from "../../services/acquisition/SufficiencyTypes";
+import { ObservationSaveStatus } from "../../contracts/repositories/IVesselObservationRepository";
+import { ResolvedCurrentVessel } from "../../services/resolution/ResolvedCurrentVessel";
+import { SourceRequestError, SourceUnavailableError } from "../../services/crawl-runtime/SourceError";
+import { SourceHealthState } from "../../services/crawl-runtime/SourceHealthTracker";
+import { VesselObservationKey } from "../../../domain/entities/VesselObservation";
+import { VesselSource } from "../../../domain/enums/VesselSource";
 import { CheckLocalVesselSufficiency } from "./CheckLocalVesselSufficiency";
-import { CollectStatus, CollectVesselObservations } from "./CollectVesselObservations";
-import { ResolveAndStoreCurrentVessel } from "./ResolveAndStoreCurrentVessel";
+import { CollectStatus, CollectVesselObservations } from "../observation/CollectVesselObservations";
+import { ResolveAndStoreCurrentVessel } from "../resolution/ResolveAndStoreCurrentVessel";
 
 export const AcquisitionStopReason = {
   /** Canonical đã đủ ngay từ đầu -> KHÔNG một request mạng nào. */

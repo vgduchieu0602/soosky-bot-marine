@@ -6,7 +6,7 @@
 // ============================================================================
 
 import { IVesselRepository } from "../../../application/contracts/repositories/IVesselRepository";
-import { BoundingBox } from "../../../application/contracts/providers/Geo";
+import { BoundingBox } from "../../../application/contracts/geo/Geo";
 import { Vessel } from "../../../legacy/entities/Vessel";
 import { VesselPosition } from "../../../legacy/entities/VesselPosition";
 import {

@@ -21,7 +21,7 @@ import { SourceRuntimeManager } from "../../../application/services/crawl-runtim
 import {
   CollectStatus,
   CollectVesselObservations,
-} from "../../../application/use-cases/CollectVesselObservations";
+} from "../../../application/use-cases/observation/CollectVesselObservations";
 import { VesselObservationType } from "../../../domain/entities/VesselObservation";
 import { ObservationValidationStatus } from "../../../domain/enums/ObservationValidation";
 import { imoIdentifier, mmsiIdentifier } from "../../../domain/value-objects/VesselIdentifier";

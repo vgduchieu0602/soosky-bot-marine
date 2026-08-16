@@ -11,34 +11,34 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { VesselIdentity } from "../../domain/value-objects/VesselIdentity";
-import { VesselParticulars } from "../../domain/value-objects/VesselParticulars";
-import { VesselPositionReport } from "../../domain/value-objects/VesselPositionReport";
-import { VesselVoyage } from "../../domain/value-objects/VesselVoyage";
-import { VesselField } from "../../domain/enums/VesselField";
-import { VesselIdentifier } from "../../domain/value-objects/VesselIdentifier";
-import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/enums/VesselSource";
-import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
-import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
-import { AcquisitionOutcome } from "../services/acquisition/AcquisitionAttempt";
-import { DataNeed, DataNeedType } from "../services/acquisition/DataNeed";
-import { FreeSourceSelector } from "../services/acquisition/FreeSourceSelector";
-import { ObservationRecorder } from "../services/observation/ObservationRecorder";
-import { ProviderRegistry } from "../services/acquisition/ProviderRegistry";
+import { VesselIdentity } from "../../../domain/value-objects/VesselIdentity";
+import { VesselParticulars } from "../../../domain/value-objects/VesselParticulars";
+import { VesselPositionReport } from "../../../domain/value-objects/VesselPositionReport";
+import { VesselVoyage } from "../../../domain/value-objects/VesselVoyage";
+import { VesselField } from "../../../domain/enums/VesselField";
+import { VesselIdentifier } from "../../../domain/value-objects/VesselIdentifier";
+import { createSourceMetadata } from "../../../domain/value-objects/SourceMetadata";
+import { VesselSource } from "../../../domain/enums/VesselSource";
+import { InMemoryCurrentVesselRepository } from "../../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
+import { InMemoryVesselObservationRepository } from "../../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+import { AcquisitionOutcome } from "../../services/acquisition/AcquisitionAttempt";
+import { DataNeed, DataNeedType } from "../../services/acquisition/DataNeed";
+import { FreeSourceSelector } from "../../services/acquisition/FreeSourceSelector";
+import { ObservationRecorder } from "../../services/observation/ObservationRecorder";
+import { ProviderRegistry } from "../../services/acquisition/ProviderRegistry";
 import {
   ProviderDetailsResult,
   ProviderPositionResult,
-} from "../contracts/providers/ProviderResults";
-import { VesselDataProvider } from "../contracts/providers/VesselDataProvider";
-import { SourceErrorCategory, SourceRequestError } from "../services/crawl-runtime/SourceError";
-import { SourceHealthState } from "../services/crawl-runtime/SourceHealthTracker";
-import { SourceRuntimeManager } from "../services/crawl-runtime/SourceRuntimeManager";
-import { ResolveCurrentVessel } from "./ResolveCurrentVessel";
+} from "../../contracts/providers/ProviderResults";
+import { VesselDataProvider } from "../../contracts/providers/VesselDataProvider";
+import { SourceErrorCategory, SourceRequestError } from "../../services/crawl-runtime/SourceError";
+import { SourceHealthState } from "../../services/crawl-runtime/SourceHealthTracker";
+import { SourceRuntimeManager } from "../../services/crawl-runtime/SourceRuntimeManager";
+import { ResolveCurrentVessel } from "../resolution/ResolveCurrentVessel";
 import { AcquireFreeVesselData, AcquisitionStopReason } from "./AcquireFreeVesselData";
 import { CheckLocalVesselSufficiency } from "./CheckLocalVesselSufficiency";
-import { CollectVesselObservations } from "./CollectVesselObservations";
-import { ResolveAndStoreCurrentVessel } from "./ResolveAndStoreCurrentVessel";
+import { CollectVesselObservations } from "../observation/CollectVesselObservations";
+import { ResolveAndStoreCurrentVessel } from "../resolution/ResolveAndStoreCurrentVessel";
 
 const MMSI = "636018086";
 const NOW = new Date("2026-08-14T17:00:00.000Z");

@@ -9,7 +9,7 @@
 import { VesselField, VesselFieldGroup } from "../../../domain/enums/VesselField";
 import { VesselIdentifier } from "../../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../../domain/enums/VesselSource";
-import { CollectOperation } from "../../use-cases/CollectVesselObservations";
+import { CollectOperation } from "../../use-cases/observation/CollectVesselObservations";
 
 /**
  * Một thứ cần lấy được, dịch từ `SufficiencyResult.missing`.

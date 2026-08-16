@@ -54,7 +54,7 @@ export class JsonFileVesselRepository implements IVesselRepository {
   }
 
   async getLatestPositionsInBbox(
-    box: import("../../../application/contracts/providers/Geo").BoundingBox,
+    box: import("../../../application/contracts/geo/Geo").BoundingBox,
     limit: number,
     freshSince?: Date
   ): Promise<VesselPosition[]> {

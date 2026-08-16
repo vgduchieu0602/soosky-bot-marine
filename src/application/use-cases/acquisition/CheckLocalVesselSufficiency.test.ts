@@ -7,15 +7,15 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PositionFreshness } from "../services/resolution/PositionResolverPolicy";
-import { ResolvedCurrentVessel } from "../services/resolution/ResolvedCurrentVessel";
-import { ResolutionReason, ResolvedField } from "../services/resolution/ResolverTypes";
-import { VesselField, VesselFieldGroup } from "../../domain/enums/VesselField";
-import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/enums/VesselSource";
-import { InMemoryCurrentVesselRepository } from "../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
-import { DataNeedType, InvalidDataNeedError } from "../services/acquisition/DataNeed";
-import { MissingReason } from "../services/acquisition/SufficiencyTypes";
+import { PositionFreshness } from "../../services/resolution/PositionResolverPolicy";
+import { ResolvedCurrentVessel } from "../../services/resolution/ResolvedCurrentVessel";
+import { ResolutionReason, ResolvedField } from "../../services/resolution/ResolverTypes";
+import { VesselField, VesselFieldGroup } from "../../../domain/enums/VesselField";
+import { createSourceMetadata } from "../../../domain/value-objects/SourceMetadata";
+import { VesselSource } from "../../../domain/enums/VesselSource";
+import { InMemoryCurrentVesselRepository } from "../../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
+import { DataNeedType, InvalidDataNeedError } from "../../services/acquisition/DataNeed";
+import { MissingReason } from "../../services/acquisition/SufficiencyTypes";
 import { CheckLocalVesselSufficiency } from "./CheckLocalVesselSufficiency";
 
 const MMSI = "636018086";

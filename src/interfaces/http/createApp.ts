@@ -11,8 +11,8 @@
 
 import { timingSafeEqual } from "node:crypto";
 import express, { NextFunction, Request, RequestHandler, Response } from "express";
-import { GetVesselDetails } from "../../application/use-cases/GetVesselDetails";
-import { ManageWatchlist } from "../../application/use-cases/ManageWatchlist";
+import { GetVesselDetails } from "../../application/use-cases/vessel/GetVesselDetails";
+import { ManageWatchlist } from "../../application/use-cases/watchlist/ManageWatchlist";
 import { IVesselRepository } from "../../application/contracts/repositories/IVesselRepository";
 import { Errors, errorStatus } from "../../domain/errors/AppError";
 

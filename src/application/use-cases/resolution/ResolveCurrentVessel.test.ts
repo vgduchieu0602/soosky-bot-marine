@@ -7,15 +7,15 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ObservationValidationStatus } from "../../domain/enums/ObservationValidation";
+import { ObservationValidationStatus } from "../../../domain/enums/ObservationValidation";
 import {
   VesselObservationType,
   VesselSourceObservation,
-} from "../../domain/entities/VesselObservation";
-import { createSourceMetadata } from "../../domain/value-objects/SourceMetadata";
-import { VesselSource } from "../../domain/enums/VesselSource";
-import { InMemoryVesselObservationRepository } from "../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
-import { ResolutionReason } from "../services/resolution/ResolverTypes";
+} from "../../../domain/entities/VesselObservation";
+import { createSourceMetadata } from "../../../domain/value-objects/SourceMetadata";
+import { VesselSource } from "../../../domain/enums/VesselSource";
+import { InMemoryVesselObservationRepository } from "../../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+import { ResolutionReason } from "../../services/resolution/ResolverTypes";
 import { ResolveCurrentVessel } from "./ResolveCurrentVessel";
 import { ResolveCurrentVoyage } from "./ResolveCurrentVoyage";
 
