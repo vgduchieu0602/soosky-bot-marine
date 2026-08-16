@@ -23,6 +23,7 @@
     "marine-ais:mongo-load-poc": "ts-node src/interfaces/cli/marineAisMongoLoadPoc.ts",
     "map:backfill-location": "ts-node src/interfaces/cli/backfillMapLocation.ts",
     "map:query-poc": "ts-node src/interfaces/cli/mapQueryPoc.ts",
+    "map:cluster-poc": "ts-node src/interfaces/cli/mapClusterPoc.ts",
     "test": "node -r ts-node/register --test \"src/**/*.test.ts\"",
     "reset-indexes": "ts-node src/interfaces/cli/resetIndexes.ts",
     "start:prod": "node dist/interfaces/http/server.js"
