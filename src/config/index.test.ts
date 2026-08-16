@@ -51,3 +51,10 @@ test("treats an empty value as absent and uses the fallback", () => {
   const config = loadConfig({ CACHE_TTL_MS: "" });
   assert.equal(config.cacheTtlMs, 60_000);
 });
+
+test("reads and validates bounded AIS resolver concurrency", () => {
+  assert.equal(loadConfig({ AIS_RESOLVE_CONCURRENCY: "4" }).aisResolveConcurrency, 4);
+  assert.equal(loadConfig({}).aisResolveConcurrency, 10);
+  assert.throws(() => loadConfig({ AIS_RESOLVE_CONCURRENCY: "0" }), /AIS_RESOLVE_CONCURRENCY/);
+  assert.throws(() => loadConfig({ AIS_RESOLVE_CONCURRENCY: "1.5" }), /AIS_RESOLVE_CONCURRENCY/);
+});

@@ -17,6 +17,7 @@ import {
   MarineAisIngestionCoordinator,
 } from "./MarineAisIngestionCoordinator";
 import { MarineAisWebSocketClient } from "./MarineAisWebSocketClient";
+import { AisIngestionEvent as BufferEvent } from "../../../application/services/ingestion/AisCoalescingBuffer";
 
 const NOW = new Date("2026-08-16T12:10:00.000Z");
 const SILENT_LOGGER = { info: () => {}, warn: () => {} };
@@ -80,6 +81,21 @@ async function waitUntil(check: () => boolean, timeoutMs = 2000): Promise<void> 
     if (Date.now() > deadline) throw new Error("waitUntil hết giờ");
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
+}
+
+function bufferEvent(mmsi: string, sourceReceivedAt: Date, lat: number): BufferEvent {
+  return {
+    mmsi,
+    result: {
+      position: {
+        mmsi, imo: null, lat, lng: 2, speed: 10, course: null, heading: null,
+        navStatus: null, latLngApproximate: false, receivedAt: sourceReceivedAt,
+        metadata: {
+          source: VesselSource.AISSTREAM, fetchedAt: NOW, sourceReceivedAt,
+        },
+      },
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -268,4 +284,49 @@ test("windowMs vô lý -> ném NGAY lúc dựng", async () => {
   } finally {
     await server.close();
   }
+});
+
+test("AIS-4 prevents overlapping persistent flushes", async () => {
+  const buffer = new AisCoalescingBuffer({ maxVessels: 10, batchSize: 10, now: () => NOW });
+  buffer.accept(bufferEvent("A", NOW, 1));
+  let calls = 0;
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const client = { on: () => {}, off: () => {}, start: () => {}, stop: async () => {} } as unknown as MarineAisWebSocketClient;
+  const coordinator = new MarineAisIngestionCoordinator({
+    client, buffer, windowMs: 60_000,
+    ingest: { execute: async () => { calls += 1; await gate; } },
+    logger: SILENT_LOGGER,
+  });
+
+  const first = coordinator.flushNow();
+  const second = coordinator.flushNow();
+  assert.equal(calls, 1);
+  release();
+  await Promise.all([first, second]);
+  assert.equal(calls, 1);
+});
+
+test("AIS-4 requeues a failed drained batch through latest-wins buffer comparison", async () => {
+  const old = new Date("2026-08-16T12:00:00.000Z");
+  const newer = new Date("2026-08-16T12:01:00.000Z");
+  const buffer = new AisCoalescingBuffer({ maxVessels: 10, batchSize: 10, now: () => NOW });
+  buffer.accept(bufferEvent("A", old, 1));
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  const client = { on: () => {}, off: () => {}, start: () => {}, stop: async () => {} } as unknown as MarineAisWebSocketClient;
+  const coordinator = new MarineAisIngestionCoordinator({
+    client, buffer, windowMs: 60_000,
+    ingest: { execute: async () => { await gate; throw new Error("Mongo unavailable"); } },
+    logger: SILENT_LOGGER,
+  });
+
+  const flush = coordinator.flushNow();
+  buffer.accept(bufferEvent("A", newer, 2));
+  release();
+  await flush;
+
+  const retried = buffer.drainBatch();
+  assert.equal(retried?.entries[0].position?.lat, 2);
+  assert.equal(retried?.entries[0].position?.receivedAt.getTime(), newer.getTime());
 });

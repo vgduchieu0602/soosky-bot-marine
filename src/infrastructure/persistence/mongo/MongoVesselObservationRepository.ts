@@ -81,18 +81,70 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     };
   }
 
-  /**
-   * Tuần tự có chủ ý: hai observation TRÙNG NHAU trong cùng một mẻ phải ăn
-   * dedupe của nhau. Ghi song song thì cái thứ hai không thấy cái thứ nhất.
-   */
   async saveMany(
     observations: readonly VesselSourceObservation[]
   ): Promise<readonly ObservationSaveResult[]> {
-    const results: ObservationSaveResult[] = [];
-    for (const observation of observations) {
-      results.push(await this.save(observation));
+    if (observations.length === 0) return Object.freeze([]);
+
+    const now = this.now();
+    const byFingerprint = new Map<string, { firstIndex: number; observation: VesselSourceObservation; cutoff: Date }>();
+    const fingerprints = observations.map((observation, index) => {
+      const fingerprint = observationFingerprint(observation);
+      if (!byFingerprint.has(fingerprint)) {
+        byFingerprint.set(fingerprint, {
+          firstIndex: index,
+          observation,
+          cutoff: dedupeCutoff(observation.type, now, this.dedupeConfig),
+        });
+      }
+      return fingerprint;
+    });
+
+    const fingerprintGroups = new Map<number, { cutoff: Date; fingerprints: string[] }>();
+    for (const [fingerprint, candidate] of byFingerprint) {
+      const key = candidate.cutoff.getTime();
+      const group = fingerprintGroups.get(key) ?? { cutoff: candidate.cutoff, fingerprints: [] };
+      group.fingerprints.push(fingerprint);
+      fingerprintGroups.set(key, group);
     }
-    return Object.freeze(results);
+
+    const existing = await VesselObservationModel.find({
+      $or: [...fingerprintGroups.values()].map(({ cutoff, fingerprints: values }) => ({
+        fingerprint: { $in: values },
+        fetchedAt: { $gte: cutoff },
+      })),
+    })
+      .select({ fingerprint: 1 })
+      .lean<Array<{ fingerprint: string }>>()
+      .exec();
+    const existingFingerprints = new Set(existing.map((document) => document.fingerprint));
+
+    const toInsert = [...byFingerprint.entries()].filter(
+      ([fingerprint]) => !existingFingerprints.has(fingerprint)
+    );
+    const created = await VesselObservationModel.insertMany(
+      toInsert.map(([fingerprint, candidate]) =>
+        MongoVesselObservationRepository.toDoc(candidate.observation, fingerprint)
+      ),
+      { ordered: true }
+    );
+    const savedIds = new Map(
+      toInsert.map(([fingerprint], index) => [fingerprint, String(created[index]._id)])
+    );
+
+    return Object.freeze(
+      fingerprints.map((fingerprint, index) => {
+        const candidate = byFingerprint.get(fingerprint)!;
+        if (candidate.firstIndex !== index || existingFingerprints.has(fingerprint)) {
+          return { status: ObservationSaveStatus.SKIPPED_DUPLICATE, fingerprint };
+        }
+        return {
+          status: ObservationSaveStatus.SAVED,
+          fingerprint,
+          id: savedIds.get(fingerprint),
+        };
+      })
+    );
   }
 
   async findRecentByVessel(

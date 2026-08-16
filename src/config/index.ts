@@ -76,6 +76,8 @@ export interface AppConfig {
   aisMaxBufferedVessels: number;
   /** Trần số tàu mỗi mẻ rút — để AIS-4 `bulkWrite` theo mẻ có kích thước biết trước. */
   aisFlushBatchSize: number;
+  /** Số resolver canonical tối đa chạy đồng thời cho một mẻ AIS. */
+  aisResolveConcurrency: number;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -112,6 +114,14 @@ function num(env: Env, name: string, fallback: number, constraints: NumConstrain
 /** Bắt buộc > 0 (khoảng thời gian, TTL, chu kỳ...). */
 function positiveNum(env: Env, name: string, fallback: number): number {
   return num(env, name, fallback, { min: 1 });
+}
+
+function positiveInteger(env: Env, name: string, fallback: number): number {
+  const value = positiveNum(env, name, fallback);
+  if (!Number.isInteger(value)) {
+    throw new Error(`Config ${name} phải là số nguyên dương, nhận ${value}.`);
+  }
+  return value;
 }
 
 /** Cho phép 0 (delay/batch có thể tắt bằng 0). */
@@ -193,6 +203,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     aisCoalesceWindowMs: positiveNum(env, "AIS_COALESCE_WINDOW_MS", 10_000),
     aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
     aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),
+    aisResolveConcurrency: positiveInteger(env, "AIS_RESOLVE_CONCURRENCY", 10),
   };
 }
 

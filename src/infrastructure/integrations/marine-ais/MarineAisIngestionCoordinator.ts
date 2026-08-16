@@ -33,6 +33,9 @@ export type AisIngestionEvent = (typeof AisIngestionEvent)[keyof typeof AisInges
 export interface MarineAisIngestionCoordinatorOptions {
   client: MarineAisWebSocketClient;
   buffer: AisCoalescingBuffer;
+  /** AIS-4 consumer. Omit only for the existing buffer-only manual POC. */
+  ingest?: { execute(batch: AisCoalescedBatch): Promise<unknown> };
+  logger?: { info(message: string): void; warn(message: string): void };
   /** Chu kỳ rút, ms. Ngắn quá thì mất tác dụng gộp; dài quá thì map trễ. */
   windowMs: number;
   /**
@@ -53,9 +56,20 @@ export class MarineAisIngestionCoordinator extends EventEmitter {
   private readonly buffer: AisCoalescingBuffer;
   private readonly windowMs: number;
   private readonly maxBatchesPerCycle: number;
+  private readonly ingest?: { execute(batch: AisCoalescedBatch): Promise<unknown> };
+  private readonly logger: { info(message: string): void; warn(message: string): void };
 
   private timer: NodeJS.Timeout | null = null;
   private running = false;
+  private flushInProgress: Promise<AisCoalescedBatch[]> | null = null;
+  private readonly persistenceStats = {
+    persistBatches: 0,
+    persistFailures: 0,
+    persistedObservations: 0,
+    duplicateObservations: 0,
+    resolvedVessels: 0,
+    resolveFailures: 0,
+  };
 
   /** Giữ tham chiếu để `stop()` gỡ ĐÚNG listener này, không gỡ của người khác. */
   private readonly onNormalized = (event: MarineAisNormalizedEvent): void => {
@@ -70,6 +84,8 @@ export class MarineAisIngestionCoordinator extends EventEmitter {
     }
     this.client = options.client;
     this.buffer = options.buffer;
+    this.ingest = options.ingest;
+    this.logger = options.logger ?? { info: (message) => console.log(message), warn: (message) => console.warn(message) };
     this.windowMs = options.windowMs;
     this.maxBatchesPerCycle = options.maxBatchesPerCycle ?? DEFAULT_MAX_BATCHES_PER_CYCLE;
   }
@@ -79,7 +95,7 @@ export class MarineAisIngestionCoordinator extends EventEmitter {
     this.running = true;
 
     this.client.on(MarineAisClientEvent.NORMALIZED_DATA, this.onNormalized);
-    this.timer = setInterval(() => this.flushNow(), this.windowMs);
+    this.timer = setInterval(() => { void this.flushNow(); }, this.windowMs);
     this.timer.unref?.();
     this.client.start();
   }
@@ -98,17 +114,79 @@ export class MarineAisIngestionCoordinator extends EventEmitter {
       this.timer = null;
     }
     await this.client.stop();
-    this.flushNow();
+    await this.flushNow();
   }
 
-  /** Rút ngay, không chờ hết chu kỳ. Test gọi thẳng hàm này. */
-  flushNow(): AisCoalescedBatch[] {
-    const batches = this.buffer.drainAll(this.maxBatchesPerCycle);
-    for (const batch of batches) this.emit(AisIngestionEvent.BATCH, batch);
-    return batches;
+  /** Rút ngay, không chờ hết chu kỳ. Persistent flush luôn single-flight. */
+  flushNow(): Promise<AisCoalescedBatch[]> {
+    // Backward-compatible buffer-only coordinator used by the AIS-3 POC.
+    if (this.ingest === undefined) {
+      const batches = this.buffer.drainAll(this.maxBatchesPerCycle);
+      for (const batch of batches) this.emit(AisIngestionEvent.BATCH, batch);
+      return Promise.resolve(batches);
+    }
+    if (this.flushInProgress !== null) return this.flushInProgress;
+
+    const flush = this.persistDrainedBatches();
+    this.flushInProgress = flush;
+    void flush.finally(() => {
+      if (this.flushInProgress === flush) this.flushInProgress = null;
+    });
+    return flush;
+  }
+
+  getPersistenceStats(): Readonly<typeof this.persistenceStats> {
+    return { ...this.persistenceStats };
   }
 
   isRunning(): boolean {
     return this.running;
+  }
+
+  private async persistDrainedBatches(): Promise<AisCoalescedBatch[]> {
+    const batches: AisCoalescedBatch[] = [];
+    for (let index = 0; index < this.maxBatchesPerCycle; index += 1) {
+      const batch = this.buffer.drainBatch();
+      if (batch === null) break;
+      batches.push(batch);
+      this.emit(AisIngestionEvent.BATCH, batch);
+      try {
+        const result = await this.ingest!.execute(batch) as {
+          observationsSaved?: number;
+          observationsSkippedDuplicate?: number;
+          vesselsResolved?: number;
+          vesselsResolveFailed?: number;
+        };
+        this.persistenceStats.persistBatches += 1;
+        this.persistenceStats.persistedObservations += result.observationsSaved ?? 0;
+        this.persistenceStats.duplicateObservations += result.observationsSkippedDuplicate ?? 0;
+        this.persistenceStats.resolvedVessels += result.vesselsResolved ?? 0;
+        this.persistenceStats.resolveFailures += result.vesselsResolveFailed ?? 0;
+        this.logger.info(
+          `[marine-ais] batch persisted entries=${batch.entries.length} ` +
+          `saved=${result.observationsSaved ?? 0} duplicates=${result.observationsSkippedDuplicate ?? 0} ` +
+          `resolved=${result.vesselsResolved ?? 0} resolveFailed=${result.vesselsResolveFailed ?? 0}`
+        );
+      } catch (error) {
+        this.persistenceStats.persistFailures += 1;
+        this.requeue(batch);
+        this.logger.warn(
+          `[marine-ais] batch persistence failed entries=${batch.entries.length}; requeued latest state: ` +
+          `${error instanceof Error ? error.message : String(error)}`
+        );
+        break;
+      }
+    }
+    return batches;
+  }
+
+  /** Re-enter through the buffer so a newer frame already received always wins. */
+  private requeue(batch: AisCoalescedBatch): void {
+    for (const entry of batch.entries) {
+      this.buffer.accept({
+        mmsi: entry.mmsi,
+        result: { identity: entry.identity, position: entry.position },
+      });
+    }
   }
 }
