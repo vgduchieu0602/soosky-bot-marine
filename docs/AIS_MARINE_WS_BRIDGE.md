@@ -319,6 +319,8 @@ In tối đa vài sample một dòng (mmsi, lat/lng hoặc name/type, `sourceRec
 
 ---
 
+> **AIS-3 đã làm xong bước gộp** (vẫn không persistence): xem [AIS_COALESCING_BUFFER.md](./AIS_COALESCING_BUFFER.md). Mục dưới là phạm vi đã đề xuất khi kết thúc AIS-2, giữ lại để đối chiếu.
+
 ## 16. Phạm vi đề xuất cho AIS-3
 
 1. **Đo trước.** Chạy POC với trần cao hơn trên production thật → frame/giây, tỉ lệ position/static, số MMSI riêng biệt.

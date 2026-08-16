@@ -18,6 +18,7 @@
     "shipfinder:poc": "ts-node src/interfaces/cli/shipfinderPoc.ts",
     "acquire:free:poc": "ts-node src/interfaces/cli/acquireFreePoc.ts",
     "marine-ais:poc": "ts-node src/interfaces/cli/marineAisPoc.ts",
+    "marine-ais:buffer-sim": "ts-node src/interfaces/cli/marineAisBufferSim.ts",
     "test": "node -r ts-node/register --test \"src/**/*.test.ts\"",
     "reset-indexes": "ts-node src/interfaces/cli/resetIndexes.ts",
     "start:prod": "node dist/interfaces/http/server.js"

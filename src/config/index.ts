@@ -63,6 +63,19 @@ export interface AppConfig {
    * tay (`npm run marine-ais:poc`) mới dùng tới nó.
    */
   marineAisWsUrl: string;
+  /**
+   * Chu kỳ gộp AIS, ms. Trong một cửa sổ, mỗi MMSI chỉ giữ vị trí MỚI NHẤT —
+   * các điểm trung gian bị bỏ CÓ CHỦ Ý (buffer phục vụ map hiện tại, không
+   * phải lịch sử hành trình).
+   */
+  aisCoalesceWindowMs: number;
+  /**
+   * Trần số tàu giữ trong RAM. Vượt -> đuổi tàu lâu nhất chưa đụng tới.
+   * Đây là hàng rào bộ nhớ BẮT BUỘC, không phải tối ưu.
+   */
+  aisMaxBufferedVessels: number;
+  /** Trần số tàu mỗi mẻ rút — để AIS-4 `bulkWrite` theo mẻ có kích thước biết trước. */
+  aisFlushBatchSize: number;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -177,6 +190,9 @@ export function loadConfig(env: Env = process.env): AppConfig {
     }),
     // Không có mặc định, và KHÔNG hardcode hostname production ở bất kỳ đâu.
     marineAisWsUrl: str(env, "MARINE_AIS_WS_URL"),
+    aisCoalesceWindowMs: positiveNum(env, "AIS_COALESCE_WINDOW_MS", 10_000),
+    aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
+    aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),
   };
 }
 
