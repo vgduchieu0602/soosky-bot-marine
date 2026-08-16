@@ -15,6 +15,7 @@ import {
 } from "../../../application/contracts/repositories/ICurrentVesselRepository";
 import { currentVesselContentHash } from "../../../application/services/resolution/currentVesselContent";
 import { ResolvedCurrentVessel } from "../../../application/services/resolution/ResolvedCurrentVessel";
+import { isValidCoordinates } from "../../../domain/validators/geo";
 import { CurrentVesselModel } from "./currentVesselModel";
 
 interface CurrentVesselDoc {
@@ -29,6 +30,34 @@ interface CurrentVesselDoc {
   contentHash: string;
   createdAt: Date;
   updatedAt: Date;
+  location?: GeoJsonPoint;
+}
+
+/** Đúng hình dạng GeoJSON mà 2dsphere của Mongo nhận. */
+export interface GeoJsonPoint {
+  type: "Point";
+  /** ⚠️ **[kinh độ, vĩ độ]** — thứ tự GeoJSON, ngược với cách người ta đọc. */
+  coordinates: [number, number];
+}
+
+/**
+ * Phép chiếu canonical -> GeoJSON. HÀM THUẦN, tách ra để test được mà không cần
+ * Mongo chạy.
+ *
+ * ⚠️ Hai điểm chết người, cả hai đều KHÔNG ném lỗi nếu làm sai:
+ *   1. Thứ tự phải là `[lng, lat]`. Đảo nhầm thì tàu ở Vũng Tàu (10,107) nhảy
+ *      sang (107,10) — giữa Somalia — và Mongo vẫn nhận vì cả hai đều hợp lệ.
+ *   2. Toạ độ rác (NaN, lat 91, lng 181) phải bị chặn Ở ĐÂY. Dựng Point từ
+ *      chúng sẽ làm hỏng cả lần ghi (Mongo từ chối khoá geo), tức là một con
+ *      tàu rác kéo đổ lệnh ghi của chính nó.
+ *
+ * @returns `null` khi canonical chưa có vị trí, hoặc toạ độ không dùng được.
+ */
+export function toGeoJsonPoint(vessel: ResolvedCurrentVessel): GeoJsonPoint | null {
+  const report = vessel.position?.position;
+  if (report === undefined) return null;
+  if (!isValidCoordinates(report.lat, report.lng)) return null;
+  return { type: "Point", coordinates: [report.lng, report.lat] };
 }
 
 export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
@@ -39,12 +68,15 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
     }
 
     const contentHash = currentVesselContentHash(vessel);
+    const location = toGeoJsonPoint(vessel);
     const existing = await this.locate(mmsi, imo);
 
     if (existing === null) {
-      const created = await CurrentVesselModel.create(
-        MongoCurrentVesselRepository.toDoc(vessel, contentHash)
-      );
+      const created = await CurrentVesselModel.create({
+        ...MongoCurrentVesselRepository.toDoc(vessel, contentHash),
+        // Chỉ gắn khi thật sự có vị trí — 2dsphere bỏ qua document thiếu field.
+        ...(location === null ? {} : { location }),
+      });
       return {
         status: CurrentVesselSaveStatus.CREATED,
         contentHash,
@@ -72,11 +104,20 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
     doc.mmsi = mmsi ?? existing.mmsi ?? null;
     doc.imo = imo ?? existing.imo ?? null;
 
-    const updated = await CurrentVesselModel.findByIdAndUpdate(
-      existing._id,
-      { $set: doc },
-      { new: true }
-    ).lean<CurrentVesselDoc>();
+    // ⚠️ `location` đi trong CHÍNH lệnh ghi này, không phải một lượt update thứ
+    // hai: hai lệnh nghĩa là có một khoảnh khắc canonical và toạ độ nói hai
+    // chuyện khác nhau, và nghĩa là gấp đôi số lệnh ghi cho mỗi tàu.
+    //
+    // Vị trí biến mất -> `$unset`, KHÔNG phải `location: null`. Toạ độ cũ nằm
+    // lại là tàu ma: map sẽ vẽ nó ở chỗ nó không còn ở đó nữa.
+    const update: Record<string, unknown> =
+      location === null
+        ? { $set: doc, $unset: { location: "" } }
+        : { $set: { ...doc, location } };
+
+    const updated = await CurrentVesselModel.findByIdAndUpdate(existing._id, update, {
+      new: true,
+    }).lean<CurrentVesselDoc>();
 
     return {
       status: CurrentVesselSaveStatus.UPDATED,

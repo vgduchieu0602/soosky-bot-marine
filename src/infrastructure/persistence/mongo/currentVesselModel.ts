@@ -137,6 +137,29 @@ const currentVesselSchema = new Schema(
 
     /** SHA-256 nội dung canonical, KHÔNG gồm `resolvedAt` -> dùng để bỏ update vô nghĩa. */
     contentHash: { type: String, required: true },
+
+    /**
+     * PHÉP CHIẾU cho truy vấn không gian — KHÔNG phải nguồn sự thật.
+     *
+     * Sự thật vẫn là `position.position.lat` / `.lng` (nguyên khối, có xuất xứ).
+     * Field này chỉ tồn tại để Mongo `$geoWithin` / `$near` chạy được, và được
+     * repository dựng lại trong CHÍNH lệnh ghi canonical.
+     *
+     * ⚠️ Thứ tự GeoJSON là **[kinh độ, vĩ độ]** — ngược với cách người ta đọc
+     * toạ độ. Đảo nhầm thì tàu ở Vũng Tàu nhảy sang giữa Somalia mà không lỗi
+     * nào được ném ra.
+     *
+     * VẮNG MẶT khi canonical chưa có vị trí. Cố ý không dùng `default: null`:
+     * 2dsphere bỏ qua document THIẾU field, còn một `null` nằm đó chỉ tổ gây
+     * hiểu nhầm là "tàu ở đâu đó".
+     */
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: { type: [Number] },
+    },
   },
   { timestamps: true }
 );
@@ -154,8 +177,20 @@ currentVesselSchema.index(
   { unique: true, partialFilterExpression: { imo: { $type: "string" } } }
 );
 
-// Chỉ hai index trên. KHÔNG thêm index suy đoán (geo, freshness, source...) khi
-// chưa có truy vấn nào cần — index thừa làm chậm mọi lần ghi.
+// Truy vấn theo viewport/bbox của map (MAP-2) cần đúng index này.
+//
+// ⚠️ 2dsphere TỰ THƯA: document thiếu `location` không nằm trong index, nên tàu
+// chưa có vị trí không tốn gì cả.
+//
+// CHỈ `location`, KHÔNG dựng compound 2dsphere + mọi field có thể lọc. MAP-2 sẽ
+// ĐO truy vấn bbox thật rồi mới thêm index hỗ trợ nếu cần — đoán trước là tự
+// làm chậm mọi lần ghi để đổi lấy một truy vấn chưa ai viết.
+currentVesselSchema.index({ location: "2dsphere" });
+
+// ⛔ KHÔNG có TTL ở đây. `canonical_current_vessels` là ẢNH CHỤP HIỆN TẠI: hết
+// hạn theo thời gian là việc của `MapVesselReadiness` khi ĐỌC, không phải của
+// TTL daemon khi xoá. Xoá document đi thì tàu biến mất khỏi mọi truy vấn, kể cả
+// truy vấn "lần cuối thấy nó ở đâu".
 
 export const CurrentVesselModel = model(
   "CanonicalCurrentVessel",
