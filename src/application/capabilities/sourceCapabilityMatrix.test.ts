@@ -117,6 +117,45 @@ test("AISStream: EXISTING_STREAM, chưa bật trong bot, KHÔNG confirm GT/DWT/n
   assert.equal(capability.fields[VesselField.LAT], FieldSupportStatus.CONFIRMED);
 });
 
+test("AISStream: CONFIRMED đúng 10 field mà Marine API thực sự broadcast", () => {
+  const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.AISSTREAM];
+
+  // `AisWebSocketManager._dataTransform` phát đúng bấy nhiêu — không hơn.
+  for (const field of [
+    VesselField.MMSI,
+    VesselField.LAT,
+    VesselField.LNG,
+    VesselField.SPEED,
+    VesselField.COURSE,
+    VesselField.NAV_STATUS,
+    VesselField.POSITION_RECEIVED_AT,
+    VesselField.IMO,
+    VesselField.NAME,
+    VesselField.VESSEL_TYPE_CODE,
+  ]) {
+    assert.equal(capability.fields[field], FieldSupportStatus.CONFIRMED, field);
+  }
+
+  // Có trong AIS message gốc nhưng đường truyền Marine KHÔNG chuyển tiếp ->
+  // KHÔNG được confirm theo đặc tả.
+  for (const field of [
+    VesselField.HEADING,
+    VesselField.CALLSIGN,
+    VesselField.LENGTH,
+    VesselField.BEAM,
+    VesselField.DRAUGHT,
+    VesselField.DESTINATION,
+    VesselField.ETA,
+  ]) {
+    assert.equal(capability.fields[field], FieldSupportStatus.CANDIDATE, field);
+  }
+
+  // Mapper AIS-1 chỉ phát POSITION + IDENTITY.
+  assert.equal(capability.operations.position, true);
+  assert.equal(capability.operations.particulars, false);
+  assert.equal(capability.operations.voyage, false);
+});
+
 test("ShipInfo: đã POC trọn đường -> CONFIRMED cho cả position lẫn details", () => {
   const capability = SOURCE_CAPABILITY_MATRIX[VesselSource.SHIPINFO];
   assert.equal(capability.operations.position, true);

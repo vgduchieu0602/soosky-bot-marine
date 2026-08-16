@@ -362,24 +362,27 @@ test("cùng fetchedAt -> hạng capability phân định (tiêu chí thứ hai)"
 
 test("TẤT ĐỊNH: hoà cả fetchedAt lẫn capability -> priority quyết định", () => {
   const at = SHIPFINDER_AT;
-  // destination CONFIRMED cho cả aisstream lẫn shipfinder.
+  // Cần HAI nguồn CÙNG mức capability cho `destination` thì tie-break mới tới
+  // lượt priority. Sau AIS-1, `destination` của aisstream là CANDIDATE (Marine
+  // API không chuyển tiếp field đó) — ngang với vesselfinder, mapper của nó
+  // cũng chưa bóc destination.
   const aisstream = voyage({
     source: VesselSource.AISSTREAM,
     fetchedAt: at,
     data: { destination: "A" },
   });
-  const shipfinder = voyage({
-    source: VesselSource.SHIPFINDER,
+  const vesselfinder = voyage({
+    source: VesselSource.VESSELFINDER,
     fetchedAt: at,
     data: { destination: "B" },
   });
 
-  const result = resolver.resolve([shipfinder, aisstream]);
-  // AISStream priority 10 < ShipFinder 55.
+  const result = resolver.resolve([vesselfinder, aisstream]);
+  // AISStream priority 10 < VesselFinder 20.
   assert.equal(result?.destination?.source, VesselSource.AISSTREAM);
   assert.equal(result?.destination?.reason, ResolutionReason.TIE_BREAK_PRIORITY);
   assert.equal(
-    resolver.resolve([aisstream, shipfinder])?.destination?.source,
+    resolver.resolve([aisstream, vesselfinder])?.destination?.source,
     VesselSource.AISSTREAM
   );
 });

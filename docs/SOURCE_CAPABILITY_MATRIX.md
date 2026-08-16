@@ -58,7 +58,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 
 | Source | cost | enabled | prio | searchByName | searchByMmsi | searchByImo | position | particulars | voyage | areaScan |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `aisstream` | EXISTING_STREAM | — | 10 | — | ✅ | — | ✅ | ✅ | ✅ | ✅ |
+| `aisstream` | EXISTING_STREAM | — | 10 | — | ✅ | — | ✅ | — | — | ✅ |
 | `vesselfinder` | FREE | ✅ | 20 | — | ✅ | ✅ | ✅ | ✅ | — | ✅ |
 | `shiptraffic` | FREE | — | 40 | ✅ | ✅ | ✅ | — | ✅ | ✅ | — |
 | `shipinfo` | FREE | — | 45 | — | ✅ | ✅ | ✅ | ✅ | — | — |
@@ -71,6 +71,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 
 `vesselfinder.voyage = false`: mapper hiện không bóc `destination`/`eta`.
 `aisstream.searchByImo = false`: AIS đánh địa chỉ theo MMSI; IMO chỉ là payload của message 5.
+`aisstream.particulars = aisstream.voyage = false` *(AIS-1)*: đường truyền Marine chỉ mang được nhóm POSITION và IDENTITY — xem [AIS_CANONICAL_INGESTION.md](./AIS_CANONICAL_INGESTION.md).
 `shipinfo.searchByName = false`: endpoint tìm theo tên nằm dưới `/api/` mà `robots.txt` của ShipInfo cấm.
 `shipfinder.searchByImo = false`: `/ship/detail/imo/{imo}` trả 404 — nguồn chỉ tra được bằng MMSI. `searchByName` cũng false vì endpoint duy nhất bị ký chữ ký.
 
@@ -84,7 +85,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `mmsi` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `imo` | ✅ | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `name` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `callsign` | ✅ | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `callsign` | 🟡 | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `vesselType` | 🟡 | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `vesselTypeCode` | ✅ | 🟡 | — | — | — | 🟡 | — | — | 🟡 | — |
 | `flag` | 🟡 | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
@@ -96,7 +97,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `lng` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 | `speed` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 | `course` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
-| `heading` | ✅ | 🟡 | — | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
+| `heading` | 🟡 | 🟡 | — | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 | `navStatus` | ✅ | ✅ | — | ✅ | — | 🟡 | — | — | 🟡 | — |
 | `positionReceivedAt` | ✅ | 🟡 | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 
@@ -106,15 +107,15 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `grossTonnage` | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `deadweight` | — | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `builtYear` | — | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `length` | ✅ | ✅ | — | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `beam` | ✅ | ✅ | — | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `draught` | ✅ | ✅ | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `length` | 🟡 | ✅ | — | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `beam` | 🟡 | ✅ | — | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `draught` | 🟡 | ✅ | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 
 ### Nhóm D · Voyage
 | Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `destination` | ✅ | 🟡 | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
-| `eta` | ✅ | 🟡 | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `destination` | 🟡 | 🟡 | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
+| `eta` | 🟡 | 🟡 | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `currentPort` | — | — | — | 🟡 | — | 🟡 | — | 🟡 | 🟡 | — |
 | `currentPortArrivalAt` | — | — | — | — | — | 🟡 | — | — | 🟡 | — |
 | `nextPort` | — | — | — | 🟡 | — | 🟡 | — | 🟡 | 🟡 | — |
@@ -125,7 +126,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 ### Tổng hợp
 | Source | CONFIRMED | CANDIDATE | UNSUPPORTED |
 |---|---|---|---|
-| `aisstream` | 17 | 2 | 9 |
+| `aisstream` | **10** | 9 | 9 |
 | `vesselfinder` | **14** | 8 | 6 |
 | `shipinfo` | **13** | 0 | 15 |
 | `shipfinder` | **17** | 7 | 4 |
@@ -182,7 +183,9 @@ CANDIDATE của VesselFinder có 2 loại lý do khác nhau:
 
 ⚠️ Vị trí bản free **trễ ~14 giờ có chủ ý** (`fresh_locked: true`). ShipInfo là nguồn identity/flag tốt, **không** phải nguồn vị trí thời gian thực.
 
-**AISSTREAM** — CONFIRMED ở đây dựa trên **đặc tả AIS** (message 1/2/3 dynamic, message 5 static & voyage) cộng với việc Marine đang vận hành AISStream thật — **KHÔNG phải POC trong bot**. `grossTonnage`/`deadweight`/`builtYear` là **UNSUPPORTED** (bằng chứng: không AIS message nào mang chúng), không phải "chưa audit". `vesselType` và `flag` là CANDIDATE vì phải suy diễn (mã → nhãn chữ; MID → quốc gia).
+**AISSTREAM** *(cập nhật AIS-1)* — trạng thái nay lấy từ **payload production thật**, không còn từ đặc tả AIS. Bot sẽ đọc qua WebSocket của Soosky-marine-api, mà `AisWebSocketManager._dataTransform` **rút gọn** message trước khi phát: `PositionReport` còn 6 field, `ShipStaticData` còn 4. Nên CONFIRMED tụt từ 17 xuống **10**.
+
+`callsign`/`length`/`beam`/`draught`/`destination`/`eta`/`heading` **có** trong AIS message gốc nhưng **không đi qua được đường truyền** → CANDIDATE, cùng nghĩa với `eta` của ShipFinder ("nguồn có, đường ta dùng chưa lấy được"). `grossTonnage`/`deadweight`/`builtYear` vẫn **UNSUPPORTED** (không AIS message nào mang chúng). `vesselType` và `flag` là CANDIDATE vì phải suy diễn (mã → nhãn chữ; MID → quốc gia). Chi tiết: [AIS_CANONICAL_INGESTION.md](./AIS_CANONICAL_INGESTION.md).
 
 **MYSHIPTRACKING** — toàn bộ **CANDIDATE**. Repo không chứa API client, không chứa tài liệu hay response mẫu để làm bằng chứng. Danh sách field CONFIRMED phải đến từ API task ngoài repo; nâng trạng thái khi có danh sách đó. Xem §11.
 

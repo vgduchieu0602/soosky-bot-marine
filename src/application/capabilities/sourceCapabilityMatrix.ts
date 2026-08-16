@@ -41,10 +41,19 @@ const NO_OPERATIONS = {
 // ---------------------------------------------------------------------------
 //  AISSTREAM — hạ tầng Marine đã vận hành, bot CHƯA nối
 // ---------------------------------------------------------------------------
-//  CONFIRMED ở đây dựa trên ĐẶC TẢ AIS (message 1/2/3 dynamic, message 5
-//  static & voyage) cộng với việc Marine đang chạy AISStream thật — KHÔNG phải
-//  POC trong bot. GT/DWT/năm đóng KHÔNG nằm trong bất kỳ AIS message nào, nên
-//  là UNSUPPORTED chứ không phải "chưa audit".
+//  ⚠️ Bằng chứng ĐÃ ĐỔI ở phase AIS-1. Trước đây trạng thái lấy theo ĐẶC TẢ AIS
+//  (message 1/2/3 + message 5). Nhưng bot không nói chuyện với AISStream.io —
+//  nó sẽ đọc qua WebSocket của Soosky-marine-api, và production RÚT GỌN payload
+//  trước khi phát (`AisWebSocketManager._dataTransform`):
+//
+//      PositionReport  -> mmsi · latlng · sog · cog · timestamp · navigationalStatus
+//      ShipStaticData  -> mmsi · imo · type · name
+//
+//  Nên CONFIRMED nay chỉ còn ĐÚNG 10 field đó. `callsign`, `length`, `beam`,
+//  `draught`, `destination`, `eta`, `heading` CÓ trong message gốc nhưng KHÔNG
+//  đi qua được đường truyền -> CANDIDATE ("nguồn có, đường ta dùng chưa lấy
+//  được"), cùng nghĩa với `eta` của ShipFinder.
+//  Xem docs/AIS_CANONICAL_INGESTION.md §3 và §7.
 const AISSTREAM = defineSourceCapability({
   source: VesselSource.AISSTREAM,
   operations: {
@@ -52,31 +61,36 @@ const AISSTREAM = defineSourceCapability({
     searchByMmsi: true,
     searchByImo: false, // AIS đánh địa chỉ theo MMSI; IMO chỉ là payload của msg 5
     position: true,
-    particulars: true,
-    voyage: true,
-    areaScan: true, // lọc theo bbox ở phía subscription
+    // Đường truyền Marine chỉ mang được hai nhóm: POSITION và IDENTITY. Mapper
+    // AIS-1 KHÔNG phát ra nhóm Particulars/Voyage nào, nên khai true ở đây là
+    // hứa một thứ không tồn tại.
+    particulars: false,
+    voyage: false,
+    areaScan: true, // subscription của Marine đã đặt bbox toàn cầu
   },
   fields: buildFieldSupport(UNSUPPORTED, {
-    // --- dynamic: message 1/2/3 ---
+    // --- CONFIRMED: có trong payload production, mapper AIS-1 bóc được ---
     [VesselField.MMSI]: CONFIRMED,
     [VesselField.LAT]: CONFIRMED,
     [VesselField.LNG]: CONFIRMED,
     [VesselField.SPEED]: CONFIRMED,
     [VesselField.COURSE]: CONFIRMED,
-    [VesselField.HEADING]: CONFIRMED,
     [VesselField.NAV_STATUS]: CONFIRMED,
-    [VesselField.POSITION_RECEIVED_AT]: CONFIRMED,
-    // --- static & voyage: message 5 ---
+    [VesselField.POSITION_RECEIVED_AT]: CONFIRMED, // MetaData.time_utc
     [VesselField.IMO]: CONFIRMED,
     [VesselField.NAME]: CONFIRMED,
-    [VesselField.CALLSIGN]: CONFIRMED,
     [VesselField.VESSEL_TYPE_CODE]: CONFIRMED,
-    [VesselField.LENGTH]: CONFIRMED,
-    [VesselField.BEAM]: CONFIRMED,
-    [VesselField.DRAUGHT]: CONFIRMED,
-    [VesselField.DESTINATION]: CONFIRMED,
-    [VesselField.ETA]: CONFIRMED,
-    // --- suy diễn, không phải field gốc ---
+
+    // --- CANDIDATE: AIS có, đường truyền Marine KHÔNG chuyển tiếp ---
+    [VesselField.HEADING]: CANDIDATE, // TrueHeading của msg 1/2/3
+    [VesselField.CALLSIGN]: CANDIDATE, // CallSign của msg 5
+    [VesselField.LENGTH]: CANDIDATE, // Dimension của msg 5
+    [VesselField.BEAM]: CANDIDATE,
+    [VesselField.DRAUGHT]: CANDIDATE, // MaximumStaticDraught của msg 5
+    [VesselField.DESTINATION]: CANDIDATE,
+    [VesselField.ETA]: CANDIDATE,
+
+    // --- CANDIDATE: suy diễn, không phải field gốc ---
     [VesselField.VESSEL_TYPE]: CANDIDATE, // AIS cho MÃ; nhãn chữ phải tự map
     [VesselField.FLAG]: CANDIDATE, // suy từ MID (3 số đầu MMSI), cần bảng tra
     // GROSS_TONNAGE / DEADWEIGHT / BUILT_YEAR / mọi field cảng: AIS không mang.
@@ -85,8 +99,10 @@ const AISSTREAM = defineSourceCapability({
   enabled: false,
   defaultPriority: 10,
   notes: [
-    "Marine đã sở hữu và vận hành kết nối AISStream. Phase A KHÔNG mở connection thứ hai từ bot.",
-    "enabled=false là quyết định vận hành (tránh 2 connection), không phải giới hạn kỹ thuật.",
+    "Marine đã sở hữu và vận hành kết nối AISStream. Bot KHÔNG mở connection thứ hai tới stream.aisstream.io.",
+    "enabled=false là quyết định vận hành (tránh 2 connection), không phải giới hạn kỹ thuật. costType=EXISTING_STREAM khiến FreeSourceSelector loại ngay ở cổng chi phí.",
+    "CONFIRMED = 10 field mà `AisWebSocketManager._dataTransform` thực sự phát. KHÔNG confirm theo đặc tả AIS: đặc tả không phải thứ chạy trong production.",
+    "heading/callsign/length/beam/draught/destination/eta là CANDIDATE: có trong AIS message gốc nhưng Marine API không chuyển tiếp. Nâng lên CONFIRMED chỉ khi đường truyền đổi.",
     "GT/DWT/năm đóng UNSUPPORTED: không AIS message nào mang các trường này.",
     "Mọi field cảng UNSUPPORTED: AIS không phát sự kiện cập cảng/rời cảng.",
   ],
