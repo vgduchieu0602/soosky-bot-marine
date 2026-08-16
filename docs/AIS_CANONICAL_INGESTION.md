@@ -342,6 +342,8 @@ AIS là **PUSH source**. Không ép nó vào `VesselDataProvider.fetch(identifie
 
 WebSocket ngoài · WebSocket nội bộ · Mongo ingestion · per-frame insert · scheduler · Redis · Kafka · GeoJSON · MyShipTracking · bậc freshness `REALTIME` · field cảng · sửa production.
 
+> **AIS-2 đã nối WS nội bộ** (vẫn không có persistence): xem [AIS_MARINE_WS_BRIDGE.md](./AIS_MARINE_WS_BRIDGE.md).
+
 ---
 
 *Bằng chứng lấy từ clone Soosky-marine-api nhánh mặc định. Không sửa file nào của production.*

@@ -52,6 +52,17 @@ export interface AppConfig {
    * voyage vẫn ghi bình thường). Thà thiếu vị trí còn hơn gắn mốc sai hàng giờ.
    */
   shipFinderSourceUtcOffsetMinutes?: number;
+  /**
+   * WebSocket NỘI BỘ của Soosky-marine-api, dạng `ws://host:port/ais-stream`.
+   *
+   * ⛔ KHÔNG được trỏ tới `stream.aisstream.io`: production là chủ sở hữu duy
+   * nhất của kết nối tới nhà cung cấp AIS. `MarineAisWebSocketClient` tự chặn
+   * và ném ngay lúc dựng.
+   *
+   * Trống -> cầu AIS nằm im: không có gì tự kết nối. Ở phase AIS-2, chỉ POC gọi
+   * tay (`npm run marine-ais:poc`) mới dùng tới nó.
+   */
+  marineAisWsUrl: string;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -164,6 +175,8 @@ export function loadConfig(env: Env = process.env): AppConfig {
       min: -12 * 60,
       max: 14 * 60,
     }),
+    // Không có mặc định, và KHÔNG hardcode hostname production ở bất kỳ đâu.
+    marineAisWsUrl: str(env, "MARINE_AIS_WS_URL"),
   };
 }
 
