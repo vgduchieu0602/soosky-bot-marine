@@ -122,12 +122,15 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     const toInsert = [...byFingerprint.entries()].filter(
       ([fingerprint]) => !existingFingerprints.has(fingerprint)
     );
-    const created = await VesselObservationModel.insertMany(
-      toInsert.map(([fingerprint, candidate]) =>
-        MongoVesselObservationRepository.toDoc(candidate.observation, fingerprint)
-      ),
-      { ordered: true }
-    );
+    const created =
+      toInsert.length === 0
+        ? []
+        : await VesselObservationModel.insertMany(
+            toInsert.map(([fingerprint, candidate]) =>
+              MongoVesselObservationRepository.toDoc(candidate.observation, fingerprint)
+            ),
+            { ordered: true }
+          );
     const savedIds = new Map(
       toInsert.map(([fingerprint], index) => [fingerprint, String(created[index]._id)])
     );

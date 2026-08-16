@@ -12,6 +12,7 @@ import { ResolveAndStoreCurrentVessel } from "../application/use-cases/resolutio
 import { AcquireFreeVesselData } from "../application/use-cases/acquisition/AcquireFreeVesselData";
 import { CheckLocalVesselSufficiency } from "../application/use-cases/acquisition/CheckLocalVesselSufficiency";
 import { CollectVesselObservations } from "../application/use-cases/observation/CollectVesselObservations";
+import { IngestAisBatch } from "../application/use-cases/ingestion/IngestAisBatch";
 import { VesselSource } from "../domain/enums/VesselSource";
 import { ShipFinderClient } from "../infrastructure/integrations/shipfinder/ShipFinderClient";
 import { SHIPFINDER_PARSER_VERSION } from "../infrastructure/integrations/shipfinder/ShipFinderParser";
@@ -22,6 +23,7 @@ import { ShipInfoProvider } from "../infrastructure/integrations/shipinfo/ShipIn
 import { VesselFinderHtmlSource } from "../infrastructure/integrations/vesselfinder/VesselFinderHtmlSource";
 import { VesselFinderMapSource } from "../infrastructure/integrations/vesselfinder/VesselFinderMapSource";
 import { VesselFinderProvider } from "../infrastructure/integrations/vesselfinder/VesselFinderProvider";
+import { MARINE_AIS_PARSER_VERSION } from "../infrastructure/integrations/marine-ais/MarineAisMessageMapper";
 import { HttpClient } from "../infrastructure/http/HttpClient";
 import { InMemoryCurrentVesselRepository } from "../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
 import { InMemoryVesselObservationRepository } from "../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
@@ -37,6 +39,7 @@ export interface CanonicalDependencies {
   collectVesselObservations: CollectVesselObservations;
   resolveAndStoreCurrentVessel: ResolveAndStoreCurrentVessel;
   acquireFreeVesselData: AcquireFreeVesselData;
+  ingestAisBatch: IngestAisBatch;
 }
 
 export interface CanonicalDependencyInputs {
@@ -69,6 +72,12 @@ export function createCanonicalDependencies(
   const resolveAndStoreCurrentVessel = new ResolveAndStoreCurrentVessel({
     resolve: new ResolveCurrentVessel({ repository: observationRepository }),
     repository: currentVesselRepository,
+  });
+  const ingestAisBatch = new IngestAisBatch({
+    repository: observationRepository,
+    resolveAndStore: resolveAndStoreCurrentVessel,
+    parserVersion: MARINE_AIS_PARSER_VERSION,
+    resolveConcurrency: config.aisResolveConcurrency,
   });
 
   const shipInfoTimeoutMs = crawlRuntime.getConfig(VesselSource.SHIPINFO).timeoutMs;
@@ -115,5 +124,6 @@ export function createCanonicalDependencies(
     collectVesselObservations,
     resolveAndStoreCurrentVessel,
     acquireFreeVesselData,
+    ingestAisBatch,
   };
 }

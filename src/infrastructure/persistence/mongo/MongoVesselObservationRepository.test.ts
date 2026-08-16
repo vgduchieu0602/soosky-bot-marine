@@ -70,3 +70,33 @@ test("saveMany dedupes the batch and DB with one bounded lookup and one bulk ins
     model.create = original.create;
   }
 });
+
+test("saveMany maps an existing DB fingerprint to its input slot without inserting it", async () => {
+  const model = VesselObservationModel as unknown as {
+    find: (criteria: { $or: Array<{ fingerprint: { $in: string[] } }> }) => { select: () => { lean: () => { exec: () => Promise<unknown[]> } } };
+    insertMany: (docs: Array<Record<string, unknown>>) => Promise<Array<{ _id: string }>>;
+  };
+  const original = { find: model.find, insertMany: model.insertMany };
+  let inserted: Array<Record<string, unknown>> = [];
+  model.find = (criteria) => ({
+    select: () => ({ lean: () => ({ exec: async () => [{ fingerprint: criteria.$or[0].fingerprint.$in[0] }] }) }),
+  });
+  model.insertMany = async (docs) => {
+    inserted = docs;
+    return docs.map((_, index) => ({ _id: `id-${index + 1}` }));
+  };
+
+  try {
+    const repository = new MongoVesselObservationRepository({ now: () => NOW });
+    const results = await repository.saveMany([position("A"), position("B", 3)]);
+    assert.equal(inserted.length, 1);
+    assert.equal(inserted[0].mmsi, "B");
+    assert.deepEqual(results.map((result) => result.status), [
+      ObservationSaveStatus.SKIPPED_DUPLICATE,
+      ObservationSaveStatus.SAVED,
+    ]);
+  } finally {
+    model.find = original.find;
+    model.insertMany = original.insertMany;
+  }
+});

@@ -46,5 +46,6 @@ export async function buildContainer(): Promise<Container> {
     collectVesselObservations: canonical.collectVesselObservations,
     resolveAndStoreCurrentVessel: canonical.resolveAndStoreCurrentVessel,
     acquireFreeVesselData: canonical.acquireFreeVesselData,
+    ingestAisBatch: canonical.ingestAisBatch,
   };
 }

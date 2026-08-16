@@ -12,6 +12,10 @@ import { createSourceMetadata } from "../../../domain/value-objects/SourceMetada
 import { VesselIdentity } from "../../../domain/value-objects/VesselIdentity";
 import { VesselPositionReport } from "../../../domain/value-objects/VesselPositionReport";
 import { IngestAisBatch } from "./IngestAisBatch";
+import { InMemoryVesselObservationRepository } from "../../../infrastructure/persistence/memory/InMemoryVesselObservationRepository";
+import { InMemoryCurrentVesselRepository } from "../../../infrastructure/persistence/memory/InMemoryCurrentVesselRepository";
+import { ResolveCurrentVessel } from "../resolution/ResolveCurrentVessel";
+import { ResolveAndStoreCurrentVessel } from "../resolution/ResolveAndStoreCurrentVessel";
 
 const FETCHED_AT = new Date("2026-08-16T12:10:00.000Z");
 
@@ -101,4 +105,30 @@ test("bounds resolution concurrency and reports a per-vessel resolve failure wit
   assert.ok(peak <= 2, `peak concurrency ${peak} exceeded configured bound`);
   assert.equal(result.vesselsResolved, 2);
   assert.equal(result.vesselsResolveFailed, 1);
+});
+
+test("position-only AIS updates canonical position without erasing an existing AIS identity", async () => {
+  const observations = new InMemoryVesselObservationRepository({ now: () => new Date("2026-08-16T13:00:00.000Z") });
+  const current = new InMemoryCurrentVesselRepository({ now: () => new Date("2026-08-16T13:00:00.000Z") });
+  const resolveAndStore = new ResolveAndStoreCurrentVessel({
+    resolve: new ResolveCurrentVessel({ repository: observations, now: () => new Date("2026-08-16T13:00:00.000Z") }),
+    repository: current,
+  });
+  const ingest = new IngestAisBatch({ repository: observations, resolveAndStore, resolveConcurrency: 1 });
+
+  await ingest.execute(batch(entry("636018086", "identity")));
+  const identityOnly = await current.findByMmsi("636018086");
+  assert.equal(identityOnly?.identity?.name?.value, "VESSEL 636018086");
+  assert.equal(identityOnly?.position, null);
+  const later = new Date("2026-08-16T12:11:00.000Z");
+  const positionOnly = entry("636018086", "position");
+  const position = {
+    ...positionOnly.position!, lat: 3, receivedAt: later,
+    metadata: createSourceMetadata({ source: VesselSource.AISSTREAM, fetchedAt: later, sourceReceivedAt: later }),
+  };
+  await ingest.execute(batch({ ...positionOnly, position }));
+
+  const stored = await current.findByMmsi("636018086");
+  assert.equal(stored?.identity?.name?.value, "VESSEL 636018086");
+  assert.equal(stored?.position?.position.lat, 3);
 });
