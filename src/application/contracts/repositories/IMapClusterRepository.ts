@@ -29,6 +29,15 @@ export interface MapClusterQuery {
    * cụm trả về con số, nên không còn cơ hội lọc lại ở tầng trên.
    */
   readonly observedSince: Date;
+  /**
+   * Bỏ qua tàu có mốc nguồn Ở TƯƠNG LAI xa hơn mốc này.
+   *
+   * ⚠️ Cận TRÊN cũng bắt buộc, ngang cận dưới. `MapVesselReadiness` đã loại mốc
+   * tương lai từ MAP-1, nhưng chế độ cụm không đi qua nó — chỉ có `$gte` thì
+   * một mốc hỏng ở tương lai sẽ **luôn** lọt vào mọi cụm, vĩnh viễn, và hai chế
+   * độ VESSELS/CLUSTERS nói hai điều khác nhau về cùng một con tàu.
+   */
+  readonly observedBefore: Date;
   /** Trần số cụm đọc về. Kho đọc dư 1 để biết còn nữa hay không. */
   readonly limit: number;
 }

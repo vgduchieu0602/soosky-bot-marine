@@ -179,6 +179,7 @@ async function main(): Promise<void> {
           boxes: viewport.boxes,
           gridZoom: plan.gridZoom,
           observedSince: since,
+          observedBefore: new Date(Date.now() + DEFAULT_MAP_READINESS_POLICY.futureToleranceMs),
           limit,
         })
       );

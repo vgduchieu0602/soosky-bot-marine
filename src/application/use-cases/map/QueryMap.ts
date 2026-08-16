@@ -125,6 +125,9 @@ export class QueryMap {
       // Cụm chỉ trả về CON SỐ, nên bộ lọc độ tươi phải nằm trong truy vấn.
       // Ngưỡng lấy từ chính chính sách readiness -> không có số thứ hai.
       observedSince: new Date(now.getTime() - this.readiness.maxPositionAgeMs),
+      // Cận TRÊN dùng CHÍNH `futureToleranceMs` của `MapVesselReadiness`, để
+      // chế độ cụm và chế độ tàu loại đúng cùng một tập mốc hỏng.
+      observedBefore: new Date(now.getTime() + this.readiness.futureToleranceMs),
       limit,
     });
 

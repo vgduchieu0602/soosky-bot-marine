@@ -84,11 +84,14 @@ export function buildMapFilter(query: MapVesselQuery): Record<string, unknown> {
 
   const filter: Record<string, unknown> = geo.length === 1 ? { ...geo[0] } : { $or: geo };
 
-  if (query.observedSince !== undefined) {
-    // Lọc SƠ BỘ để giảm ứng viên. Quyết định cuối vẫn là của application —
-    // ở đây không có khái niệm "đủ tươi", chỉ có "cũ hơn mốc này thì khỏi đọc".
-    filter["position.observedAt"] = { $gte: query.observedSince };
-  }
+  // Lọc SƠ BỘ để giảm ứng viên. Quyết định cuối vẫn là của application — ở đây
+  // không có khái niệm "đủ tươi", chỉ có "ngoài khoảng này thì khỏi đọc".
+  const window: Record<string, Date> = {};
+  if (query.observedSince !== undefined) window.$gte = query.observedSince;
+  // Cận TRÊN cũng cần: mốc ở tương lai không phải "siêu tươi", nó là mốc hỏng.
+  if (query.observedBefore !== undefined) window.$lte = query.observedBefore;
+  if (Object.keys(window).length > 0) filter["position.observedAt"] = window;
+
   return filter;
 }
 

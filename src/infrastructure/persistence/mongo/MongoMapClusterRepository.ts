@@ -105,8 +105,9 @@ export function buildClusterPipeline(query: MapClusterQuery): Record<string, unk
         boxes: query.boxes,
         candidateLimit: query.limit,
         // Lọc độ tươi NGAY trong `$match`: cụm chỉ trả về con số nên không còn
-        // cơ hội loại tàu cũ ở tầng trên.
+        // cơ hội loại tàu cũ (hoặc tàu có mốc ở tương lai) ở tầng trên.
         observedSince: query.observedSince,
+        observedBefore: query.observedBefore,
       }),
     },
     // Chỉ giữ đúng ba field cần cho phép gộp — không kéo `identity`,

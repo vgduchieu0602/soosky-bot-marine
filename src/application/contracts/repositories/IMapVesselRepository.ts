@@ -36,6 +36,13 @@ export interface MapVesselQuery {
    * `evaluateMapReadiness`; kho không được coi đây là luật nghiệp vụ.
    */
   readonly observedSince?: Date;
+  /**
+   * Bỏ qua tàu có mốc nguồn ở TƯƠNG LAI xa hơn mốc này.
+   *
+   * Cũng chỉ là lọc sơ bộ — `evaluateMapReadiness` vẫn là quyết định cuối. Có
+   * mặt ở đây để hai chế độ VESSELS/CLUSTERS lọc CÙNG một khoảng thời gian.
+   */
+  readonly observedBefore?: Date;
 }
 
 export interface MapVesselQueryResult {

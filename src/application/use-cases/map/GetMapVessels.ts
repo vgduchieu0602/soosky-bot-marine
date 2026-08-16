@@ -116,6 +116,7 @@ export class GetMapVessels {
       // Lọc sơ bộ để kho khỏi trả về tàu chắc chắn sẽ bị loại. Kết quả CUỐI
       // vẫn do `evaluateMapReadiness` quyết — không sao chép luật xuống kho.
       observedSince: new Date(now.getTime() - this.policy.maxPositionAgeMs),
+      observedBefore: new Date(now.getTime() + this.policy.futureToleranceMs),
     });
 
     const projected = projectMapVessels(candidates, now, this.policy);

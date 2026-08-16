@@ -74,6 +74,18 @@ test("§7 `observedSince` thành bộ lọc trên `position.observedAt`", () => 
   assert.deepEqual(filter["position.observedAt"], { $gte: since });
 });
 
+test("cửa sổ thời gian có CẢ HAI cận — mốc tương lai không phải 'siêu tươi'", () => {
+  const since = new Date("2026-08-15T12:00:00.000Z");
+  const before = new Date("2026-08-16T12:05:00.000Z");
+  const filter = buildMapFilter({
+    boxes: [BOX],
+    candidateLimit: 10,
+    observedSince: since,
+    observedBefore: before,
+  });
+  assert.deepEqual(filter["position.observedAt"], { $gte: since, $lte: before });
+});
+
 test("không truyền `observedSince` -> KHÔNG thêm bộ lọc thời gian", () => {
   const filter = buildMapFilter({ boxes: [BOX], candidateLimit: 10 });
   assert.equal("position.observedAt" in filter, false);

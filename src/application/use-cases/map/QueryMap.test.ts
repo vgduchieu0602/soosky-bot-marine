@@ -103,6 +103,8 @@ class FakeClusterRepository implements IMapClusterRepository {
       const observedAt = item.position?.observedAt;
       if (report === undefined || !(observedAt instanceof Date)) continue;
       if (observedAt.getTime() < query.observedSince.getTime()) continue;
+      // Cận TRÊN: mốc ở tương lai không phải "siêu tươi".
+      if (observedAt.getTime() > query.observedBefore.getTime()) continue;
 
       const inside = query.boxes.some(
         (box) =>
@@ -338,6 +340,47 @@ test("§36 cùng một ô có tàu tươi và tàu cũ -> chỉ đếm tàu tư�
   // Ngưỡng lọc lấy từ chính chính sách readiness, không phải số thứ hai.
   const since = clusters.queries[0].observedSince;
   assert.equal(since.toISOString(), new Date(NOW.getTime() - 24 * 3600_000).toISOString());
+});
+
+test("§20 mốc nguồn ở TƯƠNG LAI xa cũng bị loại khỏi cụm, giống chế độ tàu", async () => {
+  // Lỗ hổng của MAP-3: bộ lọc cụm chỉ có `$gte` nên một mốc hỏng ở tương lai
+  // lọt vào MỌI cụm, vĩnh viễn — trong khi chế độ VESSELS đã loại nó từ MAP-1.
+  // Hai chế độ nói hai điều khác nhau về cùng một con tàu.
+  const future = new Date(NOW.getTime() + 60 * 60 * 1000);
+  const { sut, clusters } = useCase([
+    vessel("111111111", 1, 103),
+    vessel("222222222", 1.001, 103.001, { observedAt: future }),
+  ]);
+
+  const result = await sut.execute({ bbox: WORLD_BOUNDING_BOX, zoom: 2 });
+  assert.equal(result.mode, MapQueryMode.CLUSTERS);
+  if (result.mode !== MapQueryMode.CLUSTERS) return;
+  assert.equal(result.representedVessels, 1, "mốc tương lai KHÔNG được đếm");
+
+  // Cận trên lấy từ chính `futureToleranceMs` của readiness — không phải số mới.
+  assert.equal(
+    clusters.queries[0].observedBefore.toISOString(),
+    new Date(NOW.getTime() + 5 * 60_000).toISOString()
+  );
+});
+
+test("§20 hai chế độ loại CÙNG một tập mốc hỏng", async () => {
+  const future = new Date(NOW.getTime() + 60 * 60 * 1000);
+  const { sut } = useCase([
+    vessel("111111111", 10, 106),
+    vessel("222222222", 10.01, 106.01, { observedAt: future }),
+  ]);
+  const bbox = { minLat: 5, minLon: 100, maxLat: 15, maxLon: 110 };
+
+  const asVessels = await sut.execute({ bbox, zoom: 10 });
+  const asClusters = await sut.execute({ bbox, zoom: 2 });
+
+  assert.equal(asVessels.mode, MapQueryMode.VESSELS);
+  assert.equal(asClusters.mode, MapQueryMode.CLUSTERS);
+  if (asVessels.mode !== MapQueryMode.VESSELS || asClusters.mode !== MapQueryMode.CLUSTERS) return;
+
+  assert.equal(asVessels.items.length, 1);
+  assert.equal(asClusters.representedVessels, 1, "cùng một con số ở cả hai chế độ");
 });
 
 test("movingCount tách tàu đang chạy khỏi tàu đứng yên", async () => {
