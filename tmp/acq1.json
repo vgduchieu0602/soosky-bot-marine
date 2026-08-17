@@ -1,0 +1,120 @@
+{
+  "status": "PARTIAL",
+  "sourceUsed": "FREE",
+  "need": "DETAIL",
+  "detail": {
+    "identifiers": {
+      "mmsi": "111000001",
+      "imo": "9110001"
+    },
+    "identity": {
+      "name": {
+        "value": "YUELEIYU111199",
+        "source": "shipfinder",
+        "observedAt": null,
+        "fetchedAt": "2026-08-17T17:13:47.768Z"
+      },
+      "callsign": {
+        "value": "ABCDE",
+        "source": "shipfinder",
+        "observedAt": null,
+        "fetchedAt": "2026-08-17T17:13:47.768Z"
+      },
+      "vesselType": {
+        "value": "Cargo",
+        "source": "shipinfo",
+        "observedAt": "2026-08-17T11:58:00.000Z",
+        "fetchedAt": "2026-08-17T12:00:00.000Z"
+      },
+      "vesselTypeCode": {
+        "value": 70,
+        "source": "shipinfo",
+        "observedAt": "2026-08-17T11:58:00.000Z",
+        "fetchedAt": "2026-08-17T12:00:00.000Z"
+      },
+      "flagCode": null,
+      "flagName": null
+    },
+    "position": {
+      "lat": 10.1,
+      "lon": 106.7,
+      "speed": 8,
+      "course": 10,
+      "heading": null,
+      "navStatusCode": 0,
+      "navStatusText": "Under way using engine",
+      "observedAt": "2026-08-17T11:58:00.000Z",
+      "ageMs": 18947843,
+      "source": "shipinfo",
+      "status": "AVAILABLE"
+    },
+    "particulars": {
+      "length": {
+        "value": 1000,
+        "source": "shipfinder",
+        "observedAt": null,
+        "fetchedAt": "2026-08-17T17:13:47.768Z"
+      },
+      "beam": {
+        "value": 120,
+        "source": "shipfinder",
+        "observedAt": null,
+        "fetchedAt": "2026-08-17T17:13:47.768Z"
+      },
+      "draught": null,
+      "grossTonnage": null,
+      "deadweight": null,
+      "builtYear": null
+    },
+    "voyage": {
+      "destination": null,
+      "eta": null,
+      "currentPort": null,
+      "nextPort": null,
+      "lastPort": null,
+      "lastPortDepartureAt": null
+    },
+    "groups": {
+      "IDENTITY": {
+        "status": "AVAILABLE",
+        "updatedAt": "2026-08-17T17:13:47.768Z",
+        "ageMs": 75
+      },
+      "POSITION": {
+        "status": "AVAILABLE",
+        "updatedAt": "2026-08-17T12:00:00.000Z",
+        "ageMs": 18947843
+      },
+      "PARTICULARS": {
+        "status": "AVAILABLE",
+        "updatedAt": "2026-08-17T17:13:47.768Z",
+        "ageMs": 75
+      },
+      "VOYAGE": {
+        "status": "MISSING",
+        "updatedAt": null,
+        "ageMs": null
+      }
+    },
+    "missingGroups": [
+      "VOYAGE"
+    ],
+    "staleGroups": [],
+    "needsRefresh": true,
+    "refreshGroups": [
+      "VOYAGE"
+    ],
+    "resolvedAt": "2026-08-17T17:13:47.814Z"
+  },
+  "externalAttempted": true,
+  "dataUpdated": true,
+  "fallbackUsed": false,
+  "paidSkipReason": "NOT_ALLOWED",
+  "remainingMissingGroups": [
+    "VOYAGE"
+  ],
+  "remainingStaleGroups": [],
+  "durationMs": 241,
+  "paidRequestedButDisabled": false,
+  "acquisitionRequestId": "acq-local-0001"
+}

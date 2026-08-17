@@ -1,0 +1,261 @@
+connected soosky_marine_reality_gate
+indexes [
+  {
+    "v": 2,
+    "key": {
+      "_id": 1
+    },
+    "name": "_id_"
+  },
+  {
+    "v": 2,
+    "key": {
+      "mmsi": 1
+    },
+    "name": "mmsi_1",
+    "unique": true,
+    "partialFilterExpression": {
+      "mmsi": {
+        "$type": "string"
+      }
+    }
+  },
+  {
+    "v": 2,
+    "key": {
+      "imo": 1
+    },
+    "name": "imo_1",
+    "unique": true,
+    "partialFilterExpression": {
+      "imo": {
+        "$type": "string"
+      }
+    }
+  },
+  {
+    "v": 2,
+    "key": {
+      "location": "2dsphere"
+    },
+    "name": "location_2dsphere",
+    "2dsphereIndexVersion": 3
+  }
+]
+ingest {
+  inputEntries: 26,
+  observationsCreated: 52,
+  observationsSaved: 52,
+  observationsSkippedDuplicate: 0,
+  vesselsAffected: 26,
+  vesselsResolved: 26,
+  vesselsResolveFailed: 0,
+  vesselsSkippedUnchanged: 0
+}
+SAMPLE_DOC {
+  "_id": "6a8340c3ae79f985552b5527",
+  "mmsi": "111000001",
+  "imo": "9110001",
+  "identity": {
+    "mmsi": "111000001",
+    "imo": {
+      "value": "9110001",
+      "source": "shipinfo",
+      "observationId": "6a8340c3ae79f985552b54f2",
+      "observedAt": "2026-08-17T11:58:00.000Z",
+      "fetchedAt": "2026-08-17T12:00:00.000Z",
+      "reason": "ONLY_AVAILABLE_VALUE",
+      "rejected": []
+    },
+    "name": {
+      "value": "FRESH CRAWL",
+      "source": "shipinfo",
+      "observationId": "6a8340c3ae79f985552b54f2",
+      "observedAt": "2026-08-17T11:58:00.000Z",
+      "fetchedAt": "2026-08-17T12:00:00.000Z",
+      "reason": "ONLY_AVAILABLE_VALUE",
+      "rejected": []
+    },
+    "callsign": null,
+    "vesselType": {
+      "value": "Cargo",
+      "source": "shipinfo",
+      "observationId": "6a8340c3ae79f985552b54f2",
+      "observedAt": "2026-08-17T11:58:00.000Z",
+      "fetchedAt": "2026-08-17T12:00:00.000Z",
+      "reason": "ONLY_AVAILABLE_VALUE",
+      "rejected": []
+    },
+    "vesselTypeCode": {
+      "value": 70,
+      "source": "shipinfo",
+      "observationId": "6a8340c3ae79f985552b54f2",
+      "observedAt": "2026-08-17T11:58:00.000Z",
+      "fetchedAt": "2026-08-17T12:00:00.000Z",
+      "reason": "ONLY_AVAILABLE_VALUE",
+      "rejected": []
+    },
+    "flagCode": null,
+    "flagName": null
+  },
+  "position": {
+    "position": {
+      "mmsi": "111000001",
+      "imo": "9110001",
+      "lat": 10.1,
+      "lng": 106.7,
+      "speed": 8,
+      "course": 10,
+      "heading": null,
+      "navStatus": {
+        "code": 0,
+        "text": "Under way using engine"
+      },
+      "latLngApproximate": false,
+      "receivedAt": "2026-08-17T11:58:00.000Z",
+      "metadata": {
+        "source": "shipinfo",
+        "fetchedAt": "2026-08-17T12:00:00.000Z",
+        "sourceReceivedAt": "2026-08-17T11:58:00.000Z",
+        "confidence": null
+      }
+    },
+    "source": "shipinfo",
+    "observationId": "6a8340c3ae79f985552b54f3",
+    "observedAt": "2026-08-17T11:58:00.000Z",
+    "fetchedAt": "2026-08-17T12:00:00.000Z",
+    "freshness": "RECENT",
+    "reason": "ONLY_AVAILABLE_VALUE",
+    "rejected": []
+  },
+  "particulars": null,
+  "voyage": null,
+  "resolvedAt": "2026-08-17T17:11:31.224Z",
+  "contentHash": "a0eed2bc54c815a60405efdb33c9cd20a49e118765fadec551d587af528b2f55",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      106.7,
+      10.1
+    ]
+  },
+  "createdAt": "2026-08-17T17:11:31.241Z",
+  "updatedAt": "2026-08-17T17:11:31.241Z",
+  "__v": 0
+}
+count 26
+EXPLAIN_WINNING {
+  "isCached": false,
+  "stage": "LIMIT",
+  "limitAmount": 5,
+  "inputStage": {
+    "stage": "FETCH",
+    "filter": {
+      "location": {
+        "$geoWithin": {
+          "$geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  100,
+                  0
+                ],
+                [
+                  120,
+                  0
+                ],
+                [
+                  120,
+                  20
+                ],
+                [
+                  100,
+                  20
+                ],
+                [
+                  100,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "inputStage": {
+      "stage": "IXSCAN",
+      "keyPattern": {
+        "location": "2dsphere"
+      },
+      "indexName": "location_2dsphere",
+      "isMultiKey": false,
+      "multiKeyPaths": {
+        "location": []
+      },
+      "isUnique": false,
+      "isSparse": false,
+      "isPartial": false,
+      "indexVersion": 2,
+      "direction": "forward",
+      "indexBounds": {
+        "location": [
+          "[3242591731706757120, 3242591731706757120]",
+          "[3281439676539338752, 3281439676539338752]",
+          "[3281442975074222080, 3281442975074222080]",
+          "[3281443569928241152, 3281443569928241152]",
+          "[3281443569929027584, 3281443569929027584]",
+          "[3281443569929093120, 3281443569929093120]",
+          "[3281443569929125889, 3281443569929158655]",
+          "[3281443569931386880, 3281443569931386880]",
+          "[3281443569943969792, 3281443569943969792]",
+          "[3281443569994301440, 3281443569994301440]",
+          "[3281443570195628032, 3281443570195628032]",
+          "[3281443571000934400, 3281443571000934400]",
+          "[3281443572074676224, 3281443572074676224]",
+          "[3281443576369643520, 3281443576369643520]",
+          "[3281443593549512704, 3281443593549512704]",
+          "[3281443799707942912, 3281443799707942912]",
+          "[3281452870678872064, 3281452870678872064]",
+          "[3281505647237005312, 3281505647237005312]",
+          "[3281716753469538304, 3281716753469538304]",
+          "[3281998228446248960, 3281998228446248960]",
+          "[3283124128353091584, 3283124128353091584]",
+          "[3296634927235203072, 3296634927235203072]",
+          "[3386706919782612992, 3386706919782612992]",
+          "[3440750115311058944, 3440750115311058944]",
+          "[3445253714938429440, 3445253714938429440]",
+          "[3446379614845272064, 3446379614845272064]",
+          "[3446661089821982720, 3446661089821982720]",
+          "[3446731458566160384, 3446731458566160384]",
+          "[3446784235124293632, 3446784235124293632]",
+          "[3446797429263826944, 3446797429263826944]",
+          "[3446798528775454720, 3446798528775454720]",
+          "[3446799353409175552, 3446799353409175552]",
+          "[3446799559567605760, 3446799559567605760]",
+          "[3446799595001085952, 3446799595001085952]",
+          "[3446799595806392320, 3446799595806392320]",
+          "[3446799595951620097, 3446799595951652863]",
+          "[3446799595951685632, 3446799595951685632]",
+          "[3446799595951882240, 3446799595951882240]",
+          "[3446799595952144384, 3446799595952144384]",
+          "[3446799595953192960, 3446799595953192960]",
+          "[3446799595957387264, 3446799595957387264]",
+          "[3446799596007718912, 3446799596007718912]",
+          "[3446799598222311424, 3446799598222311424]",
+          "[3446799611107213312, 3446799611107213312]",
+          "[3467771713075281921, 3476778912330022911]",
+          "[3476778912330022912, 3476778912330022912]",
+          "[3476778912330022913, 3485786111584763903]",
+          "[3512807709348986880, 3512807709348986880]",
+          "[3512807709348986881, 3521814908603727871]",
+          "[3521814908603727873, 3530822107858468863]",
+          "[3530822107858468864, 3530822107858468864]",
+     
+EXPLAIN_STATS {
+  "nReturned": 5,
+  "totalKeysExamined": 5,
+  "totalDocsExamined": 5,
+  "executionTimeMillis": 5,
+  "stage": "LIMIT"
+}
