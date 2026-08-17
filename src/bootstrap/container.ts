@@ -15,10 +15,14 @@ export interface Container extends LegacyDependencies, CanonicalDependencies {
   config: AppConfig;
 }
 
-export async function buildContainer(): Promise<Container> {
+export interface BuildContainerOptions {
+  connectMongo?: boolean;
+}
+
+export async function buildContainer(options: BuildContainerOptions = {}): Promise<Container> {
   // Compatibility path: legacy VesselFinder entities and workflows remain
   // available to the existing HTTP and CLI entry points.
-  const legacy = await createLegacyDependencies(config);
+  const legacy = await createLegacyDependencies(config, { connectMongo: options.connectMongo });
 
   // Target path: multi-source providers, observations and canonical current
   // vessel dependencies. Construction is inert; no AIS client is started.

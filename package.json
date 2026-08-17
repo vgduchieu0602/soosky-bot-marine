@@ -5,6 +5,8 @@
   "main": "dist/interfaces/http/server.js",
   "scripts": {
     "build": "tsc",
+    "start:bot": "node dist/interfaces/runtime/production.js",
+    "runtime:load-poc": "ts-node src/interfaces/cli/marineAisLoadSim.ts",
     "start": "ts-node src/interfaces/http/server.ts",
     "get": "ts-node src/interfaces/cli/getVessel.ts",
     "crawl": "ts-node src/interfaces/cli/crawlOnce.ts",

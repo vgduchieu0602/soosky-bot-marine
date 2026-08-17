@@ -50,6 +50,17 @@ export const MarineAisClientEvent = {
 export type MarineAisClientEvent =
   (typeof MarineAisClientEvent)[keyof typeof MarineAisClientEvent];
 
+export const MarineAisLifecycleState = {
+  CONNECTING: "CONNECTING",
+  CONNECTED: "CONNECTED",
+  RECONNECTING: "RECONNECTING",
+  STOPPING: "STOPPING",
+  STOPPED: "STOPPED",
+} as const;
+
+export type MarineAisLifecycleState =
+  (typeof MarineAisLifecycleState)[keyof typeof MarineAisLifecycleState];
+
 /**
  * Lý do loại ở mức FRAME — trước khi mapper được gọi.
  * Tách khỏi `MarineAisRejectReason` (mức nội dung) vì hai loại này chỉ ra hai
@@ -131,6 +142,8 @@ export interface MarineAisWebSocketClientOptions {
   initialReconnectDelayMs?: number;
   maxReconnectDelayMs?: number;
   reconnectBackoffFactor?: number;
+  reconnectJitterRatio?: number;
+  random?: () => number;
   /** Trần chờ close handshake trước khi `terminate()`. */
   closeTimeoutMs?: number;
   /**
@@ -153,6 +166,8 @@ interface ResolvedOptions {
   initialReconnectDelayMs: number;
   maxReconnectDelayMs: number;
   reconnectBackoffFactor: number;
+  reconnectJitterRatio: number;
+  random: () => number;
   closeTimeoutMs: number;
   staleConnectionTimeoutMs?: number;
   logger: MarineAisWebSocketClientLogger;
@@ -219,6 +234,8 @@ export class MarineAisWebSocketClient extends EventEmitter {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private staleTimer: NodeJS.Timeout | null = null;
   private reconnectDelayMs: number;
+  private lifecycleState: MarineAisLifecycleState = MarineAisLifecycleState.STOPPED;
+  private lastMessageAt: Date | null = null;
   /** `stop()` đã được gọi -> tuyệt đối không tự kết nối lại nữa. */
   private stopped = true;
 
@@ -249,6 +266,8 @@ export class MarineAisWebSocketClient extends EventEmitter {
       maxReconnectDelayMs: options.maxReconnectDelayMs ?? DEFAULTS.maxReconnectDelayMs,
       reconnectBackoffFactor:
         options.reconnectBackoffFactor ?? DEFAULTS.reconnectBackoffFactor,
+      reconnectJitterRatio: options.reconnectJitterRatio ?? 0,
+      random: options.random ?? Math.random,
       closeTimeoutMs: options.closeTimeoutMs ?? DEFAULTS.closeTimeoutMs,
       staleConnectionTimeoutMs: options.staleConnectionTimeoutMs,
       logger: options.logger ?? {
@@ -266,6 +285,7 @@ export class MarineAisWebSocketClient extends EventEmitter {
    * socket thứ hai — bot chỉ được có ĐÚNG MỘT connection tới Marine (§11).
    */
   start(): void {
+    if (!this.stopped) return;
     this.stopped = false;
     this.openSocket();
   }
@@ -275,13 +295,18 @@ export class MarineAisWebSocketClient extends EventEmitter {
    * đã được lên lịch từ trước.
    */
   async stop(): Promise<void> {
+    if (this.stopped && this.socket === null) return;
+    this.lifecycleState = MarineAisLifecycleState.STOPPING;
     this.stopped = true;
     this.clearReconnectTimer();
     this.clearStaleTimer();
 
     const socket = this.socket;
     this.socket = null;
-    if (socket === null) return;
+    if (socket === null) {
+      this.lifecycleState = MarineAisLifecycleState.STOPPED;
+      return;
+    }
 
     // Gỡ listener TRƯỚC khi close: nếu không, handler `close` sẽ lại xếp lịch
     // reconnect cho một client vừa bị dừng.
@@ -289,6 +314,7 @@ export class MarineAisWebSocketClient extends EventEmitter {
 
     if (socket.readyState === WebSocket.CLOSED) {
       this.emitSafe(MarineAisClientEvent.DISCONNECTED, { intentional: true });
+      this.lifecycleState = MarineAisLifecycleState.STOPPED;
       return;
     }
 
@@ -308,6 +334,7 @@ export class MarineAisWebSocketClient extends EventEmitter {
     });
 
     this.options.logger.info("[marine-ais] đã dừng theo yêu cầu, không reconnect nữa.");
+    this.lifecycleState = MarineAisLifecycleState.STOPPED;
     this.emitSafe(MarineAisClientEvent.DISCONNECTED, { intentional: true });
   }
 
@@ -327,6 +354,14 @@ export class MarineAisWebSocketClient extends EventEmitter {
     };
   }
 
+  getLifecycleState(): MarineAisLifecycleState {
+    return this.lifecycleState;
+  }
+
+  getLastMessageAt(): Date | null {
+    return this.lastMessageAt;
+  }
+
   // ---- socket ---------------------------------------------------------------
 
   private openSocket(): void {
@@ -335,6 +370,8 @@ export class MarineAisWebSocketClient extends EventEmitter {
     if (this.isActive()) return;
 
     this.clearReconnectTimer();
+
+    this.lifecycleState = MarineAisLifecycleState.CONNECTING;
 
     const socket = new WebSocket(this.options.url);
     this.socket = socket;
@@ -345,6 +382,7 @@ export class MarineAisWebSocketClient extends EventEmitter {
       // Kết nối lại được -> trả backoff về mốc đầu, nếu không lần rớt sau sẽ
       // phải chờ 30s dù mạng đã ổn.
       this.reconnectDelayMs = this.options.initialReconnectDelayMs;
+      this.lifecycleState = MarineAisLifecycleState.CONNECTED;
       this.armStaleTimer();
       this.options.logger.info(`[marine-ais] connected ${this.options.url}`);
       this.emitSafe(MarineAisClientEvent.CONNECTED, { url: this.options.url });
@@ -382,13 +420,16 @@ export class MarineAisWebSocketClient extends EventEmitter {
     if (this.reconnectTimer !== null) return;
 
     const delay = this.reconnectDelayMs;
+    this.lifecycleState = MarineAisLifecycleState.RECONNECTING;
     this.stats.reconnects += 1;
     this.options.logger.info(`[marine-ais] ${cause} -> reconnect sau ${delay}ms`);
 
+    const jitter = this.options.reconnectJitterRatio;
+    const actualDelay = Math.max(1, Math.round(delay * (1 + ((this.options.random() * 2 - 1) * jitter))));
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.openSocket();
-    }, delay);
+    }, actualDelay);
     this.reconnectTimer.unref?.();
 
     // Backoff có TRẦN: mạng hỏng lâu cũng không đẩy khoảng chờ lên vô hạn, mà
@@ -438,6 +479,7 @@ export class MarineAisWebSocketClient extends EventEmitter {
    */
   private handleFrame(data: WebSocket.RawData, isBinary: boolean): void {
     this.stats.receivedFrames += 1;
+    this.lastMessageAt = this.options.now();
     this.armStaleTimer();
 
     if (isBinary) {

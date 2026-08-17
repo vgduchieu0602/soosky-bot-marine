@@ -35,12 +35,18 @@ export interface LegacyBootstrapDependencies extends LegacyDependencies {
   mapSource: VesselFinderMapSource;
 }
 
+export interface LegacyBootstrapOptions {
+  /** ProductionRuntime owns connection order; legacy callers retain current behavior. */
+  connectMongo?: boolean;
+}
+
 /**
  * Wires the compatibility path that still serves the legacy VesselFinder
  * model and its HTTP/CLI workflows. It performs no crawl or network request.
  */
 export async function createLegacyDependencies(
-  config: AppConfig
+  config: AppConfig,
+  options: LegacyBootstrapOptions = {}
 ): Promise<LegacyBootstrapDependencies> {
   const httpClient = new HttpClient({ timeoutMs: 10000 });
   const detailsSource = new VesselFinderHtmlSource(httpClient);
@@ -57,7 +63,7 @@ export async function createLegacyDependencies(
   let repository: IVesselRepository;
   let watchlistRepository: IWatchlistRepository;
   if (config.mongoUri) {
-    await connectMongo(config.mongoUri);
+    if (options.connectMongo !== false) await connectMongo(config.mongoUri);
     repository = new MongoVesselRepository();
     watchlistRepository = new MongoWatchlistRepository();
   } else {

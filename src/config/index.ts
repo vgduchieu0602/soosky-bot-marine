@@ -87,6 +87,10 @@ export interface AppConfig {
   aisFlushBatchSize: number;
   /** Số resolver canonical tối đa chạy đồng thời cho một mẻ AIS. */
   aisResolveConcurrency: number;
+  runtimeShutdownTimeoutMs: number;
+  aisReconnectInitialMs: number;
+  aisReconnectMaxMs: number;
+  aisReconnectJitterRatio: number;
   /**
    * Trần thời gian cho TOÀN BỘ một lượt làm mới detail — không phải mỗi nguồn.
    *
@@ -245,6 +249,10 @@ export function loadConfig(env: Env = process.env): AppConfig {
     aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
     aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),
     aisResolveConcurrency: positiveInteger(env, "AIS_RESOLVE_CONCURRENCY", 10),
+    runtimeShutdownTimeoutMs: positiveNum(env, "RUNTIME_SHUTDOWN_TIMEOUT_MS", 15_000),
+    aisReconnectInitialMs: positiveNum(env, "AIS_RECONNECT_INITIAL_MS", 1_000),
+    aisReconnectMaxMs: positiveNum(env, "AIS_RECONNECT_MAX_MS", 30_000),
+    aisReconnectJitterRatio: num(env, "AIS_RECONNECT_JITTER_RATIO", 0.2, { min: 0, max: 1 }),
     detailRefreshTimeoutMs: positiveNum(env, "DETAIL_REFRESH_TIMEOUT_MS", 10_000),
     detailRefreshMaxSources: positiveInteger(env, "DETAIL_REFRESH_MAX_SOURCES", 2),
     detailRefreshCooldownMs: positiveNum(env, "DETAIL_REFRESH_COOLDOWN_MS", 5 * 60 * 1000),
