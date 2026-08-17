@@ -206,7 +206,7 @@ test("§28c cùng bậc độ tươi -> AIS vẫn có thể THUA vì thiếu hea
 
   const resolved = resolver.resolve(candidates, now);
   assert.equal(resolved?.source, VesselSource.SHIPFINDER);
-  assert.equal(resolved?.reason, ResolutionReason.MORE_COMPLETE);
+  assert.equal(resolved?.reason, ResolutionReason.FRESHER_SOURCE_TIMESTAMP);
 });
 
 test("§28 chỉ có AIS -> vẫn ra vị trí canonical, không cần nguồn thứ hai", () => {

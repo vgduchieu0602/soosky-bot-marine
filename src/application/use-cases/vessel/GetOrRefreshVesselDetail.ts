@@ -103,7 +103,13 @@ export interface GetOrRefreshVesselDetailResult {
   /** `null` chỉ khi canonical vẫn không có gì sau khi đã thử. */
   readonly detail: CanonicalVesselDetail | null;
   readonly status: VesselDetailStatus;
-  /** Có chạm nguồn ngoài trong lượt này không. */
+  /**
+   * `true` = lượt này ĐÃ CHẠM ít nhất một nguồn ngoài.
+   *
+   * ⚠️ Nó nói về HÀNH ĐỘNG, không phải kết quả: mọi nguồn hỏng thì `refreshed`
+   * vẫn `true` (đã tốn request thật) trong khi `refreshedGroups` rỗng. Muốn
+   * biết có lấy thêm được gì không thì đọc `refreshedGroups`.
+   */
   readonly refreshed: boolean;
   readonly requestedGroups: readonly DetailGroup[];
   readonly refreshedGroups: readonly DetailGroup[];
@@ -198,11 +204,10 @@ export class GetOrRefreshVesselDetail {
     );
     if (allowed.length === 0) {
       // Vừa hỏi xong -> trả thứ đang có. Bấm 20 lần không thành 20 lượt crawl.
-      return {
-        ...GetOrRefreshVesselDetail.settled(first.detail, requestedGroups, [], []),
-        attempts: suppressed.length === 0 ? [] : [],
-        refreshed: false,
-      };
+      // `suppressed` chỉ để đọc hiểu; không có `attempt` nào vì không nguồn nào
+      // được chạm tới.
+      void suppressed;
+      return GetOrRefreshVesselDetail.settled(first.detail, requestedGroups, [], []);
     }
 
     // BƯỚC 2 — gộp mọi lời gọi đồng thời cho cùng con tàu về MỘT lượt.

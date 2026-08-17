@@ -100,7 +100,34 @@ export const PaidGateReason = {
 
 export type PaidGateReason = (typeof PaidGateReason)[keyof typeof PaidGateReason];
 
+/**
+ * Vì sao lần gọi trả tiền này được xét.
+ *
+ * ⚠️ Hai ý định KHÁC NHAU về bản chất, và chúng đi qua hai bộ cổng khác nhau:
+ *
+ *   AUTOMATIC_FALLBACK  hệ thống TỰ quyết tiêu tiền vì free đã cạn. Phải qua
+ *                       ĐỦ chín cổng — trong đó có "local chưa đủ" và "free đã
+ *                       đi hết". Đây là mặc định, và là đường nguy hiểm.
+ *
+ *   EXPLICIT_TRACKING   NGƯỜI DÙNG bấm "làm mới trả tiền" cho đúng con tàu này.
+ *                       Cổng 2 và 3 KHÔNG áp dụng: người ta trả tiền để lấy
+ *                       đúng vị trí trả tiền, không phải để hệ thống tự cân
+ *                       nhắc hộ xem free có đủ chưa. Mọi cổng CÒN LẠI giữ
+ *                       nguyên — nhất là ngân sách và chống gọi lặp.
+ */
+export const PaidIntent = {
+  AUTOMATIC_FALLBACK: "AUTOMATIC_FALLBACK",
+  EXPLICIT_TRACKING: "EXPLICIT_TRACKING",
+} as const;
+
+export type PaidIntent = (typeof PaidIntent)[keyof typeof PaidIntent];
+
 export interface PaidFallbackRequest {
+  /**
+   * Mặc định `AUTOMATIC_FALLBACK` — vắng mặt phải là đường CHẶT hơn, không phải
+   * đường lỏng hơn.
+   */
+  readonly intent?: PaidIntent;
   readonly key: VesselObservationKey;
   readonly need: DataNeed;
   readonly sufficiency: SufficiencyResult;
@@ -151,10 +178,15 @@ export class PaidFallbackGate {
       return deny(PaidGateReason.PAID_NOT_ALLOWED);
     }
 
+    // Cổng 2 và 3 CHỈ dành cho đường tự động. Người dùng bấm "làm mới trả tiền"
+    // thì hai câu hỏi "local đủ chưa" và "free đi hết chưa" không còn là câu
+    // hỏi — họ đã trả lời rồi bằng chính hành động đó.
+    const automatic = (request.intent ?? PaidIntent.AUTOMATIC_FALLBACK) === PaidIntent.AUTOMATIC_FALLBACK;
+
     // ---- Cổng 2 · Đã đủ thì không mua --------------------------------------
     // Đứng TRƯỚC mọi thứ khác: người gọi bật `allowPaidFallback` không có nghĩa
     // là muốn tiêu tiền, chỉ có nghĩa là cho phép khi thật sự cần.
-    if (request.sufficiency.satisfied) {
+    if (automatic && request.sufficiency.satisfied) {
       return deny(PaidGateReason.LOCAL_ALREADY_SUFFICIENT);
     }
 
@@ -163,7 +195,7 @@ export class PaidFallbackGate {
     // nghĩa là ta hết lượt, KHÔNG phải hết nguồn — có thể còn nguồn free chưa
     // đụng tới. Cho qua ở đó là biến ngân sách free thành đường tắt sang tiền
     // thật: cứ để nó cạn rồi mua.
-    if (request.freeOutcome !== FreeAcquisitionOutcome.NO_FREE_SOURCE_AVAILABLE) {
+    if (automatic && request.freeOutcome !== FreeAcquisitionOutcome.NO_FREE_SOURCE_AVAILABLE) {
       return deny(PaidGateReason.FREE_OPTIONS_NOT_EXHAUSTED);
     }
 

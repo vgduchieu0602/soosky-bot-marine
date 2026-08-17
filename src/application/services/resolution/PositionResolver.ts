@@ -145,9 +145,19 @@ export class PositionResolver {
   private static compare(a: Candidate, b: Candidate): number {
     if (a.rank !== b.rank) return a.rank - b.rank;
     if (a.precise !== b.precise) return a.precise ? -1 : 1;
+    const sourceTimeOrder = PositionResolver.compareSourceTimes(a.observation, b.observation);
+    if (sourceTimeOrder !== 0) return sourceTimeOrder;
     if (a.motion !== b.motion) return b.motion - a.motion;
     if (a.priority !== b.priority) return a.priority - b.priority;
     return a.observation.source.localeCompare(b.observation.source);
+  }
+
+  /** More recent source timestamp wins within the same freshness and precision tier. */
+  private static compareSourceTimes(a: PositionObservation, b: PositionObservation): number {
+    const aTime = a.sourceReceivedAt?.getTime();
+    const bTime = b.sourceReceivedAt?.getTime();
+    if (aTime === undefined || bTime === undefined || aTime === bTime) return 0;
+    return bTime - aTime;
   }
 
   /** Tiêu chí ĐẦU TIÊN phân định được winner với kẻ thua ngay sau nó. */
@@ -156,6 +166,9 @@ export class PositionResolver {
     if (runnerUp === undefined) return ResolutionReason.ONLY_AVAILABLE_VALUE;
     if (winner.rank !== runnerUp.rank) return ResolutionReason.FRESHER_SOURCE_TIMESTAMP;
     if (winner.precise !== runnerUp.precise) return ResolutionReason.HIGHER_PRECISION;
+    if (PositionResolver.compareSourceTimes(winner.observation, runnerUp.observation) !== 0) {
+      return ResolutionReason.FRESHER_SOURCE_TIMESTAMP;
+    }
     if (winner.motion !== runnerUp.motion) return ResolutionReason.MORE_COMPLETE;
     return ResolutionReason.TIE_BREAK_PRIORITY;
   }
@@ -168,6 +181,9 @@ export class PositionResolver {
         : RejectionReason.STALER_TIMESTAMP;
     }
     if (winner.precise !== loser.precise) return RejectionReason.LOWER_PRECISION;
+    if (PositionResolver.compareSourceTimes(winner.observation, loser.observation) !== 0) {
+      return RejectionReason.STALER_TIMESTAMP;
+    }
     if (winner.motion !== loser.motion) return RejectionReason.LESS_COMPLETE;
     return RejectionReason.TIE_BREAK_PRIORITY;
   }

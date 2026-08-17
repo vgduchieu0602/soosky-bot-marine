@@ -71,6 +71,24 @@ export const DEFAULT_OBSERVATION_RETENTION_CONFIG: ObservationRetentionConfig = 
     [VesselSource.AISSTREAM]: Object.freeze({
       [VesselObservationType.POSITION]: 48 * HOUR,
     }),
+    /**
+     * MYSHIPTRACKING + POSITION → **7 ngày** = đúng
+     * `PositionResolverPolicy.candidateWindowMs`.
+     *
+     * Vì sao KHÔNG dùng 48 giờ như AIS: hai nhóm này khác nhau ở cả khối lượng
+     * lẫn giá.
+     *   • Khối lượng: AIS sinh ~1.440 vị trí/tàu/ngày; làn trả tiền là MỘT
+     *     request cho MỘT cú bấm của người dùng — vài bản ghi mỗi tàu là cùng.
+     *     Cắt ngắn không tiết kiệm được gì đáng kể.
+     *   • Giá: mỗi bản ghi ở đây tốn credit thật. Xoá sớm là vứt đi thứ đã trả
+     *     tiền, và mất luôn đường đối chiếu khi cần kiểm "đã tiêu credit vào
+     *     đâu".
+     * Giữ đúng cửa sổ resolver, không hơn: giữ vĩnh viễn mà không có lý do là
+     * chính thứ AIS-5 đặt ra để tránh.
+     */
+    [VesselSource.MYSHIPTRACKING]: Object.freeze({
+      [VesselObservationType.POSITION]: 7 * DAY,
+    }),
   }),
 });
 

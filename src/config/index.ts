@@ -106,6 +106,19 @@ export interface AppConfig {
    * (tàu, nhóm). Hàng rào chống bấm 20 lần thành 20 lượt crawl.
    */
   detailRefreshCooldownMs: number;
+  /**
+   * Khoá API MyShipTracking — **NGUỒN TRẢ TIỀN**.
+   *
+   * ⛔ Trống là bình thường: bot khởi động và chạy đủ mọi đường free mà không
+   * cần khoá này. Chỉ khi ai đó gọi ĐÍCH DANH làn theo dõi trả tiền thì thiếu
+   * khoá mới thành lỗi — và lỗi đó phải nói rõ, không phải 401 sau khi đã tốn
+   * một lượt.
+   *
+   * ⛔ Không bao giờ log giá trị này.
+   */
+  myShipTrackingApiKey: string;
+  myShipTrackingBaseUrl: string;
+  myShipTrackingTimeoutMs: number;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -235,6 +248,10 @@ export function loadConfig(env: Env = process.env): AppConfig {
     detailRefreshTimeoutMs: positiveNum(env, "DETAIL_REFRESH_TIMEOUT_MS", 10_000),
     detailRefreshMaxSources: positiveInteger(env, "DETAIL_REFRESH_MAX_SOURCES", 2),
     detailRefreshCooldownMs: positiveNum(env, "DETAIL_REFRESH_COOLDOWN_MS", 5 * 60 * 1000),
+    // Không mặc định, và KHÔNG throw khi trống — làn trả tiền là tuỳ chọn.
+    myShipTrackingApiKey: str(env, "MYSHIPTRACKING_API_KEY"),
+    myShipTrackingBaseUrl: str(env, "MYSHIPTRACKING_BASE_URL", "https://api.myshiptracking.com"),
+    myShipTrackingTimeoutMs: positiveNum(env, "MYSHIPTRACKING_TIMEOUT_MS", 10_000),
   };
 }
 
