@@ -89,3 +89,41 @@ test("AIS-5.1: cửa sổ gộp mặc định là 60s, không còn 10s", () => {
   assert.equal(loadConfig({ AIS_COALESCE_WINDOW_MS: "30000" }).aisCoalesceWindowMs, 30_000);
   assert.throws(() => loadConfig({ AIS_COALESCE_WINDOW_MS: "0" }), /AIS_COALESCE_WINDOW_MS/);
 });
+
+test("FALLBACK: nguồn trả tiền mặc định TẮT, và chỉ chuỗi \"true\" mới bật", () => {
+  assert.equal(loadConfig({}).paidFallbackEnabled, false);
+
+  // ⚠️ Đây là lý do dùng `=== "true"` chứ không phải `!== "false"`: mọi giá trị
+  // gõ sai đều phải rơi về TẮT. Bật do gõ nhầm là một hoá đơn, không phải một bug.
+  for (const value of ["", " ", "false", "0", "no", "off", "TRUE ", "yes", "1", "enabled"]) {
+    const enabled = loadConfig({ PAID_FALLBACK_ENABLED: value }).paidFallbackEnabled;
+    if (value.trim().toLowerCase() === "true") continue;
+    assert.equal(enabled, false, `"${value}" không được phép bật nguồn trả tiền`);
+  }
+
+  assert.equal(loadConfig({ PAID_FALLBACK_ENABLED: "true" }).paidFallbackEnabled, true);
+  assert.equal(loadConfig({ PAID_FALLBACK_ENABLED: " TRUE " }).paidFallbackEnabled, true);
+});
+
+test("FALLBACK: ngân sách cả lượt và cooldown trả tiền có mặc định và có kiểm tra", () => {
+  const defaults = loadConfig({});
+  assert.equal(defaults.freeFallbackTotalTimeoutMs, 15_000);
+  assert.equal(defaults.paidFallbackCooldownMs, 10 * 60 * 1000);
+
+  // Ngân sách cả lượt phải rộng hơn ngân sách riêng của làn free, nếu không thì
+  // không bao giờ còn chỗ cho một request trả tiền.
+  assert.ok(defaults.freeFallbackTotalTimeoutMs > defaults.detailRefreshTimeoutMs);
+
+  assert.equal(
+    loadConfig({ FREE_FALLBACK_TOTAL_TIMEOUT_MS: "20000" }).freeFallbackTotalTimeoutMs,
+    20_000
+  );
+  assert.throws(
+    () => loadConfig({ FREE_FALLBACK_TOTAL_TIMEOUT_MS: "0" }),
+    /FREE_FALLBACK_TOTAL_TIMEOUT_MS/
+  );
+  assert.throws(
+    () => loadConfig({ PAID_FALLBACK_COOLDOWN_MS: "soon" }),
+    /PAID_FALLBACK_COOLDOWN_MS/
+  );
+});

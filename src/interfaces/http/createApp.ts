@@ -15,6 +15,7 @@ import { GetVesselDetails } from "../../application/use-cases/vessel/GetVesselDe
 import { ManageWatchlist } from "../../application/use-cases/watchlist/ManageWatchlist";
 import { IVesselRepository } from "../../application/contracts/repositories/IVesselRepository";
 import { Errors, errorStatus } from "../../domain/errors/AppError";
+import { InternalAcquireDeps, createInternalAcquireRouter } from "./internalAcquireRoute";
 
 export interface HttpAppDeps {
   getVesselDetails: GetVesselDetails;
@@ -26,6 +27,13 @@ export interface HttpAppDeps {
   positionStaleAfterMs: number;
   /** Thư mục chứa giao diện bản đồ. Bỏ trống -> không phục vụ file tĩnh. */
   staticDir?: string;
+  /**
+   * Kênh LỆNH nội bộ cho Marine API (LOCAL -> FREE -> PAID).
+   *
+   * Vắng mặt -> route không tồn tại (404), đúng mặc định cho một biên tiêu
+   * credit thật: phải bật có ý thức mới có.
+   */
+  internalAcquire?: InternalAcquireDeps;
   /** Tiêm được để test không phụ thuộc đồng hồ thật. */
   now?: () => Date;
 }
@@ -69,6 +77,11 @@ export function createApp(deps: HttpAppDeps): express.Express {
 
   // Giao diện web xem bản đồ tàu (clone tối giản kiểu VesselFinder)
   if (deps.staticDir) app.use(express.static(deps.staticDir));
+
+  // Kênh nội bộ gắn TRƯỚC các route legacy: nó có khoá riêng, không dùng
+  // `guard` bên dưới. Khoá rỗng -> `createInternalAcquireRouter` trả 401 cho
+  // mọi request, nên không có lối vào nào mở do quên cấu hình.
+  if (deps.internalAcquire) app.use(createInternalAcquireRouter(deps.internalAcquire));
 
   // --- Routes ---
   app.get("/health", (_req: Request, res: Response) => {

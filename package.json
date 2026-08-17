@@ -19,6 +19,7 @@
     "shipfinder:smoke": "ts-node src/interfaces/cli/shipfinderSmoke.ts",
     "shipfinder:poc": "ts-node src/interfaces/cli/shipfinderPoc.ts",
     "acquire:free:poc": "ts-node src/interfaces/cli/acquireFreePoc.ts",
+    "fallback:cost": "ts-node src/interfaces/cli/fallbackCostSim.ts",
     "marine-ais:poc": "ts-node src/interfaces/cli/marineAisPoc.ts",
     "marine-ais:buffer-sim": "ts-node src/interfaces/cli/marineAisBufferSim.ts",
     "marine-ais:load-sim": "ts-node src/interfaces/cli/marineAisLoadSim.ts",

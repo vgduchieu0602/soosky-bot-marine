@@ -40,7 +40,10 @@ export function createProductionRuntime(): ProductionRuntime {
         stats: () => scheduler.getStats(),
       }));
 
-      if (!config.marineAisWsUrl) return { schedulers };
+      // The bot never owns the paid upstream AISStream connection.  Its
+      // optional client is useful only for explicit canonical-ingestion tests
+      // and staging; default production deployment leaves it disabled.
+      if (!config.botAisEnabled || !config.marineAisWsUrl) return { schedulers };
 
       const client = new MarineAisWebSocketClient({
         url: config.marineAisWsUrl,

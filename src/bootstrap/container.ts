@@ -10,8 +10,15 @@ import {
   createLegacyDependencies,
   LegacyDependencies,
 } from "./createLegacyDependencies";
+import {
+  createVesselAcquisitionDependencies,
+  VesselAcquisitionDependencies,
+} from "./createVesselAcquisitionDependencies";
 
-export interface Container extends LegacyDependencies, CanonicalDependencies {
+export interface Container
+  extends LegacyDependencies,
+    CanonicalDependencies,
+    VesselAcquisitionDependencies {
   config: AppConfig;
 }
 
@@ -30,6 +37,15 @@ export async function buildContainer(options: BuildContainerOptions = {}): Promi
     config,
     detailsSource: legacy.detailsSource,
     mapSource: legacy.mapSource,
+  });
+
+  // LOCAL → FREE → PAID orchestration. Also inert; the paid lane is not wired.
+  const acquisition = createVesselAcquisitionDependencies({
+    config,
+    currentVesselRepository: canonical.currentVesselRepository,
+    collectVesselObservations: canonical.collectVesselObservations,
+    resolveAndStoreCurrentVessel: canonical.resolveAndStoreCurrentVessel,
+    crawlRuntime: canonical.crawlRuntime,
   });
 
   return {
@@ -51,5 +67,10 @@ export async function buildContainer(options: BuildContainerOptions = {}): Promi
     resolveAndStoreCurrentVessel: canonical.resolveAndStoreCurrentVessel,
     acquireFreeVesselData: canonical.acquireFreeVesselData,
     ingestAisBatch: canonical.ingestAisBatch,
+    getCanonicalVesselDetail: acquisition.getCanonicalVesselDetail,
+    getOrRefreshVesselDetail: acquisition.getOrRefreshVesselDetail,
+    getVesselWithFallback: acquisition.getVesselWithFallback,
+    detailRefreshGate: acquisition.detailRefreshGate,
+    paidFallbackGate: acquisition.paidFallbackGate,
   };
 }

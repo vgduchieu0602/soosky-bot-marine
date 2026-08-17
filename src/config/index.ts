@@ -64,6 +64,12 @@ export interface AppConfig {
    */
   marineAisWsUrl: string;
   /**
+   * Bot is not the production owner of the AIS upstream. Keep this opt-in for
+   * ingestion tests/staging only; the Marine API owns the single upstream
+   * AISStream connection in production.
+   */
+  botAisEnabled: boolean;
+  /**
    * Chu kỳ gộp AIS, ms. Trong một cửa sổ, mỗi MMSI chỉ giữ vị trí MỚI NHẤT —
    * các điểm trung gian bị bỏ CÓ CHỦ Ý (buffer phục vụ map hiện tại, không
    * phải lịch sử hành trình).
@@ -123,6 +129,34 @@ export interface AppConfig {
   myShipTrackingApiKey: string;
   myShipTrackingBaseUrl: string;
   myShipTrackingTimeoutMs: number;
+  /**
+   * Ngân sách cho TOÀN LƯỢT `LOCAL → FREE → PAID`, không phải mỗi chặng.
+   *
+   * Cộng dồn timeout từng chặng (10s free + 10s paid + …) là cách biến một cú
+   * bấm thành nửa phút chờ.
+   */
+  freeFallbackTotalTimeoutMs: number;
+  /**
+   * Công tắc CHỦ cho fallback trả tiền.
+   *
+   * ⛔ MẶC ĐỊNH `false`, và phải giữ như vậy. Nếu mọi request đều được fallback
+   * trả tiền theo mặc định thì một đợt truy cập bình thường sẽ thành hoá đơn.
+   * Bật là một quyết định vận hành, và phải có số đo tỉ lệ free-miss trước.
+   */
+  paidFallbackEnabled: boolean;
+  /** Vừa gọi trả tiền cho một tàu thì nghỉ ngần này trước khi gọi lại. */
+  paidFallbackCooldownMs: number;
+  /**
+   * Bí mật của kênh LỆNH nội bộ `POST /internal/vessels/:id/acquire`.
+   *
+   * RỖNG = kênh không được gắn. Đây là mặc định đúng: một biên tiêu credit thật
+   * không được tồn tại chỉ vì ai đó chạy `npm start`.
+   *
+   * ⛔ KHÔNG dùng lại `API_KEY`: khoá đó mở route đọc cho client thường và đã
+   *    đi qua nhiều nơi. Kênh này phải thu hồi được riêng.
+   * ⛔ Không bao giờ log giá trị này.
+   */
+  internalAcquireToken: string;
 }
 
 type Env = NodeJS.ProcessEnv;
@@ -245,6 +279,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     }),
     // Không có mặc định, và KHÔNG hardcode hostname production ở bất kỳ đâu.
     marineAisWsUrl: str(env, "MARINE_AIS_WS_URL"),
+    botAisEnabled: str(env, "BOT_AIS_ENABLED").trim().toLowerCase() === "true",
     aisCoalesceWindowMs: positiveNum(env, "AIS_COALESCE_WINDOW_MS", 60_000),
     aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
     aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),
@@ -260,6 +295,12 @@ export function loadConfig(env: Env = process.env): AppConfig {
     myShipTrackingApiKey: str(env, "MYSHIPTRACKING_API_KEY"),
     myShipTrackingBaseUrl: str(env, "MYSHIPTRACKING_BASE_URL", "https://api.myshiptracking.com"),
     myShipTrackingTimeoutMs: positiveNum(env, "MYSHIPTRACKING_TIMEOUT_MS", 10_000),
+    freeFallbackTotalTimeoutMs: positiveNum(env, "FREE_FALLBACK_TOTAL_TIMEOUT_MS", 15_000),
+    // `=== "true"` chứ không phải `!== "false"`: mọi giá trị lạ, kể cả rỗng,
+    // đều phải là TẮT. Không có đường nào bật tiêu tiền một cách ngầm định.
+    paidFallbackEnabled: str(env, "PAID_FALLBACK_ENABLED").trim().toLowerCase() === "true",
+    paidFallbackCooldownMs: positiveNum(env, "PAID_FALLBACK_COOLDOWN_MS", 10 * 60 * 1000),
+    internalAcquireToken: str(env, "INTERNAL_ACQUIRE_TOKEN"),
   };
 }
 

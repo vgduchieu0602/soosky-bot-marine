@@ -26,6 +26,7 @@ async function start(): Promise<void> {
     repository,
     manageWatchlist,
     cleanupStalePositions,
+    getVesselWithFallback,
   } = await buildContainer();
 
   // Không có khoá -> KHÔNG mở server. Thà không chạy còn hơn chạy không rào.
@@ -36,6 +37,10 @@ async function start(): Promise<void> {
     );
   }
 
+  // Kênh LỆNH nội bộ cho Marine API: CHỈ tồn tại khi có token riêng. Không có
+  // token thì route không được gắn — một biên tiêu credit thật không được mở ra
+  // chỉ vì ai đó chạy `npm start`.
+  const internalToken = config.internalAcquireToken.trim();
   const app = createApp({
     getVesselDetails,
     manageWatchlist,
@@ -43,6 +48,16 @@ async function start(): Promise<void> {
     apiKey: config.apiKey,
     positionStaleAfterMs: config.positionStaleAfterMs,
     staticDir: path.join(__dirname, "../../../public"),
+    ...(internalToken.length === 0
+      ? {}
+      : {
+          internalAcquire: {
+            useCase: getVesselWithFallback,
+            token: internalToken,
+            paidFallbackEnabled: config.paidFallbackEnabled,
+            logger: console,
+          },
+        }),
   });
 
   app.listen(config.httpPort, config.httpHost, () => {
@@ -52,6 +67,12 @@ async function start(): Promise<void> {
     console.log(`   • /positions`);
     console.log(`   • /vessel/9811983      (cần header X-API-Key)`);
     console.log(`   • /watchlist           (cần header X-API-Key)`);
+    if (internalToken.length > 0) {
+      console.log(
+        `   • POST /internal/vessels/:id/acquire  (cần header X-Internal-Token, ` +
+          `paid=${config.paidFallbackEnabled ? "BẬT" : "TẮT"})`
+      );
+    }
   });
 
   // --- Scheduler crawl watchlist định kỳ ---

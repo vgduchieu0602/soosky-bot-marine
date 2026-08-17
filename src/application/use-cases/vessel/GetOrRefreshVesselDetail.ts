@@ -47,7 +47,13 @@ import {
 //  Chính sách
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_DETAIL_REFRESH_POLICY = Object.freeze({
+export interface DetailRefreshPolicy {
+  readonly totalBudgetMs: number;
+  readonly maxSources: number;
+  readonly minSliceMs: number;
+}
+
+export const DEFAULT_DETAIL_REFRESH_POLICY: Readonly<DetailRefreshPolicy> = Object.freeze({
   /**
    * Trần thời gian cho TOÀN BỘ lượt làm mới, không phải cho từng nguồn.
    *
@@ -70,8 +76,6 @@ export const DEFAULT_DETAIL_REFRESH_POLICY = Object.freeze({
    */
   minSliceMs: 1_500,
 });
-
-export type DetailRefreshPolicy = typeof DEFAULT_DETAIL_REFRESH_POLICY;
 
 // ---------------------------------------------------------------------------
 //  Kết quả
