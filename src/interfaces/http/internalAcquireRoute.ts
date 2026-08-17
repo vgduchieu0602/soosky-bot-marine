@@ -30,6 +30,7 @@ import {
 } from "../../application/use-cases/vessel/GetVesselWithFallback";
 import { InvalidVesselIdentifierError } from "../../application/use-cases/vessel/GetCanonicalVesselDetail";
 import { isValidImo, isValidMmsi } from "../../domain/validators/identifiers";
+import { AcquisitionRequestRegistry } from "./AcquisitionRequestRegistry";
 
 export interface InternalAcquireDeps {
   useCase: GetVesselWithFallback;
@@ -50,6 +51,7 @@ export interface InternalAcquireDeps {
   perRoutePerMinute?: number;
   now?: () => Date;
   logger?: { info(message: string): void };
+  idempotencyRegistry?: AcquisitionRequestRegistry;
 }
 
 export const DEFAULT_INTERNAL_ACQUIRE_LIMITS = Object.freeze({
@@ -139,6 +141,7 @@ export function createInternalAcquireRouter(deps: InternalAcquireDeps): Router {
     deps.perRoutePerMinute ?? DEFAULT_INTERNAL_ACQUIRE_LIMITS.perRoutePerMinute,
     1
   );
+  const idempotency = deps.idempotencyRegistry ?? new AcquisitionRequestRegistry({ ttlMs: 10 * 60_000, maxEntries: 20_000 }, now);
 
   const guard: RequestHandler = (req, res, next) => {
     const provided = req.header("x-internal-token") ?? "";
@@ -181,6 +184,11 @@ export function createInternalAcquireRouter(deps: InternalAcquireDeps): Router {
 
         // §Luật 3 — VÀ với công tắc server. `=== true` để `undefined` là TỪ CHỐI.
         const requested = (req.body as { allowPaidFallback?: boolean }).allowPaidFallback === true;
+        const acquisitionRequestId = (req.body as { acquisitionRequestId?: unknown }).acquisitionRequestId;
+        if (acquisitionRequestId !== undefined && (typeof acquisitionRequestId !== "string" || !/^[A-Za-z0-9-]{8,128}$/.test(acquisitionRequestId))) {
+          res.status(400).json({ code: "BAD_REQUEST", error: "acquisitionRequestId phải là chuỗi 8-128 ký tự an toàn" });
+          return;
+        }
         const allowPaidFallback = requested && deps.paidFallbackEnabled;
         if (requested && !allowPaidFallback) {
           deps.logger?.info(
@@ -188,11 +196,8 @@ export function createInternalAcquireRouter(deps: InternalAcquireDeps): Router {
           );
         }
 
-        const result = await deps.useCase.execute({
-          ...(isMmsi ? { mmsi: id } : { imo: id }),
-          need: parsed,
-          allowPaidFallback,
-        });
+        const command = () => deps.useCase.execute({ ...(isMmsi ? { mmsi: id } : { imo: id }), need: parsed, allowPaidFallback });
+        const result = acquisitionRequestId === undefined ? await command() : await idempotency.run(acquisitionRequestId, command);
 
         res.json({
           status: result.status,
@@ -211,6 +216,7 @@ export function createInternalAcquireRouter(deps: InternalAcquireDeps): Router {
           durationMs: result.durationMs,
           /** Người gọi xin paid mà server tắt -> nói thẳng, không giả vờ đã thử. */
           paidRequestedButDisabled: requested && !allowPaidFallback,
+          ...(acquisitionRequestId === undefined ? {} : { acquisitionRequestId }),
         });
       } catch (err) {
         if (err instanceof InvalidVesselIdentifierError) {

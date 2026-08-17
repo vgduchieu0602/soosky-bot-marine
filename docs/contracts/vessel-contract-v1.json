@@ -1,0 +1,5 @@
+{
+  "version": "1",
+  "VesselBasics": {"vesselName":"string","mmsi":"string|null","imo":"string|null","vType":"number|null","lat":"number|null","lon":"number|null","course":"number|null","speed":"number|null","navStatus":"string","received":"string"},
+  "VesselDetails": {"basics":"VesselBasics","vesselType":"string","flag":"string","grossTonnage":"number|null","deadWeight":"number|null","yearOfBuild":"number|null","voyage":{"current":{"port":"string","portId":"number|null","portUnlocode":"string","portCountry":"string","portArrivalUtc":"string","portArrivalLocal":"string"},"last":{"port":"string","portId":"number|null","portUnlocode":"string","portCountry":"string","portDepartureUtc":"string","portDepartureLocal":"string"},"next":{"port":"string","portId":"number|null","portUnlocode":"string","portCountry":"string","portEtaUtc":"string","portEtaLocal":"string"}}}
+}

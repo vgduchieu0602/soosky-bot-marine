@@ -12,3 +12,4 @@ docs/*
 !docs/*.html
 !docs/*/
 !docs/*/*.md
+marine-api/

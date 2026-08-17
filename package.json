@@ -1,7 +1,7 @@
 {
   "name": "crawlbot",
   "version": "3.0.0",
-  "description": "VesselFinder regional vessel scanner — TypeScript + Clean Architecture",
+  "description": "VesselFinder regional vessel scanner \u2014 TypeScript + Clean Architecture",
   "main": "dist/interfaces/http/server.js",
   "scripts": {
     "build": "tsc",
@@ -27,7 +27,8 @@
     "map:backfill-location": "ts-node src/interfaces/cli/backfillMapLocation.ts",
     "map:query-poc": "ts-node src/interfaces/cli/mapQueryPoc.ts",
     "map:cluster-poc": "ts-node src/interfaces/cli/mapClusterPoc.ts",
-    "test": "node -r ts-node/register --test \"src/**/*.test.ts\"",
+    "test": "node -r ts-node/register --test --test-force-exit \"src/**/*.test.ts\"",
+    "contract:parity": "node scripts/check-contract-parity.mjs",
     "reset-indexes": "ts-node src/interfaces/cli/resetIndexes.ts",
     "start:prod": "node dist/interfaces/http/server.js"
   },
