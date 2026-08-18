@@ -1,0 +1,184 @@
+{
+  "DATABASE": {
+    "name": "soosky_marine_bot_dev",
+    "observations": 4800,
+    "canonical": 2289,
+    "canonicalWithPosition": 2289,
+    "storageBytes": 4812400,
+    "storageMB": 4.59,
+    "indexMB": 2.1
+  },
+  "VESSEL_BASICS_COVERAGE": {
+    "total": 2289,
+    "vesselNamePct": 98.4,
+    "mmsiPct": 100,
+    "imoPct": 0.8,
+    "latLonPct": 100,
+    "coursePct": 0.3,
+    "speedPct": 0.3,
+    "navStatusPct": 0.1,
+    "sourceObservedAtPct": 0.2,
+    "note": "VesselFinder mp2 map tiles do not provide course/speed/navStatus/sourceReceivedAt; those fields stay null until detail/AIS enrichment."
+  },
+  "VESSEL_DETAILS_COVERAGE": {
+    "total": 2289,
+    "flagPct": 1.3,
+    "grossTonnagePct": 0,
+    "deadWeightPct": 0,
+    "yearOfBuildPct": 0
+  },
+  "OBSERVATIONS_BY_SOURCE": [
+    {
+      "_id": "vesselfinder",
+      "n": 4714
+    },
+    {
+      "_id": "shipfinder",
+      "n": 76
+    },
+    {
+      "_id": "shipinfo",
+      "n": 10
+    }
+  ],
+  "OBSERVATIONS_BY_TYPE": [
+    {
+      "_id": "POSITION",
+      "n": 2426
+    },
+    {
+      "_id": "IDENTITY",
+      "n": 2326
+    },
+    {
+      "_id": "PARTICULARS",
+      "n": 30
+    },
+    {
+      "_id": "VOYAGE",
+      "n": 18
+    }
+  ],
+  "INDEXES": {
+    "vessel_observations": [
+      "_id_",
+      "mmsi_1_type_1_fetchedAt_-1",
+      "imo_1_type_1_fetchedAt_-1",
+      "source_1_fetchedAt_-1",
+      "fingerprint_1_fetchedAt_-1",
+      "expiresAt_1"
+    ],
+    "canonical_current_vessels": [
+      "_id_",
+      "mmsi_1",
+      "imo_1",
+      "location_2dsphere"
+    ]
+  },
+  "CHECKPOINTS": [
+    {
+      "job": "data-proof-discovery",
+      "provider": "vesselfinder",
+      "cursor": {
+        "tileIndex": 103,
+        "tilesTotal": 108,
+        "region": "vn-sg-grid"
+      },
+      "updatedAt": "2026-08-18T02:52:49.368Z"
+    },
+    {
+      "job": "data-proof-map",
+      "provider": "vesselfinder",
+      "cursor": {
+        "tileIndex": 10,
+        "tilesTotal": 108,
+        "region": "vn-sg-grid"
+      },
+      "updatedAt": "2026-08-18T02:58:15.695Z"
+    }
+  ],
+  "SAMPLES": [
+    {
+      "mmsi": "525200357",
+      "imo": "9864459",
+      "name": "MV DOLPHIN 02",
+      "lat": 1.1337216666666667,
+      "lng": 104.05598666666667,
+      "course": null,
+      "speed": null,
+      "navStatus": null,
+      "observedAt": null,
+      "source": "vesselfinder",
+      "flag": "IDN",
+      "gt": null,
+      "dwt": null
+    },
+    {
+      "mmsi": "525110184",
+      "imo": "9023433",
+      "name": "PULO RONDO",
+      "lat": 1.1342066666666666,
+      "lng": 104.05433333333333,
+      "course": null,
+      "speed": null,
+      "navStatus": null,
+      "observedAt": null,
+      "source": "vesselfinder",
+      "flag": "IDN",
+      "gt": null,
+      "dwt": null
+    },
+    {
+      "mmsi": "533131191",
+      "imo": null,
+      "name": "PEACEFUL ABODE",
+      "lat": 1.19709,
+      "lng": 104.09768333333334,
+      "course": null,
+      "speed": null,
+      "navStatus": null,
+      "observedAt": null,
+      "source": "vesselfinder",
+      "flag": "MYS",
+      "gt": null,
+      "dwt": null
+    },
+    {
+      "mmsi": "563250600",
+      "imo": "1073121",
+      "name": "MAJESTIC HARMONY",
+      "lat": 1.1316333333333333,
+      "lng": 104.05539166666667,
+      "course": null,
+      "speed": null,
+      "navStatus": null,
+      "observedAt": null,
+      "source": "vesselfinder",
+      "flag": "SGP",
+      "gt": null,
+      "dwt": null
+    },
+    {
+      "mmsi": "209622000",
+      "imo": null,
+      "name": "BABY PEGASUS",
+      "lat": 1.1961466666666667,
+      "lng": 104.09644833333333,
+      "course": null,
+      "speed": null,
+      "navStatus": null,
+      "observedAt": null,
+      "source": "vesselfinder",
+      "flag": "CYP",
+      "gt": null,
+      "dwt": null
+    }
+  ],
+  "RUNTIME": {
+    "aisEnabled": false,
+    "paidEnabled": false,
+    "myShipTrackingKeyPresent": false,
+    "rssMb": 480,
+    "heapMb": 394
+  }
+}

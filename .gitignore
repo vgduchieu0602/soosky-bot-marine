@@ -1,6 +1,7 @@
 node_modules/
 dist/
 data/
+tmp/
 .env
 *.log
 *.md
@@ -12,4 +13,7 @@ docs/*
 !docs/*.html
 !docs/*/
 !docs/*/*.md
+!docs/reports/
+!docs/reports/*.md
+!docs/reports/*.json
 marine-api/

@@ -1,0 +1,28 @@
+{
+  "mode": "map",
+  "startedAt": "2026-08-18T02:57:58.526Z",
+  "database": "soosky_marine_bot_dev",
+  "aisEnabled": false,
+  "paidEnabled": false,
+  "pagesRequested": 10,
+  "pagesOk": 10,
+  "pagesError": 0,
+  "rawRows": 154,
+  "validRows": 154,
+  "uniqueMmsi": 153,
+  "duplicates": 1,
+  "invalidIdentifiers": 0,
+  "observationsSaved": 181,
+  "observationsDuplicate": 127,
+  "vesselsResolved": 154,
+  "vesselsResolveFailed": 0,
+  "statusCodes": {
+    "200": 10
+  },
+  "errors": [],
+  "peakRssMb": 500,
+  "peakHeapMb": 413,
+  "provider": "vesselfinder",
+  "finishedAt": "2026-08-18T02:58:15.697Z",
+  "durationMs": 17170
+}

@@ -27,19 +27,27 @@ export class VesselFinderMapSource implements IAreaScanner {
    * @param zoom  mức zoom (7–10 hợp lý; nhỏ quá gộp tàu, lớn quá thêm field)
    */
   async fetchArea(box: BoundingBox, zoom = 9): Promise<ScannedShip[]> {
-    // bbox trong request: minLon,minLat,maxLon,maxLat — mỗi số × 600000
-    const bbox = [box.minLon, box.minLat, box.maxLon, box.maxLat]
-      .map((v) => Math.floor(v * COORD_DIV))
-      .join(",");
-    const url = `${this.BASE}?bbox=${bbox}&zoom=${zoom}&mcbe=1`;
+      // bbox trong request: minLon,minLat,maxLon,maxLat — mỗi số × 600000
+      const bbox = [box.minLon, box.minLat, box.maxLon, box.maxLat]
+        .map((v) => Math.floor(v * COORD_DIV))
+        .join(",");
+      const url = `${this.BASE}?bbox=${bbox}&zoom=${zoom}&mcbe=1`;
 
-    const buf = await this.http.getArrayBuffer(url);
-    return VesselFinderMapSource.decode(buf, zoom, box);
-  }
+      const buf = await this.http.getArrayBuffer(url, {
+        // Ordinary browser-compatible headers. Not stealth automation — VF may
+        // answer HTTP 200 with an empty body for opaque non-browser clients.
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        accept: "application/octet-stream,*/*",
+        referer: "https://www.vesselfinder.com/",
+        "accept-language": "en-US,en;q=0.9",
+      });
+      return VesselFinderMapSource.decode(buf, zoom, box);
+    }
 
-  /**
-   * Giải mã binary theo đúng logic drawShipsOnMapBinary của VesselFinder.
-   *
+    /**
+     * Giải mã binary theo đúng logic drawShipsOnMapBinary của VesselFinder.
+
    * ⚠️ Format không có tài liệu -> mọi sai lệch trong 1 record (ví dụ cờ
    * isSelected sai, nameLen đọc lệch) làm CÁC RECORD PHÍA SAU trong cùng
    * buffer bị đọc lệch offset theo (desync dây chuyền), sinh toạ độ rác

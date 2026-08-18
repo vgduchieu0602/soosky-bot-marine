@@ -30,7 +30,15 @@
     "test": "node -r ts-node/register --test --test-force-exit \"src/**/*.test.ts\"",
     "contract:parity": "node scripts/check-contract-parity.mjs",
     "reset-indexes": "ts-node src/interfaces/cli/resetIndexes.ts",
-    "start:prod": "node dist/interfaces/http/server.js"
+    "start:prod": "node dist/interfaces/http/server.js",
+    "bot:discovery": "ts-node src/interfaces/cli/botDataProof.ts --mode=discovery",
+    "bot:map": "ts-node src/interfaces/cli/botDataProof.ts --mode=map",
+    "bot:map-proof": "ts-node src/interfaces/cli/botDataProof.ts --mode=map --pages=10 --reset-checkpoint",
+    "bot:detail-proof": "ts-node src/interfaces/cli/botDataProof.ts --mode=detail",
+    "bot:detail-sample": "ts-node src/interfaces/cli/botDataProof.ts --mode=detail",
+    "bot:continuous": "ts-node src/interfaces/cli/botDataProof.ts --mode=continuous",
+    "bot:data-report": "ts-node src/interfaces/cli/botDataProof.ts --mode=report",
+    "bot:data-proof": "ts-node src/interfaces/cli/botDataProof.ts"
   },
   "engines": {
     "node": ">=18"

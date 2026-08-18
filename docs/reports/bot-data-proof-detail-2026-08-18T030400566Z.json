@@ -1,0 +1,39 @@
+{
+  "mode": "detail",
+  "startedAt": "2026-08-18T03:01:13.148Z",
+  "database": "soosky_marine_bot_dev",
+  "aisEnabled": false,
+  "paidEnabled": false,
+  "pagesRequested": 30,
+  "pagesOk": 30,
+  "pagesError": 0,
+  "rawRows": 0,
+  "validRows": 0,
+  "uniqueMmsi": 30,
+  "duplicates": 0,
+  "invalidIdentifiers": 0,
+  "observationsSaved": 37,
+  "observationsDuplicate": 0,
+  "vesselsResolved": 30,
+  "vesselsResolveFailed": 0,
+  "statusCodes": {
+    "200": 30
+  },
+  "errors": [],
+  "peakRssMb": 496,
+  "peakHeapMb": 401,
+  "detailSample": 30,
+  "provider": "free-multi",
+  "detailFieldCoverage": {
+    "vesselType": 90,
+    "flag": 100,
+    "grossTonnage": 0,
+    "deadWeight": 0,
+    "yearOfBuild": 0,
+    "currentPort": 0,
+    "lastPort": 0,
+    "nextPort": 0
+  },
+  "finishedAt": "2026-08-18T03:04:00.566Z",
+  "durationMs": 167417
+}
