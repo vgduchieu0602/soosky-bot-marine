@@ -186,7 +186,7 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
    *   $match -> $sort fetchedAt DESC -> $group theo source lấy $first
    * Index `{mmsi:1, type:1, fetchedAt:-1}` (đã có sẵn) phục vụ đúng $match + $sort này.
    *
-   * `limit` cố tình bị bỏ qua: số kết quả do số nguồn quyết định.
+   * `limit` cố tình bị bỏ qua: số kết quả do (số nguồn × `maxPerSource`) quyết định.
    */
   async findLatestPerSourceByVesselAndType(
     key: VesselObservationKey,
@@ -198,15 +198,22 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
 
     const criteria = MongoVesselObservationRepository.buildCriteria(filter, { ...options, type });
 
-    const rows = await VesselObservationModel.aggregate<{ doc: ObservationDoc }>([
+    // Chặn trên cứng cho số bản ghi mỗi nguồn. `$slice` chạy SAU `$sort`, nên
+    // đây đúng là "N bản mới nhất của nguồn đó", không phải N bản bất kỳ.
+    const maxPerSource = Math.max(1, Math.floor(options.maxPerSource ?? 1));
+
+    const rows = await VesselObservationModel.aggregate<{ docs: ObservationDoc[] }>([
       { $match: criteria },
       { $sort: { fetchedAt: -1 } },
-      { $group: { _id: "$source", doc: { $first: "$$ROOT" } } },
+      { $group: { _id: "$source", docs: { $push: "$$ROOT" } } },
+      { $project: { docs: { $slice: ["$docs", maxPerSource] } } },
       // Sắp theo tên nguồn -> kết quả tất định, không phụ thuộc thứ tự nhóm của Mongo.
       { $sort: { _id: 1 } },
     ]).exec();
 
-    return Object.freeze(rows.map((row) => MongoVesselObservationRepository.toEntity(row.doc)));
+    return Object.freeze(
+      rows.flatMap((row) => row.docs.map((doc) => MongoVesselObservationRepository.toEntity(doc)))
+    );
   }
 
   /** `null` = khoá rỗng, không truy vấn gì cả. */

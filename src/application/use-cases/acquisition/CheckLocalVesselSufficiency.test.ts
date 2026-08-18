@@ -68,6 +68,7 @@ function vessel(overrides: Partial<ResolvedCurrentVessel> = {}): ResolvedCurrent
       freshness: PositionFreshness.LIVE,
       reason: ResolutionReason.ONLY_AVAILABLE_VALUE,
       rejected: [],
+      motion: null,
     },
     particulars: {
       mmsi: MMSI,

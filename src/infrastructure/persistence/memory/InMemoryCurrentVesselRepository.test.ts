@@ -88,6 +88,7 @@ function vessel(overrides: Partial<ResolvedCurrentVessel> = {}): ResolvedCurrent
           reason: RejectionReason.STALER_TIMESTAMP,
         },
       ],
+      motion: null,
     },
     particulars: {
       mmsi: MMSI,

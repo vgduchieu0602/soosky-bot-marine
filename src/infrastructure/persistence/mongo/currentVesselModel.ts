@@ -72,6 +72,34 @@ const identitySchema = new Schema(
   { _id: false }
 );
 
+/**
+ * Chuyển động đã phân xử RIÊNG khỏi toạ độ, kèm mốc thời gian và nguồn của
+ * CHÍNH NÓ.
+ *
+ * Vì sao tách: một nguồn có nhiều bề mặt cho cùng nhóm POSITION (ô map cho toạ
+ * độ chính xác nhưng không có chuyển động; trang chi tiết thì ngược lại). Gộp
+ * hai thứ vào một khối sẽ dựng nên một ảnh chụp chưa từng tồn tại — toạ độ lúc
+ * 13:00 ghép tốc độ lúc 12:57 dưới MỘT `observedAt`.
+ *
+ * `null` = không có chuyển động nào còn dùng được. KHÔNG phải "tàu đứng yên".
+ */
+const motionSchema = new Schema(
+  {
+    speed: { type: Number, default: null },
+    course: { type: Number, default: null },
+    heading: { type: Number, default: null },
+    navStatus: { type: Schema.Types.Mixed, default: null },
+    source: { type: String, required: true },
+    observationId: String,
+    /** Mốc NGUỒN của bản ghi chuyển động. Không bao giờ là `fetchedAt` của ô map. */
+    observedAt: { type: Date, default: null },
+    fetchedAt: { type: Date, required: true },
+    /** Bậc độ tươi của riêng chuyển động -> chuyển động cũ nhìn thấy được. */
+    freshness: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const positionSchema = new Schema(
   {
     /**
@@ -89,6 +117,8 @@ const positionSchema = new Schema(
     freshness: { type: String, required: true },
     reason: { type: String, required: true },
     rejected: { type: [rejectedCandidateSchema], default: [] },
+    /** Chuyển động có thể đến từ MỘT observation khác với observation toạ độ. */
+    motion: { type: motionSchema, default: null },
   },
   { _id: false }
 );

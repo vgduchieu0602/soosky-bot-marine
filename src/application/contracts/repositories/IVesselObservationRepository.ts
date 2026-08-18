@@ -40,6 +40,19 @@ export interface ObservationQueryOptions {
    * bản ghi INVALID. Chỉ bật khi đang debug parser.
    */
   readonly includeInvalid?: boolean;
+  /**
+   * Số bản ghi tối đa lấy cho MỖI NGUỒN (chỉ
+   * `findLatestPerSourceByVesselAndType` dùng). Mặc định 1 = hành vi cũ.
+   *
+   * Lý do tồn tại: MỘT nguồn có thể phát ra nhiều BỀ MẶT khác nhau cho cùng một
+   * nhóm — ô map của VesselFinder cho toạ độ chính xác nhưng không có chuyển
+   * động, trang chi tiết thì ngược lại. Lấy đúng "bản mới nhất của mỗi nguồn"
+   * khiến bề mặt ghi sau CHE mất bề mặt kia, và dữ liệu chuyển động biến mất
+   * khỏi canonical.
+   *
+   * Vẫn CÓ CHẶN TRÊN: đây là "N gần nhất mỗi nguồn", không phải toàn bộ lịch sử.
+   */
+  readonly maxPerSource?: number;
 }
 
 export interface IVesselObservationRepository {
@@ -76,7 +89,8 @@ export interface IVesselObservationRepository {
   ): Promise<VesselSourceObservation | null>;
 
   /**
-   * Bản ghi MỚI NHẤT của **MỖI NGUỒN** cho một (tàu, nhóm) — đầu vào của resolver.
+   * `maxPerSource` bản ghi mới nhất của **MỖI NGUỒN** cho một (tàu, nhóm) —
+   * đầu vào của resolver. Mặc định 1.
    *
    * Khác `findLatestByVesselAndType` ở chỗ quyết định: trả **tối đa một bản ghi
    * cho mỗi nguồn**, nên số kết quả bị chặn bởi SỐ NGUỒN chứ không bởi một

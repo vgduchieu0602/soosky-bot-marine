@@ -84,6 +84,7 @@ function position(
     freshness,
     reason: ResolutionReason.ONLY_AVAILABLE_VALUE,
     rejected: [],
+    motion: null,
   };
 }
 

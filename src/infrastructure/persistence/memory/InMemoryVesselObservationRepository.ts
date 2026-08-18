@@ -124,16 +124,20 @@ export class InMemoryVesselObservationRepository implements IVesselObservationRe
       limit: Number.MAX_SAFE_INTEGER,
     });
 
-    // `all` đã sắp mới nhất trước -> bản gặp đầu tiên của mỗi nguồn là bản mới nhất.
-    const latestBySource = new Map<VesselSource, VesselSourceObservation>();
+    // `all` đã sắp mới nhất trước -> N bản đầu tiên của mỗi nguồn là N bản mới nhất.
+    const maxPerSource = Math.max(1, Math.floor(options.maxPerSource ?? 1));
+    const bySource = new Map<VesselSource, VesselSourceObservation[]>();
     for (const observation of all) {
-      if (!latestBySource.has(observation.source)) {
-        latestBySource.set(observation.source, observation);
-      }
+      const bucket = bySource.get(observation.source) ?? [];
+      if (bucket.length >= maxPerSource) continue;
+      bucket.push(observation);
+      bySource.set(observation.source, bucket);
     }
 
     return Object.freeze(
-      [...latestBySource.values()].sort((a, b) => a.source.localeCompare(b.source))
+      [...bySource.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, observations]) => observations)
     );
   }
 

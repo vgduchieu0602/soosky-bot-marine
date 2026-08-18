@@ -227,7 +227,7 @@ test("COG 360 của AIS không lọt xuống canonical thành hướng đi thậ
 
 const MAP_SHIP: ScannedShip = { mmsi: MMSI, name: "PIPELINE TEST", lat: 51.234567, lon: 1.234567 };
 
-test("§15 — discovery TRƯỚC, chi tiết SAU: motion và mốc nguồn tới được canonical", async () => {
+test("§11 — discovery TRƯỚC, chi tiết SAU: toạ độ của map, motion của chi tiết", async () => {
   const { resolved } = await runPipeline(
     detailHtml({ sog: 9.4, cog: 187, lrpd: "3 min ago", navStatus: "Under way using engine" }),
     [MAP_SHIP]
@@ -235,24 +235,22 @@ test("§15 — discovery TRƯỚC, chi tiết SAU: motion và mốc nguồn tớ
 
   const position = resolved.position;
   assert.ok(position);
-  assert.equal(position.position.speed, 9.4);
-  assert.equal(position.position.course, 187);
-  assert.equal(position.observedAt?.toISOString(), "2026-08-18T12:57:00.000Z");
-  assert.equal(position.freshness, PositionFreshness.LIVE);
+  // Toạ độ: ô map còn liên quan và chính xác hơn -> thắng.
+  assert.equal(position.position.latLngApproximate, false);
+  // Khối toạ độ khai TRUNG THỰC rằng ô map không cho mốc nguồn.
+  assert.equal(position.observedAt, null);
+  assert.equal(position.freshness, PositionFreshness.NO_SOURCE_TIME);
+  // Chuyển động nằm ở khối riêng, mang mốc nguồn của chính nó.
+  assert.ok(position.motion);
+  assert.equal(position.motion.speed, 9.4);
+  assert.equal(position.motion.course, 187);
+  assert.equal(position.motion.observedAt?.toISOString(), "2026-08-18T12:57:00.000Z");
+  assert.equal(position.motion.freshness, PositionFreshness.LIVE);
 });
 
-test("§15 — ĐÃ BIẾT: chu kỳ discovery SAU đó xoá motion khỏi canonical", async () => {
-  // ⚠️ ĐÂY LÀ TEST ĐẶC TẢ HÀNH VI HIỆN TẠI, KHÔNG PHẢI HÀNH VI MONG MUỐN.
-  //
-  // `findLatestPerSourceByVesselAndType` trả về ĐÚNG MỘT observation cho mỗi
-  // NGUỒN. Ô map và trang chi tiết cùng là `vesselfinder`, nên chúng KHÔNG BAO
-  // GIỜ cùng vào tới resolver: ô map ghi sau sẽ CHE observation chi tiết, mang
-  // theo speed/course/observedAt biến mất — dù resolver, nếu được thấy cả hai,
-  // đã chọn đúng bản có mốc nguồn (test ngay phía trên chứng minh điều đó).
-  //
-  // Sửa đúng cách phải đổi cách NẠP ứng viên (repository/ResolveCurrentPosition),
-  // tức là đổi chính sách resolver — nằm ngoài phạm vi PHASE 3 (§1, §2) và cần
-  // proof riêng. Test này khoá hành vi lại để nó không âm thầm đổi.
+test("§20 — chu kỳ map SAU KHI tra chi tiết KHÔNG còn xoá motion", async () => {
+  // Đây chính là lỗi PHASE 3.1 phải sửa. Trước đây ô map ghi sau che mất
+  // observation chi tiết, kéo theo speed/course/navStatus/observedAt biến mất.
   const { resolved } = await runPipeline(
     detailHtml({ sog: 9.4, cog: 187, lrpd: "3 min ago", navStatus: "Under way using engine" }),
     [MAP_SHIP],
@@ -261,10 +259,133 @@ test("§15 — ĐÃ BIẾT: chu kỳ discovery SAU đó xoá motion khỏi canon
 
   const position = resolved.position;
   assert.ok(position);
-  // Ô map thắng vì nó MỚI HƠN theo fetchedAt, không phải vì nó tốt hơn.
+
+  // Toạ độ: lấy của ô map, CHÍNH XÁC hơn trang chi tiết bị làm tròn.
   assert.equal(position.position.latLngApproximate, false);
-  assert.equal(position.position.speed, undefined);
-  assert.equal(position.position.course, undefined);
-  assert.equal(position.observedAt, null);
-  assert.equal(position.freshness, PositionFreshness.NO_SOURCE_TIME);
+  assert.equal(position.position.lat, MAP_SHIP.lat);
+  assert.equal(position.position.lng, MAP_SHIP.lon);
+
+  // Chuyển động: vẫn còn, kèm mốc thời gian CỦA CHÍNH NÓ.
+  assert.ok(position.motion, "motion phải sống sót qua chu kỳ map");
+  assert.equal(position.motion.speed, 9.4);
+  assert.equal(position.motion.course, 187);
+  assert.equal(position.motion.navStatus?.code, 0);
+  assert.equal(position.motion.observedAt?.toISOString(), "2026-08-18T11:57:00.000Z");
+  // Lúc phân xử (13:00) chuyển động đã 63 phút tuổi -> RECENT mới là sự thật.
+  // Gắn nhãn LIVE ở đây chính là kiểu nói dối mà §33 cấm.
+  assert.equal(position.motion.freshness, PositionFreshness.RECENT);
+});
+
+test("§21 — thứ tự ngược lại cho cùng một kết quả ngữ nghĩa", async () => {
+  const { resolved } = await runPipeline(
+    detailHtml({ sog: 9.4, cog: 187, lrpd: "3 min ago", navStatus: "Under way using engine" }),
+    [MAP_SHIP],
+    false
+  );
+  const position = resolved.position;
+  assert.ok(position);
+  assert.ok(position.motion);
+  assert.equal(position.motion.speed, 9.4);
+  assert.equal(position.motion.course, 187);
+  assert.equal(position.motion.navStatus?.code, 0);
+});
+
+test("§22 — giá trị 0 vẫn còn sau chu kỳ map", async () => {
+  const { resolved } = await runPipeline(
+    detailHtml({ sog: 0, cog: 0, lrpd: "0 min ago", navStatus: "Under way using engine" }),
+    [MAP_SHIP],
+    true
+  );
+  const motion = resolved.position?.motion;
+  assert.ok(motion);
+  // 0 là giá trị. `speed ?? fallback` / `speed || null` làm ba assert này đỏ.
+  assert.equal(motion.speed, 0);
+  assert.equal(motion.course, 0);
+  assert.equal(motion.navStatus?.code, 0);
+});
+
+test("§14/§15 — fetchedAt của ô map KHÔNG làm mới motion", async () => {
+  const { resolved } = await runPipeline(
+    detailHtml({ sog: 9.4, cog: 187, lrpd: "3 min ago", navStatus: "Moored" }),
+    [MAP_SHIP],
+    true
+  );
+  const position = resolved.position;
+  assert.ok(position?.motion);
+  // Ô map được lấy lúc 13:00; motion vẫn khai đúng mốc nguồn 11:57 của nó.
+  assert.equal(position.motion.observedAt?.toISOString(), "2026-08-18T11:57:00.000Z");
+  assert.notEqual(
+    position.motion.observedAt?.toISOString(),
+    position.fetchedAt.toISOString()
+  );
+  assert.equal(position.motion.fetchedAt.toISOString(), FETCHED_AT.toISOString());
+});
+
+test("§23 — motion quá hạn KHÔNG được mang sang như thể còn tươi", async () => {
+  // lrpd 3 ngày -> vượt staleMaxAgeMs (24h) -> bậc EXPIRED.
+  const { resolved } = await runPipeline(
+    detailHtml({ sog: 9.4, cog: 187, lrpd: "3 days ago", navStatus: "Moored" }),
+    [MAP_SHIP],
+    true
+  );
+  const position = resolved.position;
+  assert.ok(position);
+  // Toạ độ vẫn dùng được; chuyển động thì thà THIẾU còn hơn bịa là tươi.
+  assert.equal(position.position.latLngApproximate, false);
+  assert.equal(position.motion, null);
+});
+
+test("§26 — chi tiết KHÔNG có lrpd: motion giữ lại nhưng KHÔNG được gắn nhãn LIVE", async () => {
+  const { resolved } = await runPipeline(
+    detailHtml({ sog: 3.2, cog: 90, lrpd: null, navStatus: "Moored" }),
+    [MAP_SHIP],
+    true
+  );
+  const position = resolved.position;
+  assert.ok(position);
+  assert.ok(position.motion);
+  assert.equal(position.motion.speed, 3.2);
+  assert.equal(position.motion.observedAt, null);
+  assert.equal(position.motion.freshness, PositionFreshness.NO_SOURCE_TIME);
+  assert.notEqual(position.motion.freshness, PositionFreshness.LIVE);
+});
+
+test("§24 — nhiều bản chi tiết: motion lấy của bản MỚI NHẤT còn hợp lệ", async () => {
+  let clock = FETCHED_AT;
+  const repository = new InMemoryVesselObservationRepository({ now: () => clock });
+  const recorder = new ObservationRecorder({ repository, now: () => clock });
+
+  const detail = async (sog: number, cog: number, lrpd: string) => {
+    const provider = providerOver(detailHtml({ sog, cog, lrpd, navStatus: "Moored" }), [], () => clock);
+    await recorder.recordDetails((await provider.getDetails(mmsiIdentifier(MMSI)))!);
+  };
+
+  await detail(2.1, 10, "2 min ago"); // chi tiết CŨ
+  clock = new Date(clock.getTime() + 30 * 60 * 1000);
+  await detail(8.8, 200, "1 min ago"); // chi tiết MỚI
+  clock = new Date(clock.getTime() + 30 * 60 * 1000);
+  const mapProvider = providerOver(detailHtml({}), [MAP_SHIP], () => clock);
+  await recorder.recordPositions(await mapProvider.scanArea(BOX)); // ô map SAU CÙNG
+
+  const resolved = await new ResolveCurrentVessel({ repository, now: () => clock }).execute({
+    mmsi: MMSI,
+  });
+  const motion = resolved?.position?.motion;
+  assert.ok(motion);
+  assert.equal(motion.speed, 8.8);
+  assert.equal(motion.course, 200);
+});
+
+test("§25 — motion KHÔNG hợp lệ không được làm bẩn canonical", async () => {
+  // cog 360 và sog 102.3 là mã "không có" của AIS. Mapper loại chúng thành null,
+  // nên bản chi tiết này KHÔNG mang chuyển động nào dùng được.
+  const { resolved } = await runPipeline(
+    detailHtml({ sog: 102.3, cog: 360, lrpd: "2 min ago", navStatus: "-" }),
+    [MAP_SHIP],
+    true
+  );
+  const position = resolved.position;
+  assert.ok(position);
+  assert.equal(position.position.latLngApproximate, false); // toạ độ map vẫn dùng được
+  assert.equal(position.motion, null); // không có gì để mang sang
 });

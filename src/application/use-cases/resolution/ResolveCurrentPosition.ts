@@ -3,7 +3,7 @@
 //  → Chứng minh đường ĐỌC: observation -> resolver -> vị trí canonical.
 // ----------------------------------------------------------------------------
 //      vesselKey
-//        -> repository.findLatestPerSourceByVesselAndType(POSITION)
+//        -> repository.findLatestPerSourceByVesselAndType(POSITION, maxPerSource)
 //        -> PositionResolver
 //        -> ResolvedPosition | null
 //
@@ -26,11 +26,24 @@ import {
   VesselObservationType,
 } from "../../../domain/entities/VesselObservation";
 
+/**
+ * Số ứng viên POSITION lấy cho MỖI NGUỒN.
+ *
+ * > 1 vì một nguồn có nhiều BỀ MẶT: ô map (toạ độ chính xác, không chuyển động)
+ * và trang chi tiết (chuyển động + mốc nguồn, toạ độ làm tròn). Lấy đúng 1 bản
+ * mới nhất khiến bề mặt ghi sau che mất bề mặt kia.
+ *
+ * 4 chứ không phải "tất cả": đủ để cả hai bề mặt cùng có mặt qua vài chu kỳ
+ * quét, mà truy vấn vẫn có chặn trên cứng (§18).
+ */
+export const DEFAULT_POSITION_CANDIDATES_PER_SOURCE = 4;
+
 export interface ResolveCurrentPositionDeps {
   repository: IVesselObservationRepository;
   resolver?: PositionResolver;
   policy?: PositionResolverPolicy;
   now?: () => Date;
+  maxPerSource?: number;
 }
 
 export class ResolveCurrentPosition {
@@ -38,12 +51,14 @@ export class ResolveCurrentPosition {
   private readonly resolver: PositionResolver;
   private readonly policy: PositionResolverPolicy;
   private readonly now: () => Date;
+  private readonly maxPerSource: number;
 
   constructor(deps: ResolveCurrentPositionDeps) {
     this.repository = deps.repository;
     this.policy = deps.policy ?? DEFAULT_POSITION_RESOLVER_POLICY;
     this.resolver = deps.resolver ?? new PositionResolver({ policy: this.policy });
     this.now = deps.now ?? (() => new Date());
+    this.maxPerSource = deps.maxPerSource ?? DEFAULT_POSITION_CANDIDATES_PER_SOURCE;
   }
 
   /**
@@ -60,7 +75,7 @@ export class ResolveCurrentPosition {
     const candidates = await this.repository.findLatestPerSourceByVesselAndType(
       key,
       VesselObservationType.POSITION,
-      { since }
+      { since, maxPerSource: this.maxPerSource }
       // includeInvalid mặc định false — bản ghi hỏng không phải ứng viên.
     );
 
