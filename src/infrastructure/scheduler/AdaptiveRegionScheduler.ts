@@ -17,6 +17,7 @@
 // ============================================================================
 
 import { ICrawlRegionStateRepository } from "../../application/contracts/repositories/ICrawlRegionStateRepository";
+import { ICurrentVesselRepository } from "../../application/contracts/repositories/ICurrentVesselRepository";
 import { ProviderPositionResult } from "../../application/contracts/providers/ProviderResults";
 import { VesselDataProvider } from "../../application/contracts/providers/VesselDataProvider";
 import { ProviderOperation } from "../../application/contracts/providers/VesselDataProvider";
@@ -43,12 +44,27 @@ import { VesselSource } from "../../domain/enums/VesselSource";
 /** Chỉ VesselFinder có `scanArea` — xem PHASE 4 §26. */
 const SCAN_SOURCE = VesselSource.VESSELFINDER;
 
+/** Chuyển động cũ hơn mốc này thì đáng đi lấy lại. Dùng lại ngưỡng RECENT. */
+const STALE_MOTION_MS = 6 * 60 * 60 * 1000;
+
 export interface RegionCycleMetrics {
   regionId: string;
   outcome: RegionScanOutcome;
   vesselCount: number;
   newVesselCount: number;
-  mapRequests: number;
+  /**
+   * Số lần GỌI `scanArea`, KHÔNG phải số request HTTP.
+   *
+   * Một lần gọi có thể nở ra nhiều request nếu provider chia nhỏ vùng. Gọi nó
+   * là "mapRequests" như trước là nói quá — nên tên này nói đúng thứ nó đếm.
+   */
+  scanAreaCalls: number;
+  /**
+   * Số request upstream ĐO ĐƯỢC, lấy từ chính bộ đếm của crawl runtime
+   * (`SourceHealthTracker.totalRequests`), không phải ước lượng. Đã bao gồm
+   * cả các lần retry mà người gọi không nhìn thấy.
+   */
+  httpRequests: number;
   completionRequests: number;
   completionVessels: number;
   durationMs: number;
@@ -61,6 +77,8 @@ export interface AdaptiveRegionSchedulerDeps {
   recorder: ObservationRecorder;
   resolveAndStore: ResolveAndStoreCurrentVessel;
   regionStates: ICrawlRegionStateRepository;
+  /** Chỉ dùng để XẾP HẠNG ứng viên hoàn thiện. Không có -> giữ nguyên thứ tự quét. */
+  currentVesselRepository?: ICurrentVesselRepository;
   policy?: RegionSchedulePolicy;
   completeBasics?: CompleteVesselBasics;
   regions?: readonly MaritimeRegion[];
@@ -146,13 +164,53 @@ export class AdaptiveRegionScheduler {
     return health.state !== SourceHealthState.COOLDOWN && health.state !== SourceHealthState.DISABLED;
   }
 
+  /**
+   * Xếp thứ tự ứng viên hoàn thiện VesselBasics (§15).
+   *
+   *   1. tàu VỪA phát hiện          — chưa biết gì về nó
+   *   2. thiếu field VesselBasics cốt lõi (vType / toạ độ / motion)
+   *   3. chuyển động đã ôi
+   *   4. đã đủ dùng                 — xếp cuối, thường bị trần cắt mất
+   *
+   * Đọc canonical bằng MỘT truy vấn cho cả mẻ, không phải N truy vấn: xếp hạng
+   * không được đắt hơn chính việc nó tiết kiệm.
+   */
+  private async prioritiseCandidates(
+    mmsis: readonly string[],
+    newMmsis: ReadonlySet<string>
+  ): Promise<string[]> {
+    const known = this.deps.currentVesselRepository
+      ? await this.deps.currentVesselRepository.findManyByMmsi(mmsis)
+      : [];
+    const byMmsi = new Map(known.map((v) => [v.vesselKey.mmsi ?? "", v]));
+    const staleBefore = this.now().getTime() - STALE_MOTION_MS;
+
+    const rank = (mmsi: string): number => {
+      if (newMmsis.has(mmsi)) return 0;
+      const vessel = byMmsi.get(mmsi);
+      if (vessel === undefined) return 1; // chưa có canonical -> gần như mới
+      const motion = vessel.position?.motion ?? null;
+      const missingCore =
+        vessel.identity?.vesselTypeCode == null ||
+        vessel.position?.position == null ||
+        motion?.speed == null;
+      if (missingCore) return 2;
+      const observedAt = motion?.observedAt ?? null;
+      if (observedAt === null || observedAt.getTime() < staleBefore) return 3;
+      return 4; // đã đủ dùng
+    };
+
+    return [...mmsis].sort((a, b) => rank(a) - rank(b));
+  }
+
   private skipped(regionId: string, state: RegionScheduleState): RegionCycleMetrics {
     return {
       regionId,
       outcome: RegionScanOutcome.SKIPPED_COOLDOWN,
       vesselCount: 0,
       newVesselCount: 0,
-      mapRequests: 0,
+      scanAreaCalls: 0,
+      httpRequests: 0,
       completionRequests: 0,
       completionVessels: 0,
       durationMs: 0,
@@ -166,7 +224,10 @@ export class AdaptiveRegionScheduler {
   ): Promise<RegionCycleMetrics> {
     this.running.add(region.id);
     const startedAt = Date.now();
-    let mapRequests = 0;
+    // Đọc bộ đếm request TRƯỚC/SAU và lấy hiệu — đây là con số thật của runtime,
+    // không phải ta tự đếm song song một hệ metric khác (§13).
+    const requestsBefore = this.deps.runtime.getHealth(SCAN_SOURCE).totalRequests;
+    let scanAreaCalls = 0;
     let vesselCount = 0;
     let newVesselCount = 0;
     let completionRequests = 0;
@@ -176,7 +237,7 @@ export class AdaptiveRegionScheduler {
 
     try {
       const executor = this.deps.runtime.getExecutor(SCAN_SOURCE);
-      mapRequests = 1;
+      scanAreaCalls = 1;
       const rows = await executor.execute<readonly ProviderPositionResult[]>(
         () => this.deps.provider.scanArea!(region.bbox),
         { operation: ProviderOperation.SCAN_AREA }
@@ -195,13 +256,21 @@ export class AdaptiveRegionScheduler {
             .filter((m): m is string => isValidMmsi(m))
         )
       );
+      // `recordPositions` trả kết quả THEO ĐÚNG THỨ TỰ đầu vào -> ghép được
+      // "bản ghi này có phải mới không" về đúng con tàu.
+      const newMmsis = new Set<string>();
+      rows.forEach((row, index) => {
+        const mmsi = row.position?.mmsi ?? null;
+        if (isValidMmsi(mmsi) && saved[index]?.status === "SAVED") newMmsis.add(mmsi!);
+      });
       for (const mmsi of mmsis) await this.deps.resolveAndStore.execute({ mmsi });
 
       // Hoàn thiện VesselBasics là công việc RIÊNG và CÓ TRẦN (§23/§24):
       // quét ra 500 tàu không có nghĩa là bắn 500 lượt tra cứu.
       if (this.deps.completeBasics !== undefined) {
         const budget = this.deps.completionBudget ?? COMPLETION_BUDGET_PER_CYCLE;
-        for (const mmsi of mmsis.slice(0, budget)) {
+        const ordered = await this.prioritiseCandidates(mmsis, newMmsis);
+        for (const mmsi of ordered.slice(0, budget)) {
           const result = await this.deps.completeBasics.execute(mmsi);
           completionRequests += result.requests;
           if (result.requests > 0) completionVessels += 1;
@@ -226,7 +295,11 @@ export class AdaptiveRegionScheduler {
       outcome,
       vesselCount,
       newVesselCount,
-      mapRequests,
+      scanAreaCalls,
+      httpRequests: Math.max(
+        0,
+        this.deps.runtime.getHealth(SCAN_SOURCE).totalRequests - requestsBefore
+      ),
       completionRequests,
       completionVessels,
       durationMs: Date.now() - startedAt,

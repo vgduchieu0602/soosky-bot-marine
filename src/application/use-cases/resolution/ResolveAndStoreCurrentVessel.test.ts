@@ -280,6 +280,7 @@ test("NO_DATA · không có observation -> KHÔNG gọi kho, không tạo bản 
     },
     findByMmsi: async (): Promise<ResolvedCurrentVessel | null> => null,
     findByImo: async (): Promise<ResolvedCurrentVessel | null> => null,
+    findManyByMmsi: async (): Promise<readonly ResolvedCurrentVessel[]> => [],
   };
   const useCase = new ResolveAndStoreCurrentVessel({
     resolve: new ResolveCurrentVessel({ repository: h.observations, now: () => NOW }),

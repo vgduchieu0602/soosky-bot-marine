@@ -133,6 +133,12 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
     return doc === null ? null : MongoCurrentVesselRepository.toEntity(doc);
   }
 
+  async findManyByMmsi(mmsis: readonly string[]): Promise<readonly ResolvedCurrentVessel[]> {
+    if (mmsis.length === 0) return Object.freeze([]);
+    const docs = await CurrentVesselModel.find({ mmsi: { $in: [...mmsis] } }).lean<CurrentVesselDoc[]>();
+    return Object.freeze(docs.map((doc) => MongoCurrentVesselRepository.toEntity(doc)));
+  }
+
   async findByImo(imo: string): Promise<ResolvedCurrentVessel | null> {
     const doc = await CurrentVesselModel.findOne({ imo }).lean<CurrentVesselDoc>();
     return doc === null ? null : MongoCurrentVesselRepository.toEntity(doc);

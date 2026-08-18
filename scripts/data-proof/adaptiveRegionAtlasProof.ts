@@ -90,6 +90,7 @@ function buildScheduler(regionIds?: readonly string[], completionBudget?: number
     recorder,
     resolveAndStore,
     regionStates: new MongoCrawlRegionStateRepository(),
+    currentVesselRepository: new MongoCurrentVesselRepository(),
     completionBudget,
     regions: regionIds
       ? MARITIME_REGIONS.filter((r) => regionIds.includes(r.id))
@@ -175,6 +176,7 @@ async function main(): Promise<void> {
   console.log(`Regions    : ${(regionIds ? regionIds.length : MARITIME_REGIONS.length)}`);
   console.log(`AIS        : OFF`);
   console.log(`Paid       : OFF`);
+  console.log(`ShipFinder UTC offset: ${loadedConfig.shipFinderSourceUtcOffsetMinutes === undefined ? "NOT_SET (position group suppressed)" : "SET"}`);
   console.log("======================================\n");
 
   if (mode === "connect") {
@@ -187,6 +189,8 @@ async function main(): Promise<void> {
   }
 
   if (mode === "cycle" || mode === "soak") {
+    const before = await atlasCounts();
+    console.log(`BEFORE      : observations=${before.vessel_observations} canonical=${before.canonical_current_vessels} regionStates=${before.crawl_region_states}`);
     const { scheduler, runtime } = buildScheduler(regionIds, budget);
     const due = await scheduler.dueRegions();
     console.log(`Due now    : ${due.length} (${due.map((d) => d.region.id).join(", ") || "none"})`);
@@ -200,15 +204,19 @@ async function main(): Promise<void> {
       all.push(...metrics);
       for (const m of metrics) {
         console.log(`[region] ${m.regionId} ${m.outcome} vessels=${m.vesselCount} new=${m.newVesselCount} ` +
-          `mapReq=${m.mapRequests} complReq=${m.completionRequests} ${m.durationMs}ms${m.error ? " err=" + m.error : ""}`);
+          `scanCalls=${m.scanAreaCalls} httpReq=${m.httpRequests} complReq=${m.completionRequests} ${m.durationMs}ms${m.error ? " err=" + m.error : ""}`);
       }
       if (Date.now() >= deadline) break;
       // Không có vùng nào tới hạn -> ngủ ngắn rồi hỏi lại. Không quét ép.
       if (metrics.length === 0) await new Promise((r) => setTimeout(r, 30_000));
     } while (Date.now() < deadline);
 
+    const after = await atlasCounts();
+    console.log(`AFTER       : observations=${after.vessel_observations} canonical=${after.canonical_current_vessels} regionStates=${after.crawl_region_states}`);
+    console.log(`DELTA       : observations=+${after.vessel_observations - before.vessel_observations} canonical=+${after.canonical_current_vessels - before.canonical_current_vessels}`);
     const health = runtime.getHealth(VesselSource.VESSELFINDER);
     const payload = {
+      before, after,
       mode, durationMs: Date.now() - startedAt, cycles: all,
       health, resources: usage(),
       regionStates: await CrawlRegionStateModel.find({}).lean(),

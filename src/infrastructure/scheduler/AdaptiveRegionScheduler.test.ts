@@ -49,6 +49,9 @@ function build(options: {
   scanArea?: () => Promise<unknown>;
   completionBudget?: number;
   onComplete?: (mmsi: string) => void;
+  totalRequests?: () => number;
+  currentVesselRepository?: unknown;
+  savedStatuses?: string[];
 } = {}) {
   const scanned: string[] = [];
   const completed: string[] = [];
@@ -70,11 +73,19 @@ function build(options: {
         return ships(options.vessels ?? 60) as never;
       },
     } as never,
+    currentVesselRepository: options.currentVesselRepository as never,
     runtime: {
-      getHealth: () => ({ state: options.health ?? SourceHealthState.HEALTHY }),
+      getHealth: () => ({
+        state: options.health ?? SourceHealthState.HEALTHY,
+        totalRequests: options.totalRequests ? options.totalRequests() : 0,
+      }),
       getExecutor: () => ({ execute: async (task: () => Promise<unknown>) => task() }),
     } as never,
-    recorder: { async recordPositions(rows: unknown[]) { return rows.map(() => ({ status: "SAVED" })); } } as never,
+    recorder: {
+      async recordPositions(rows: unknown[]) {
+        return rows.map((_, i) => ({ status: options.savedStatuses?.[i] ?? "SAVED" }));
+      },
+    } as never,
     resolveAndStore: { async execute() { return {} as never; } } as never,
     completeBasics: {
       async execute(mmsi: string) {
@@ -172,4 +183,48 @@ test("§22 quét hỏng -> ghi FAILED, KHÔNG ghi vesselCount = 0", async () => 
   const saved = states.saved.get("r1")!;
   assert.equal(saved.consecutiveEmptyScans, 0, "hỏng không được tính là vùng rỗng");
   assert.equal(saved.lastVesselCount, null, "không được bịa ra số tàu bằng 0");
+});
+
+
+test("§13/§14 httpRequests đo từ runtime, KHÔNG phải đếm số lần gọi scanArea", async () => {
+  // Một lần gọi scanArea nhưng runtime ghi nhận 3 request (2 lần retry).
+  let counter = 0;
+  const { scheduler } = build({
+    vessels: 5,
+    totalRequests: () => counter,
+    scanArea: async () => { counter += 3; return ships(5); },
+  });
+  const metrics = await scheduler.tick();
+
+  assert.equal(metrics[0].scanAreaCalls, 1, "đúng một lần gọi scanArea");
+  assert.equal(metrics[0].httpRequests, 3, "phải lấy con số THẬT của runtime");
+  assert.notEqual(metrics[0].scanAreaCalls, metrics[0].httpRequests);
+});
+
+test("§15 ứng viên hoàn thiện: tàu MỚI được ưu tiên trước tàu đã đủ dùng", async () => {
+  const fresh = new Date(NOW.getTime() - 60_000);
+  // 3 tàu: chỉ tàu thứ 3 là mới; hai tàu đầu đã đủ dùng.
+  const sufficient = (mmsi: string) => ({
+    vesselKey: { mmsi },
+    identity: { vesselTypeCode: { value: 70 } },
+    position: { position: { lat: 1, lng: 1 }, motion: { speed: 1, observedAt: fresh } },
+  });
+  const { scheduler, completed } = build({
+    vessels: 3,
+    completionBudget: 1,
+    savedStatuses: ["SKIPPED_DUPLICATE", "SKIPPED_DUPLICATE", "SAVED"],
+    currentVesselRepository: {
+      async findManyByMmsi() {
+        return [sufficient("200000000"), sufficient("200000001")];
+      },
+    },
+  });
+  await scheduler.tick();
+
+  // Trần = 1, nên chỉ con tàu ĐƯỢC ƯU TIÊN NHẤT mới được gọi.
+  assert.equal(completed.length, REGIONS.length);
+  assert.ok(
+    completed.every((m) => m === "200000002"),
+    `phải chọn tàu mới, nhận: ${completed.join(",")}`
+  );
 });

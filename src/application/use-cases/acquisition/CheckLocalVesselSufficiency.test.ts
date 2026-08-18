@@ -202,6 +202,7 @@ test("khoá rỗng -> ném lỗi, KHÔNG truy vấn kho", async () => {
       lookups++;
       return repo.findByImo(imo);
     },
+    findManyByMmsi: async () => [],
   };
 
   await assert.rejects(

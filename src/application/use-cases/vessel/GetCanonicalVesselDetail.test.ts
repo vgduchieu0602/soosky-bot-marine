@@ -147,6 +147,9 @@ class FakeRepository implements ICurrentVesselRepository {
   async upsert(): Promise<CurrentVesselSaveResult> {
     throw new Error("DETAIL-1 không được ghi gì");
   }
+  async findManyByMmsi(mmsis: readonly string[]): Promise<readonly ResolvedCurrentVessel[]> {
+    return mmsis.map((m) => this.byMmsi.get(m)).filter((v): v is ResolvedCurrentVessel => v !== undefined);
+  }
   async findByMmsi(mmsi: string): Promise<ResolvedCurrentVessel | null> {
     this.calls.push(`mmsi:${mmsi}`);
     return this.byMmsi.get(mmsi) ?? null;

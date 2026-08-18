@@ -54,4 +54,12 @@ export interface ICurrentVesselRepository {
   findByMmsi(mmsi: string): Promise<ResolvedCurrentVessel | null>;
 
   findByImo(imo: string): Promise<ResolvedCurrentVessel | null>;
+  /**
+   * Đọc NHIỀU tàu trong MỘT lượt.
+   *
+   * Tồn tại để việc xếp hạng ứng viên không tự biến thành N truy vấn: quét ra
+   * 500 MMSI mà hỏi DB 500 lần thì phần "tiết kiệm request" trở nên vô nghĩa.
+   * Trả về những tàu TÌM THẤY; MMSI chưa có canonical đơn giản là vắng mặt.
+   */
+  findManyByMmsi(mmsis: readonly string[]): Promise<readonly ResolvedCurrentVessel[]>;
 }

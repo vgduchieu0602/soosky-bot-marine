@@ -94,6 +94,16 @@ export class InMemoryCurrentVesselRepository implements ICurrentVesselRepository
     return found === undefined ? null : structuredClone(found.vessel);
   }
 
+  async findManyByMmsi(mmsis: readonly string[]): Promise<readonly ResolvedCurrentVessel[]> {
+    const wanted = new Set(mmsis);
+    const found: ResolvedCurrentVessel[] = [];
+    for (const mmsi of wanted) {
+      const vessel = await this.findByMmsi(mmsi);
+      if (vessel !== null) found.push(vessel);
+    }
+    return Object.freeze(found);
+  }
+
   async findByImo(imo: string): Promise<ResolvedCurrentVessel | null> {
     const found = this.stored.find((record) => record.imo === imo);
     return found === undefined ? null : structuredClone(found.vessel);
