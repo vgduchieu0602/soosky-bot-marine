@@ -11,6 +11,14 @@ export interface VesselProps {
   imo?: string | number | null; // thuộc tính, có thể thiếu (tàu nội địa)
   name?: string | null;
   type?: string | null;
+  /**
+   * Mã AIS "ship and cargo type" (0..99) khi nguồn có cho.
+   *
+   * KHÁC `type` (nhãn chữ): hợp đồng công khai cần SỐ. VesselFinder vẫn luôn
+   * gửi mã này trong `#djson.ship_type` — trước đây ta vứt đi rồi báo cáo
+   * vType = 0%.
+   */
+  typeCode?: number | null;
   callsign?: string | null;
   flagCode?: string | null;
   country?: string | null;
@@ -28,6 +36,7 @@ export class Vessel {
   readonly imo: string | null;
   readonly name: string | null;
   readonly type: string | null;
+  readonly typeCode: number | null;
   readonly callsign: string | null;
   readonly flagCode: string | null;
   readonly country: string | null;
@@ -51,6 +60,14 @@ export class Vessel {
     this.imo = props.imo != null ? String(props.imo) : null;
     this.name = props.name ?? null;
     this.type = props.type ?? null;
+    // Chỉ nhận mã AIS hợp lệ; giá trị ngoài dải là rác của nguồn, không phải loại tàu.
+    this.typeCode =
+      typeof props.typeCode === "number" &&
+      Number.isInteger(props.typeCode) &&
+      props.typeCode >= 0 &&
+      props.typeCode <= 99
+        ? props.typeCode
+        : null;
     this.callsign = props.callsign ?? null;
     this.flagCode = props.flagCode ?? null;
     this.country = props.country ?? null;

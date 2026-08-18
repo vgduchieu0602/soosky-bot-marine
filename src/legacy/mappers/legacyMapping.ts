@@ -44,8 +44,8 @@ export function toVesselIdentity(vessel: Vessel, metadata: SourceMetadata): Vess
     name: vessel.name,
     callsign: vessel.callsign,
     vesselType: vessel.type,
-    // Entity cũ KHÔNG có mã loại tàu — mapper VesselFinder bỏ qua #djson.ship_type.
-    vesselTypeCode: null,
+    // Mã AIS số khi nguồn có cho (VesselFinder `#djson.ship_type`).
+    vesselTypeCode: vessel.typeCode,
     flag,
     metadata,
   };

@@ -90,6 +90,10 @@ export class VesselFinderHtmlMapper {
       imo,
       name,
       type: tbl["AIS Type"] ?? null,
+      // `#djson.ship_type` LÀ mã AIS thật, đã đối chiếu live: 52=Tug, 51=SAR,
+      // 37=Pleasure craft, 57=Local type. Đây là nguồn DUY NHẤT đo được cho
+      // `vType: number` của hợp đồng.
+      typeCode: typeof dj.ship_type === "number" ? dj.ship_type : null,
       callsign: tbl["Callsign"] ?? null,
       country: tbl["AIS Flag"] ?? null,
       lengthM,
