@@ -87,6 +87,30 @@ const FIELDS_BY_SOURCE: Readonly<Record<string, readonly VesselField[]>> = Objec
   ]),
 });
 
+/** Nhãn nghĩa là "ô trống", không phải một trạng thái hành hải. */
+const NAV_STATUS_PLACEHOLDERS: ReadonlySet<string> = new Set([
+  "",
+  "-",
+  "--",
+  "---",
+  "unknown",
+  "n/a",
+]);
+
+/**
+ * navStatus có mang dữ liệu thật không.
+ *
+ * ⚠️ `code = 0` ("under way using engine") là GIÁ TRỊ. Mọi kiểm tra kiểu
+ * `code || text` sẽ nuốt mất nó.
+ */
+function hasNavStatus(navStatus: { code?: number | null; text?: string | null } | null | undefined): boolean {
+  if (navStatus === null || navStatus === undefined) return false;
+  if (typeof navStatus.code === "number") return true;
+  const text = navStatus.text;
+  if (typeof text !== "string") return false;
+  return !NAV_STATUS_PLACEHOLDERS.has(text.trim().toLowerCase());
+}
+
 /** Nhóm phụ thuộc độ tươi — cũ quá thì coi như chưa có. */
 const MOTION_BASICS_FIELDS: readonly VesselField[] = Object.freeze([
   VesselField.SPEED,
@@ -325,11 +349,16 @@ export class CompleteVesselBasics {
       case VesselField.NAME: return vessel.identity?.name != null;
       case VesselField.IMO: return vessel.identity?.imo != null;
       case VesselField.VESSEL_TYPE_CODE: return vessel.identity?.vesselTypeCode != null;
-      case VesselField.LAT:
-      case VesselField.LNG: return vessel.position != null;
+      // Khối `position` TỒN TẠI không có nghĩa là có toạ độ. Phải soi đúng giá trị,
+      // nếu không một canonical thiếu lat vẫn bị coi là "đã đủ" và không bao giờ
+      // được lấp.
+      case VesselField.LAT: return typeof vessel.position?.position?.lat === "number";
+      case VesselField.LNG: return typeof vessel.position?.position?.lng === "number";
       case VesselField.SPEED: return vessel.position?.motion?.speed != null;
       case VesselField.COURSE: return vessel.position?.motion?.course != null;
-      case VesselField.NAV_STATUS: return vessel.position?.motion?.navStatus != null;
+      // Nhóm navStatus tồn tại nhưng rỗng ("Unknown", "-") KHÔNG phải dữ liệu.
+      // Mã 0 thì NGƯỢC LẠI: đó là giá trị thật của tàu đang chạy máy.
+      case VesselField.NAV_STATUS: return hasNavStatus(vessel.position?.motion?.navStatus);
       case VesselField.POSITION_RECEIVED_AT: return vessel.position?.motion?.observedAt != null;
       default: return false;
     }

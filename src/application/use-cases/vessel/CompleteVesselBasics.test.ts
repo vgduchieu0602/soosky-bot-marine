@@ -231,3 +231,64 @@ test("§12 — nguồn vừa được hỏi thì KHÔNG hỏi lại ở chu kỳ
   assert.equal(result.requests, 0);
   assert.equal(result.attempts[0].outcome, "RECENTLY_ASKED");
 });
+
+// ---------------------------------------------------------------------------
+//  Ngữ nghĩa lat/lng và navStatus — khối TỒN TẠI không đồng nghĩa CÓ GIÁ TRỊ
+// ---------------------------------------------------------------------------
+
+/** Canonical đầy đủ, nhưng cho phép bẻ riêng phần toạ độ / navStatus. */
+function vesselWith(overrides: { lat?: unknown; lng?: unknown; navStatus?: unknown }): ResolvedCurrentVessel {
+  const v = completeVessel();
+  if ("lat" in overrides) (v.position as any).position.lat = overrides.lat;
+  if ("lng" in overrides) (v.position as any).position.lng = overrides.lng;
+  if ("navStatus" in overrides) (v.position as any).motion.navStatus = overrides.navStatus;
+  return v;
+}
+
+/** Field nào còn thiếu, nhìn qua đúng đường mà use-case dùng. */
+async function missingOf(vessel: ResolvedCurrentVessel): Promise<string[]> {
+  const { repo } = repositoryOf([vessel]);
+  const { collect } = collectorOf(() => CollectStatus.NOT_FOUND);
+  const result = await new CompleteVesselBasics({
+    currentVesselRepository: repo,
+    collect,
+    resolveAndStore,
+    now: () => NOW,
+  }).execute(MMSI);
+  return [...result.missingBefore] as string[];
+}
+
+test("A. có lat, thiếu lng -> chỉ lng bị coi là thiếu", async () => {
+  const missing = await missingOf(vesselWith({ lat: 51.2, lng: null }));
+  assert.equal(missing.includes("lat"), false, "lat có giá trị -> không thiếu");
+  assert.equal(missing.includes("lng"), true, "lng null -> phải thiếu");
+});
+
+test("B. có lng, thiếu lat -> chỉ lat bị coi là thiếu", async () => {
+  const missing = await missingOf(vesselWith({ lat: undefined, lng: 1.2 }));
+  assert.equal(missing.includes("lng"), false, "lng có giá trị -> không thiếu");
+  assert.equal(missing.includes("lat"), true, "lat vắng -> phải thiếu");
+});
+
+test("C. navStatus { code: null, text: 'Unknown' } -> THIẾU", async () => {
+  const missing = await missingOf(vesselWith({ navStatus: { code: null, text: "Unknown" } }));
+  assert.equal(missing.includes("navStatus"), true, "'Unknown' là ô trống, không phải trạng thái");
+});
+
+test("D. navStatus { code: 0, text: null } -> CÓ", async () => {
+  const missing = await missingOf(vesselWith({ navStatus: { code: 0, text: null } }));
+  // `code || text` sẽ làm assert này đỏ: 0 là falsy nhưng là giá trị THẬT.
+  assert.equal(missing.includes("navStatus"), false, "mã 0 là giá trị hợp lệ");
+});
+
+test("E. navStatus { code: null, text: 'Moored' } -> CÓ", async () => {
+  const missing = await missingOf(vesselWith({ navStatus: { code: null, text: "Moored" } }));
+  assert.equal(missing.includes("navStatus"), false, "chữ có nghĩa vẫn là dữ liệu");
+});
+
+test("navStatus các dạng ô trống khác cũng bị coi là thiếu", async () => {
+  for (const text of ["", "-", "--", "---", "n/a", "  UNKNOWN  "]) {
+    const missing = await missingOf(vesselWith({ navStatus: { code: null, text } }));
+    assert.equal(missing.includes("navStatus"), true, `nhãn ${JSON.stringify(text)} phải là thiếu`);
+  }
+});
