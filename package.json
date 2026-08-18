@@ -38,7 +38,13 @@
     "bot:detail-sample": "ts-node src/interfaces/cli/botDataProof.ts --mode=detail",
     "bot:continuous": "ts-node src/interfaces/cli/botDataProof.ts --mode=continuous",
     "bot:data-report": "ts-node src/interfaces/cli/botDataProof.ts --mode=report",
-    "bot:data-proof": "ts-node src/interfaces/cli/botDataProof.ts"
+    "bot:data-proof": "ts-node src/interfaces/cli/botDataProof.ts",
+    "proof:free-motion": "ts-node scripts/data-proof/freeMotionProof.ts",
+    "proof:free-motion:a": "ts-node scripts/data-proof/freeMotionProof.ts --stage=A",
+    "proof:free-motion:b": "ts-node scripts/data-proof/freeMotionProof.ts --stage=B",
+    "proof:regional": "ts-node scripts/data-proof/regionalCoverage.ts",
+    "proof:regional:a": "ts-node scripts/data-proof/regionalCoverage.ts --stage=A",
+    "proof:regional:b": "ts-node scripts/data-proof/regionalCoverage.ts --stage=B"
   },
   "engines": {
     "node": ">=18"

@@ -1,0 +1,722 @@
+[
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "368393930",
+    "imo": "990930",
+    "vesselName": "CORNUCOPIA MAJESTY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "367022790",
+    "imo": "0",
+    "vesselName": "QUENAMES",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "338417325",
+    "imo": null,
+    "vesselName": "PROKAT28",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "369230000",
+    "imo": "9819428",
+    "vesselName": "PHILADELPHIA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "368119660",
+    "imo": "9881213",
+    "vesselName": "CHARLESTON",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "368327980",
+    "imo": null,
+    "vesselName": "HENRY GIRLS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "368246350",
+    "imo": null,
+    "vesselName": "QUIET STORM",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "367015880",
+    "imo": null,
+    "vesselName": "ROBERT IV",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "366516370",
+    "imo": "7046170",
+    "vesselName": "STEPHEN REINAUER",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-EAST-COAST",
+    "mmsi": "366852680",
+    "imo": null,
+    "vesselName": "DAVID WINSLOW",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "338171745",
+    "imo": null,
+    "vesselName": "TAILGATE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "338489635",
+    "imo": null,
+    "vesselName": "WINDWALKER",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "215230000",
+    "imo": "9317975",
+    "vesselName": "CMA CGM WHITE SHARK",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "367006770",
+    "imo": null,
+    "vesselName": "ROBYN J",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "367311590",
+    "imo": null,
+    "vesselName": "MISS CHRISTI",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "367006790",
+    "imo": null,
+    "vesselName": "VICKI ANN",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "565015000",
+    "imo": "9576753",
+    "vesselName": "REBECCA SCHULTE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "416466000",
+    "imo": "9462718",
+    "vesselName": "YM UNANIMITY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "563199600",
+    "imo": "9935210",
+    "vesselName": "EVER MACH",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-WEST-COAST",
+    "mmsi": "367537630",
+    "imo": null,
+    "vesselName": "G.F. NICHOLSON",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "367547750",
+    "imo": null,
+    "vesselName": "HIGH ISLAND",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "338724000",
+    "imo": "7420429",
+    "vesselName": "MARGERY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "368611000",
+    "imo": null,
+    "vesselName": "NEPTUNE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "368363180",
+    "imo": null,
+    "vesselName": "MAJOR",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "367799320",
+    "imo": null,
+    "vesselName": "MALLARD",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "368062270",
+    "imo": null,
+    "vesselName": "KIRSTEN GOLDING",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "563284100",
+    "imo": "9926594",
+    "vesselName": "TOSA HARMONY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "367599850",
+    "imo": null,
+    "vesselName": "BRIAN LEE TESTE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "367456830",
+    "imo": "8981418",
+    "vesselName": "INTEGRITY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "US",
+    "subRegion": "US-GULF",
+    "mmsi": "367562810",
+    "imo": null,
+    "vesselName": "GARY REED",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "244750930",
+    "imo": null,
+    "vesselName": "JOIE DE VIVRE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "235057399",
+    "imo": null,
+    "vesselName": "TALISMAN OF IPSWICH",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "235101095",
+    "imo": null,
+    "vesselName": "RNLI LIFEBOAT 13-02",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "247353200",
+    "imo": "9570565",
+    "vesselName": "CAROLINE A",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "235005245",
+    "imo": null,
+    "vesselName": "DMS ROTHER",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "235052005",
+    "imo": null,
+    "vesselName": "JOSEPHINE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "235038943",
+    "imo": null,
+    "vesselName": "FLYING START",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "211857350",
+    "imo": null,
+    "vesselName": "POLLY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "250005981",
+    "imo": "9851969",
+    "vesselName": "ARKLOW ARCHER",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-ENGLISH-CHANNEL",
+    "mmsi": "538005376",
+    "imo": "9624500",
+    "vesselName": "ERRIKOS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "232056936",
+    "imo": "9173977",
+    "vesselName": "HANS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "232014960",
+    "imo": null,
+    "vesselName": "KELEMA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "244720000",
+    "imo": "8803783",
+    "vesselName": "DELTA-D",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "235016122",
+    "imo": null,
+    "vesselName": "GREYLAG",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "232000790",
+    "imo": "8902278",
+    "vesselName": "CITY OF WESTMINSTER",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "235018306",
+    "imo": null,
+    "vesselName": "SEVEN N SIX",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "235054373",
+    "imo": null,
+    "vesselName": "VOLANTIS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "210649000",
+    "imo": "9330068",
+    "vesselName": "MSC SURABAYA VIII",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "232007487",
+    "imo": "9756470",
+    "vesselName": "SVITZER MONARCH",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-THAMES",
+    "mmsi": "235039035",
+    "imo": null,
+    "vesselName": "HOXA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "232053696",
+    "imo": "9199763",
+    "vesselName": "NORMA II",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "235070199",
+    "imo": "9176072",
+    "vesselName": "MANANNAN",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "235102224",
+    "imo": "9121637",
+    "vesselName": "STENA HIBERNIA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "235079386",
+    "imo": null,
+    "vesselName": "CORALEE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "305453000",
+    "imo": "9421075",
+    "vesselName": "KLAUDIA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "245497000",
+    "imo": "9278337",
+    "vesselName": "EEMS DOLLARD",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "232017592",
+    "imo": "9409974",
+    "vesselName": "SVITZER AMAZONAS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "210430000",
+    "imo": "9933183",
+    "vesselName": "VASSOS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "215804000",
+    "imo": "9670602",
+    "vesselName": "ATLANTIC SKY",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "UK",
+    "subRegion": "UK-IRISH-SEA",
+    "mmsi": "232041396",
+    "imo": "9917244",
+    "vesselName": "MANXMAN",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "258083180",
+    "imo": null,
+    "vesselName": "DELIGHT",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "257777000",
+    "imo": null,
+    "vesselName": "NIRO",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "257053700",
+    "imo": "7325681",
+    "vesselName": "HURUMFERJA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "259023490",
+    "imo": null,
+    "vesselName": "MORMORA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "257168500",
+    "imo": null,
+    "vesselName": "ARMANKA II",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "258535610",
+    "imo": null,
+    "vesselName": "SECOND TJANGS",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "258453000",
+    "imo": null,
+    "vesselName": "COEUR DE LION",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "257691380",
+    "imo": null,
+    "vesselName": "MANTRA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "259000070",
+    "imo": null,
+    "vesselName": "SOTTO VENTO",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "257319900",
+    "imo": null,
+    "vesselName": "MY LOUISE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257128190",
+    "imo": null,
+    "vesselName": "PORSVIKA 1",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257836800",
+    "imo": null,
+    "vesselName": "SALAR",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257349910",
+    "imo": null,
+    "vesselName": "IDA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257997800",
+    "imo": null,
+    "vesselName": "MARIE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "258027360",
+    "imo": null,
+    "vesselName": "TROLLGUTT",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "265078170",
+    "imo": null,
+    "vesselName": "THYRA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257574040",
+    "imo": null,
+    "vesselName": "NADINE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257172740",
+    "imo": null,
+    "vesselName": "TRYM",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "258144270",
+    "imo": null,
+    "vesselName": "VI 2",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257729630",
+    "imo": null,
+    "vesselName": "VAARE",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-NORTHERN-COAST",
+    "mmsi": "257014900",
+    "imo": null,
+    "vesselName": "MOLNES",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-NORTHERN-COAST",
+    "mmsi": "257580170",
+    "imo": null,
+    "vesselName": "TOPPEN",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-NORTHERN-COAST",
+    "mmsi": "259042130",
+    "imo": null,
+    "vesselName": "ARCTIC WONDER",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-NORTHERN-COAST",
+    "mmsi": "257005140",
+    "imo": "9137765",
+    "vesselName": "VOLLEROSA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-NORTHERN-COAST",
+    "mmsi": "257169940",
+    "imo": null,
+    "vesselName": "GIGGEN",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-NORTHERN-COAST",
+    "mmsi": "111257512",
+    "imo": null,
+    "vesselName": "SAR AC RESCUE 7",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "257751670",
+    "imo": null,
+    "vesselName": "HANNA",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257049680",
+    "imo": null,
+    "vesselName": "NORR",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-OSLOFJORD",
+    "mmsi": "259018440",
+    "imo": null,
+    "vesselName": "KARIANA II",
+    "discoverySource": "vesselfinder-map"
+  },
+  {
+    "region": "NORWAY",
+    "subRegion": "NO-BERGEN-COAST",
+    "mmsi": "257317440",
+    "imo": null,
+    "vesselName": "ALVOEY",
+    "discoverySource": "vesselfinder-map"
+  }
+]

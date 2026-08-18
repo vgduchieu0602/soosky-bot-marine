@@ -1,0 +1,1263 @@
+{
+  "meta": {
+    "phase": "FREE-MOTION-PROOF",
+    "stage": "A",
+    "commit": "local",
+    "startedAt": "2026-08-18T04:06:50.711Z",
+    "finishedAt": "2026-08-18T04:13:15.722Z",
+    "durationMs": 385005,
+    "ais": false,
+    "paid": false,
+    "marineApi": false,
+    "canonicalWrite": false
+  },
+  "sampleSize": {
+    "US": 30,
+    "UK": 30,
+    "NORWAY": 30,
+    "totalVessels": 90,
+    "enrichmentAttempts": 270
+  },
+  "regions": {
+    "US": {
+      "mmsis": [
+        "368393930",
+        "366868360",
+        "258802000",
+        "338511947",
+        "338417325",
+        "338495222",
+        "367314490",
+        "368318920",
+        "367309390",
+        "367586910",
+        "366516380",
+        "367020550",
+        "369230000",
+        "367549830",
+        "367497610",
+        "636022904",
+        "636023384",
+        "368423730",
+        "368157570",
+        "338496434",
+        "368135240",
+        "367558070",
+        "366744020",
+        "218643000",
+        "369118000",
+        "338500989",
+        "538004065",
+        "338147573",
+        "367560590",
+        "538007240"
+      ],
+      "tilesUsed": [
+        {
+          "name": "US-East-NY-NJ",
+          "box": {
+            "minLat": 40.4,
+            "minLon": -74.3,
+            "maxLat": 40.9,
+            "maxLon": -73.7
+          },
+          "ships": 30
+        }
+      ]
+    },
+    "UK": {
+      "mmsis": [
+        "232215000",
+        "227091690",
+        "235052005",
+        "236401000",
+        "538006821",
+        "235060888",
+        "235081808",
+        "244060111",
+        "211375320",
+        "235099752",
+        "209490000",
+        "636026706",
+        "235028825",
+        "271043022",
+        "227317390",
+        "311001548",
+        "255805621",
+        "538005249",
+        "228417600",
+        "235070283",
+        "227000000",
+        "227300270",
+        "256784000",
+        "538010871",
+        "255917243",
+        "538004060",
+        "235103697",
+        "232007487",
+        "245381000",
+        "232014960"
+      ],
+      "tilesUsed": [
+        {
+          "name": "UK-Channel-Dover",
+          "box": {
+            "minLat": 50.8,
+            "minLon": 0.8,
+            "maxLat": 51.3,
+            "maxLon": 1.6
+          },
+          "ships": 26
+        },
+        {
+          "name": "UK-Thames-Estuary",
+          "box": {
+            "minLat": 51.3,
+            "minLon": 0.4,
+            "maxLat": 51.7,
+            "maxLon": 1.2
+          },
+          "ships": 4
+        }
+      ]
+    },
+    "NORWAY": {
+      "mmsis": [
+        "258083180",
+        "257053700",
+        "257777000",
+        "257083180",
+        "259023490",
+        "257168500",
+        "258535610",
+        "257291700",
+        "257319900",
+        "257691380",
+        "259000070",
+        "259021240",
+        "258099690",
+        "259016610",
+        "259018440",
+        "257688740",
+        "259020850",
+        "258100040",
+        "257431950",
+        "259042540",
+        "257080590",
+        "257714880",
+        "257526900",
+        "257957270",
+        "258025590",
+        "258081550",
+        "982599009",
+        "257688900",
+        "257773870",
+        "257025490"
+      ],
+      "tilesUsed": [
+        {
+          "name": "NO-Oslofjord",
+          "box": {
+            "minLat": 59.6,
+            "minLon": 10.3,
+            "maxLat": 59.95,
+            "maxLon": 10.9
+          },
+          "ships": 30
+        }
+      ]
+    }
+  },
+  "surfaces": {
+    "vesselfinder": [
+      "map mp2 tiles — discovery only (no speed/course/nav/time)",
+      "HTML /vessels/details/{id} #djson ship_sog/ship_cog, table Navigation Status, lrpd relative age"
+    ],
+    "shipfinder": [
+      "HTML https://www.shipfinder.com/ship/detail/mmsi/{mmsi} speed/course/status/Last update"
+    ],
+    "shipinfo": [
+      "HTML vessel page embedded JSON track points speed/course/timestamp"
+    ]
+  },
+  "motionMatrix": {
+    "US": {
+      "vesselfinder": {
+        "speedKn": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        },
+        "courseDeg": {
+          "available": 25,
+          "sample": 30,
+          "pct": 83.3
+        },
+        "navStatusCode": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3
+        },
+        "observedAt": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        }
+      },
+      "shipfinder": {
+        "speedKn": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "courseDeg": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        }
+      },
+      "shipinfo": {
+        "speedKn": {
+          "available": 13,
+          "sample": 30,
+          "pct": 43.3
+        },
+        "courseDeg": {
+          "available": 9,
+          "sample": 30,
+          "pct": 30
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 13,
+          "sample": 30,
+          "pct": 43.3
+        }
+      },
+      "combined": {
+        "speedKn": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        },
+        "courseDeg": {
+          "available": 25,
+          "sample": 30,
+          "pct": 83.3
+        },
+        "navStatusCode": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3
+        },
+        "observedAt": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        }
+      }
+    },
+    "UK": {
+      "vesselfinder": {
+        "speedKn": {
+          "available": 29,
+          "sample": 30,
+          "pct": 96.7
+        },
+        "courseDeg": {
+          "available": 25,
+          "sample": 30,
+          "pct": 83.3
+        },
+        "navStatusCode": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7
+        },
+        "observedAt": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        }
+      },
+      "shipfinder": {
+        "speedKn": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "courseDeg": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        }
+      },
+      "shipinfo": {
+        "speedKn": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "courseDeg": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        }
+      },
+      "combined": {
+        "speedKn": {
+          "available": 29,
+          "sample": 30,
+          "pct": 96.7
+        },
+        "courseDeg": {
+          "available": 25,
+          "sample": 30,
+          "pct": 83.3
+        },
+        "navStatusCode": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7
+        },
+        "observedAt": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        }
+      }
+    },
+    "NORWAY": {
+      "vesselfinder": {
+        "speedKn": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        },
+        "courseDeg": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3
+        },
+        "navStatusCode": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7
+        },
+        "observedAt": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        }
+      },
+      "shipfinder": {
+        "speedKn": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "courseDeg": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        }
+      },
+      "shipinfo": {
+        "speedKn": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "courseDeg": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0
+        }
+      },
+      "combined": {
+        "speedKn": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        },
+        "courseDeg": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3
+        },
+        "navStatusCode": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7
+        },
+        "observedAt": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100
+        }
+      }
+    },
+    "ALL": {
+      "vesselfinder": {
+        "speedKn": {
+          "available": 89,
+          "sample": 90,
+          "pct": 98.9
+        },
+        "courseDeg": {
+          "available": 69,
+          "sample": 90,
+          "pct": 76.7
+        },
+        "navStatusCode": {
+          "available": 44,
+          "sample": 90,
+          "pct": 48.9
+        },
+        "observedAt": {
+          "available": 90,
+          "sample": 90,
+          "pct": 100
+        }
+      },
+      "shipfinder": {
+        "speedKn": {
+          "available": 0,
+          "sample": 90,
+          "pct": 0
+        },
+        "courseDeg": {
+          "available": 0,
+          "sample": 90,
+          "pct": 0
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 90,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 0,
+          "sample": 90,
+          "pct": 0
+        }
+      },
+      "shipinfo": {
+        "speedKn": {
+          "available": 13,
+          "sample": 90,
+          "pct": 14.4
+        },
+        "courseDeg": {
+          "available": 9,
+          "sample": 90,
+          "pct": 10
+        },
+        "navStatusCode": {
+          "available": 0,
+          "sample": 90,
+          "pct": 0
+        },
+        "observedAt": {
+          "available": 13,
+          "sample": 90,
+          "pct": 14.4
+        }
+      },
+      "combined": {
+        "speedKn": {
+          "available": 89,
+          "sample": 90,
+          "pct": 98.9
+        },
+        "courseDeg": {
+          "available": 69,
+          "sample": 90,
+          "pct": 76.7
+        },
+        "navStatusCode": {
+          "available": 44,
+          "sample": 90,
+          "pct": 48.9
+        },
+        "observedAt": {
+          "available": 90,
+          "sample": 90,
+          "pct": 100
+        }
+      }
+    }
+  },
+  "timestampDerivation": {
+    "ABSOLUTE_SOURCE_TIME": 13,
+    "RELATIVE_SOURCE_AGE": 90,
+    "NO_SOURCE_TIME": 167
+  },
+  "freshness": {
+    "ALL": {
+      "<=5min": 67,
+      "5-15min": 3,
+      "15-30min": 1,
+      "30-60min": 0,
+      ">60min": 32,
+      "unknown": 0
+    },
+    "vesselfinder": {
+      "<=5min": 67,
+      "5-15min": 3,
+      "15-30min": 1,
+      "30-60min": 0,
+      ">60min": 19,
+      "unknown": 0
+    },
+    "shipfinder": {
+      "<=5min": 0,
+      "5-15min": 0,
+      "15-30min": 0,
+      "30-60min": 0,
+      ">60min": 0,
+      "unknown": 90
+    },
+    "shipinfo": {
+      "<=5min": 0,
+      "5-15min": 0,
+      "15-30min": 0,
+      "30-60min": 0,
+      ">60min": 13,
+      "unknown": 77
+    }
+  },
+  "operational": {
+    "vesselfinder": {
+      "requests": 90,
+      "reqPerVessel": 1,
+      "avgLatencyMs": 552,
+      "p95LatencyMs": 1534,
+      "http": {
+        "200": 90
+      },
+      "blocks403": 0,
+      "blocks429": 0,
+      "timeouts": 0,
+      "classification": "GOOD"
+    },
+    "shipfinder": {
+      "requests": 90,
+      "reqPerVessel": 1,
+      "avgLatencyMs": 155,
+      "p95LatencyMs": 275,
+      "http": {
+        "null": 90
+      },
+      "blocks403": 0,
+      "blocks429": 0,
+      "timeouts": 0,
+      "classification": "NOT_AVAILABLE"
+    },
+    "shipinfo": {
+      "requests": 90,
+      "reqPerVessel": 1,
+      "avgLatencyMs": 2188,
+      "p95LatencyMs": 3837,
+      "http": {
+        "200": 13,
+        "403": 5,
+        "skipped_block": 72
+      },
+      "blocks403": 5,
+      "blocks429": 0,
+      "timeouts": 0,
+      "classification": "USABLE"
+    }
+  },
+  "amplification": {
+    "discoveryTilesUsed": 4,
+    "discoveryTileBudget": 15,
+    "vesselsDiscovered": 90,
+    "enrichmentRequests": 198,
+    "extraRequestsPerVessel": 2.2,
+    "note": "Map tile: 1 HTTP → many vessels (identity+lat/lon only). Motion requires separate detail GET per vessel per provider. Measured enrichment ≈ 2.2 requests/vessel across 3 providers."
+  },
+  "throughput": {
+    "durationMs": 385005,
+    "enrichmentRequestsPerMin": 30.9,
+    "usableMotionVesselsPerMin": 13.9,
+    "estimateMinutes": {
+      "vessels1000": 72.1,
+      "vessels10000": 721,
+      "vessels50000": 3604.9
+    }
+  },
+  "vesselBasicsImpact": {
+    "note": "Free-only estimate from THIS motion sample + known map discovery strengths. No AIS/paid.",
+    "discoveryMapKnown": {
+      "vesselName": "~98% on VF map tiles (prior proof)",
+      "mmsi": "100% (discovery key)",
+      "latLon": "100% on VF map tiles",
+      "imo": "low on map; partial on detail",
+      "vType": "partial on detail"
+    },
+    "motionCombinedPct": {
+      "speedKn": 98.9,
+      "courseDeg": 76.7,
+      "navStatusCode": 48.9,
+      "received": 100
+    },
+    "estimatedVesselBasicsFreeOnly": {
+      "vesselName": "high (map)",
+      "mmsi": "100%",
+      "imo": "low–moderate (detail dependent)",
+      "vType": "moderate (detail)",
+      "latLon": "high (map)",
+      "speed": "98.9% (targeted free detail)",
+      "course": "76.7% (targeted free detail)",
+      "navStatus": "48.9% (targeted free detail)",
+      "received": "100% (source time only)"
+    }
+  },
+  "samples": [
+    {
+      "mmsi": "368393930",
+      "region": "US",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 229,
+      "speedKn": 0,
+      "courseDeg": 0,
+      "navStatusCode": 0,
+      "navStatusText": "Under way",
+      "observedAt": "2026-08-18T04:06:50.939Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 0,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "366868360",
+      "region": "US",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 231,
+      "speedKn": 0,
+      "courseDeg": 224.2,
+      "navStatusCode": 0,
+      "navStatusText": "Under way",
+      "observedAt": "2026-08-17T22:06:53.404Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 360,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "368393930",
+      "region": "US",
+      "provider": "shipinfo",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 1881,
+      "speedKn": 0,
+      "courseDeg": null,
+      "navStatusCode": null,
+      "navStatusText": null,
+      "observedAt": "2026-08-17T13:41:14.000Z",
+      "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+      "ageMinutes": 866,
+      "surface": "HTML embedded JSON points speed/course/timestamp"
+    },
+    {
+      "mmsi": "366868360",
+      "region": "US",
+      "provider": "shipinfo",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 2263,
+      "speedKn": 0,
+      "courseDeg": null,
+      "navStatusCode": null,
+      "navStatusText": null,
+      "observedAt": "2026-08-17T13:45:52.000Z",
+      "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+      "ageMinutes": 861,
+      "surface": "HTML embedded JSON points speed/course/timestamp"
+    },
+    {
+      "mmsi": "258802000",
+      "region": "US",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 1516,
+      "speedKn": 0,
+      "courseDeg": 344.6,
+      "navStatusCode": 5,
+      "navStatusText": "Moored",
+      "observedAt": "2026-08-18T04:05:59.360Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 1,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "232215000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 445,
+      "speedKn": 10.6,
+      "courseDeg": 236.5,
+      "navStatusCode": 0,
+      "navStatusText": "Under way",
+      "observedAt": "2026-08-18T04:09:50.168Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 1,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "227091690",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 275,
+      "speedKn": 6.2,
+      "courseDeg": 54.6,
+      "navStatusCode": null,
+      "navStatusText": "-",
+      "observedAt": "2026-08-18T04:09:52.674Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 1,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "235052005",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 226,
+      "speedKn": 0.2,
+      "courseDeg": null,
+      "navStatusCode": null,
+      "navStatusText": "-",
+      "observedAt": "2026-08-18T04:08:55.053Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 2,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "236401000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 1160,
+      "speedKn": 7.6,
+      "courseDeg": 229.6,
+      "navStatusCode": 0,
+      "navStatusText": "Under way",
+      "observedAt": "2026-08-18T04:10:58.168Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 0,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "538006821",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 453,
+      "speedKn": 9.6,
+      "courseDeg": 231.4,
+      "navStatusCode": 0,
+      "navStatusText": "Under way",
+      "observedAt": "2026-08-18T04:11:00.014Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 0,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "258083180",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 226,
+      "speedKn": 0,
+      "courseDeg": null,
+      "navStatusCode": null,
+      "navStatusText": "-",
+      "observedAt": "2026-08-18T03:58:05.108Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 14,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "257053700",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 856,
+      "speedKn": 0,
+      "courseDeg": 233.1,
+      "navStatusCode": 0,
+      "navStatusText": "Under way",
+      "observedAt": "2026-08-18T04:12:08.144Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 0,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "257777000",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 237,
+      "speedKn": 0,
+      "courseDeg": 275.4,
+      "navStatusCode": null,
+      "navStatusText": "-",
+      "observedAt": "2026-08-18T04:11:09.688Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 1,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "257083180",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 1122,
+      "speedKn": 0,
+      "courseDeg": null,
+      "navStatusCode": 5,
+      "navStatusText": "Moored",
+      "observedAt": "2026-08-18T04:11:13.044Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 1,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    },
+    {
+      "mmsi": "259023490",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "ok": true,
+      "httpClass": "200",
+      "latencyMs": 229,
+      "speedKn": 0.2,
+      "courseDeg": null,
+      "navStatusCode": null,
+      "navStatusText": "-",
+      "observedAt": "2026-08-18T04:09:15.056Z",
+      "timestampDerivation": "RELATIVE_SOURCE_AGE",
+      "ageMinutes": 3,
+      "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+    }
+  ],
+  "manualValidationCandidates": {
+    "vesselfinder": [
+      {
+        "mmsi": "368393930",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 229,
+        "speedKn": 0,
+        "courseDeg": 0,
+        "navStatusCode": 0,
+        "navStatusText": "Under way",
+        "observedAt": "2026-08-18T04:06:50.939Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 0,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "366868360",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 231,
+        "speedKn": 0,
+        "courseDeg": 224.2,
+        "navStatusCode": 0,
+        "navStatusText": "Under way",
+        "observedAt": "2026-08-17T22:06:53.404Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 360,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "258802000",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1516,
+        "speedKn": 0,
+        "courseDeg": 344.6,
+        "navStatusCode": 5,
+        "navStatusText": "Moored",
+        "observedAt": "2026-08-18T04:05:59.360Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 1,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "338511947",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 681,
+        "speedKn": 0,
+        "courseDeg": 150.9,
+        "navStatusCode": null,
+        "navStatusText": "-",
+        "observedAt": "2026-08-17T17:07:04.002Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 660,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "338417325",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 867,
+        "speedKn": 0,
+        "courseDeg": null,
+        "navStatusCode": null,
+        "navStatusText": "-",
+        "observedAt": "2026-08-18T04:05:08.446Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 2,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "338495222",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 686,
+        "speedKn": 0,
+        "courseDeg": null,
+        "navStatusCode": null,
+        "navStatusText": "-",
+        "observedAt": "2026-08-17T21:07:12.927Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 420,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "367314490",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 705,
+        "speedKn": 0,
+        "courseDeg": 259.7,
+        "navStatusCode": null,
+        "navStatusText": "-",
+        "observedAt": "2026-08-18T04:08:15.418Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 0,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "368318920",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 682,
+        "speedKn": 0,
+        "courseDeg": 248.6,
+        "navStatusCode": 0,
+        "navStatusText": "Under way",
+        "observedAt": "2026-08-17T19:08:20.736Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 540,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "367309390",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1554,
+        "speedKn": 0,
+        "courseDeg": 35.9,
+        "navStatusCode": 5,
+        "navStatusText": "Moored",
+        "observedAt": "2026-08-18T04:08:26.937Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 0,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      },
+      {
+        "mmsi": "367586910",
+        "region": "US",
+        "provider": "vesselfinder",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1534,
+        "speedKn": 0,
+        "courseDeg": 39,
+        "navStatusCode": 5,
+        "navStatusText": "Moored",
+        "observedAt": "2026-08-18T04:06:32.826Z",
+        "timestampDerivation": "RELATIVE_SOURCE_AGE",
+        "ageMinutes": 2,
+        "surface": "HTML detail #djson ship_sog/ship_cog + Navigation Status + lrpd"
+      }
+    ],
+    "shipfinder": [],
+    "shipinfo": [
+      {
+        "mmsi": "368393930",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1881,
+        "speedKn": 0,
+        "courseDeg": null,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:41:14.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 866,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "366868360",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 2263,
+        "speedKn": 0,
+        "courseDeg": null,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:45:52.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 861,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "258802000",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1585,
+        "speedKn": 0.1,
+        "courseDeg": 200,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:44:42.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 862,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "338511947",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1590,
+        "speedKn": 0,
+        "courseDeg": null,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:33:32.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 874,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "367314490",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 3489,
+        "speedKn": 0,
+        "courseDeg": 342,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:45:55.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 862,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "368318920",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 1797,
+        "speedKn": 2,
+        "courseDeg": null,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-05T16:36:50.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 17972,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "367309390",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 3108,
+        "speedKn": 0,
+        "courseDeg": 273,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:45:50.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 863,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "367586910",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 3837,
+        "speedKn": 0.4,
+        "courseDeg": 182,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:43:52.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 865,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "366516380",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 3425,
+        "speedKn": 0,
+        "courseDeg": 29,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:45:40.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 863,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      },
+      {
+        "mmsi": "367549830",
+        "region": "US",
+        "provider": "shipinfo",
+        "ok": true,
+        "httpClass": "200",
+        "latencyMs": 3827,
+        "speedKn": 0,
+        "courseDeg": 357,
+        "navStatusCode": null,
+        "navStatusText": null,
+        "observedAt": "2026-08-17T13:45:27.000Z",
+        "timestampDerivation": "ABSOLUTE_SOURCE_TIME",
+        "ageMinutes": 865,
+        "surface": "HTML embedded JSON points speed/course/timestamp"
+      }
+    ]
+  },
+  "manualValidationNote": "Automated extraction via existing providers. Manual spot-check: compare samples[] fields to live provider pages. VF lrpd counted as RELATIVE_SOURCE_AGE only in diagnostic path (production mapping still sets sourceReceivedAt=null).",
+  "recommendation": {
+    "code": "A",
+    "text": "FREE CRAWLER SUFFICIENT FOR MOTION"
+  },
+  "missingFieldsSummary": {
+    "mapTilesAlone": [
+      "speedKn",
+      "courseDeg",
+      "navStatusCode",
+      "observedAt"
+    ],
+    "afterTargetedFreeDetail": {
+      "stillWeak": [],
+      "stronger": [
+        "speedKn",
+        "courseDeg",
+        "navStatusCode",
+        "observedAt"
+      ]
+    }
+  }
+}
