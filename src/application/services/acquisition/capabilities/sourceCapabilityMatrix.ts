@@ -284,7 +284,8 @@ const SHIPFINDER = defineSourceCapability({
   costType: SourceCostType.FREE,
   enabled: false,
   // ⚠️ GIỮ NGUYÊN 55 dù vị trí tươi hơn ShipInfo (45). Đổi thứ tự ưu tiên chính
-  // là mã hoá "ShipFinder thắng ShipInfo" — đó là việc của resolver, CHƯA CÓ.
+  // là mã hoá "ShipFinder thắng ShipInfo" — đó là việc của resolver
+  // (`application/services/resolution`).
   defaultPriority: 55,
   notes: [
     "Có provider thật (ShipFinderProvider), đã đăng ký trong ProviderRegistry, mọi request đi qua crawl runtime P4.",

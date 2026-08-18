@@ -10,7 +10,8 @@
 //  phải sửa file này.
 //
 //  KHÔNG có ở đây (và không được thêm vào): retry, sleep, rate limit, cooldown
-//  (đã ở P4) · merge, chọn nguồn, fallback, chấm điểm (thuộc resolver, CHƯA CÓ)
+//  (đã ở P4) · merge, chọn nguồn, fallback, chấm điểm (thuộc resolver, xem
+//  `application/services/resolution`)
 //  · ghi thẳng repository (phải qua recorder để chạy validation + dedupe).
 //
 //  NOT_FOUND đi bằng đường riêng: provider trả `null` -> ta ném một lỗi đã phân

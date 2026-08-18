@@ -6,8 +6,8 @@
 //        -> IdentityResolver
 //        -> ResolvedIdentity | null
 //
-//  Cùng khuôn với `ResolveCurrentPosition` (P8.2). Chỉ ĐỌC: không mạng, không
-//  provider, không ghi DB. Kết quả KHÔNG được lưu ở đâu — chưa có canonical
+//  Cùng khuôn với `ResolveCurrentPosition`. Chỉ ĐỌC: không mạng, không
+//  provider, không ghi DB. Việc ghi canonical là của `ResolveAndStoreCurrentVessel`
 //  storage.
 // ============================================================================
 

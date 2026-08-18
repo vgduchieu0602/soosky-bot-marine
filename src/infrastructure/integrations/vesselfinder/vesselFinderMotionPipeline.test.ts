@@ -389,3 +389,41 @@ test("§25 — motion KHÔNG hợp lệ không được làm bẩn canonical", a
   assert.equal(position.position.latLngApproximate, false); // toạ độ map vẫn dùng được
   assert.equal(position.motion, null); // không có gì để mang sang
 });
+
+test("§22 — nhiều chu kỳ map liên tiếp KHÔNG đẩy được bản chi tiết ra khỏi ứng viên", async () => {
+  // Lỗi thật do gate PHASE 3.2 phát hiện: "N bản mới nhất mỗi nguồn" vẫn mất
+  // chuyển động ở quy mô lớn hơn — ô map ghi mỗi chu kỳ, trang chi tiết thì
+  // thưa, nên sau vài chu kỳ đám ô map chiếm hết N khe và đẩy bản chi tiết ra.
+  let clock = FETCHED_AT;
+  const repository = new InMemoryVesselObservationRepository({ now: () => clock });
+  const recorder = new ObservationRecorder({ repository, now: () => clock });
+
+  const detailProvider = providerOver(
+    detailHtml({ sog: 9.4, cog: 187, lrpd: "3 min ago", navStatus: "Under way using engine" }),
+    [],
+    () => clock
+  );
+  await recorder.recordDetails((await detailProvider.getDetails(mmsiIdentifier(MMSI)))!);
+
+  // 6 chu kỳ quét map SAU đó, mỗi lần tàu dịch đi một chút -> observation mới thật.
+  for (let i = 1; i <= 6; i++) {
+    clock = new Date(clock.getTime() + 10 * 60 * 1000);
+    const mapProvider = providerOver(detailHtml({}), [
+      { mmsi: MMSI, name: "PIPELINE TEST", lat: 51.2 + i * 0.01, lon: 1.2 + i * 0.01 },
+    ], () => clock);
+    await recorder.recordPositions(await mapProvider.scanArea(BOX));
+  }
+
+  const resolved = await new ResolveCurrentVessel({ repository, now: () => clock }).execute({
+    mmsi: MMSI,
+  });
+  const position = resolved?.position;
+  assert.ok(position);
+  // Toạ độ đi theo ô map mới nhất.
+  assert.equal(position.position.latLngApproximate, false);
+  // Chuyển động vẫn còn, dù bản sinh ra nó đã bị 6 ô map mới hơn xếp sau.
+  assert.ok(position.motion, "motion phải sống sót qua nhiều chu kỳ map");
+  assert.equal(position.motion.speed, 9.4);
+  assert.equal(position.motion.course, 187);
+  assert.equal(position.motion.observedAt?.toISOString(), "2026-08-18T11:57:00.000Z");
+});

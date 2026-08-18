@@ -53,6 +53,19 @@ export interface ObservationQueryOptions {
    * Vẫn CÓ CHẶN TRÊN: đây là "N gần nhất mỗi nguồn", không phải toàn bộ lịch sử.
    */
   readonly maxPerSource?: number;
+  /**
+   * Chỉ lấy observation POSITION thực sự MANG dữ liệu chuyển động
+   * (speed / course / heading / navStatus có ít nhất một giá trị).
+   *
+   * Vì sao cần: "N bản mới nhất mỗi nguồn" vẫn để lọt lỗi cũ ở quy mô lớn hơn.
+   * Ô map được ghi mỗi chu kỳ quét, còn trang chi tiết thì thưa hơn nhiều; sau
+   * vài chu kỳ, đám ô map chiếm hết N khe và ĐẨY bản chi tiết ra ngoài — chuyển
+   * động lại biến mất khỏi canonical y như trước.
+   *
+   * Truy vấn riêng cho chuyển động khiến bề mặt thưa hơn luôn có mặt, và VẪN
+   * bị chặn trên bởi `maxPerSource`.
+   */
+  readonly motionOnly?: boolean;
 }
 
 export interface IVesselObservationRepository {

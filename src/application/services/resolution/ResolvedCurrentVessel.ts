@@ -2,8 +2,9 @@
 //  APPLICATION · ResolvedCurrentVessel — READ MODEL, chỉ nằm trong RAM
 // ----------------------------------------------------------------------------
 //  Ảnh hợp nhất của một con tàu tại một thời điểm, ghép từ đầu ra của BỐN
-//  resolver. Đây KHÔNG phải entity, KHÔNG có collection, KHÔNG được lưu ở đâu.
-//  Phase có canonical storage mới quyết định chuyện đó.
+//  resolver. Đây KHÔNG phải entity và KHÔNG có collection của riêng nó.
+//  Ảnh hợp nhất này ĐƯỢC LƯU: `ResolveAndStoreCurrentVessel` ghi nó xuống
+//  `canonical_current_vessels` qua `ICurrentVesselRepository`.
 //
 //  ⚠️ Tầng ghép KHÔNG được đụng vào nội dung từng nhóm:
 //    • không bóc `ResolvedField` thành giá trị trần -> mất provenance

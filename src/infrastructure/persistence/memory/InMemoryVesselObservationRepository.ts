@@ -39,6 +39,15 @@ export interface InMemoryVesselObservationRepositoryDeps {
   now?: () => Date;
 }
 
+/** Observation POSITION có mang ít nhất một field chuyển động. `0` là giá trị. */
+function hasMotionData(observation: VesselSourceObservation): boolean {
+  if (observation.type !== VesselObservationType.POSITION) return false;
+  const data = observation.data;
+  return (
+    data.speed != null || data.course != null || data.heading != null || data.navStatus != null
+  );
+}
+
 export class InMemoryVesselObservationRepository implements IVesselObservationRepository {
   private readonly stored: StoredObservation[] = [];
   private readonly dedupeConfig: ObservationDedupeConfig;
@@ -128,6 +137,7 @@ export class InMemoryVesselObservationRepository implements IVesselObservationRe
     const maxPerSource = Math.max(1, Math.floor(options.maxPerSource ?? 1));
     const bySource = new Map<VesselSource, VesselSourceObservation[]>();
     for (const observation of all) {
+      if (options.motionOnly === true && !hasMotionData(observation)) continue;
       const bucket = bySource.get(observation.source) ?? [];
       if (bucket.length >= maxPerSource) continue;
       bucket.push(observation);

@@ -236,6 +236,20 @@ export class MongoVesselObservationRepository implements IVesselObservationRepos
     if (options.includeInvalid !== true) {
       criteria.validationStatus = { $ne: ObservationValidationStatus.INVALID };
     }
+    if (options.motionOnly === true) {
+      // Ít nhất một field chuyển động có giá trị. `0` là giá trị hợp lệ, nên
+      // phải so với null/absent chứ KHÔNG dùng truthiness.
+      criteria.$and = [
+        {
+          $or: [
+            { "data.speed": { $ne: null, $exists: true } },
+            { "data.course": { $ne: null, $exists: true } },
+            { "data.heading": { $ne: null, $exists: true } },
+            { "data.navStatus": { $ne: null, $exists: true } },
+          ],
+        },
+      ];
+    }
     return criteria;
   }
 

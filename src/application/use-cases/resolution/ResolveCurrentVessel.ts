@@ -7,7 +7,8 @@
 //        -> ResolvedCurrentVessel | null
 //
 //  Chỉ ĐỌC: không mạng, không provider, không runtime, không ghi DB, không
-//  fallback. Kết quả nằm trong RAM — chưa có canonical storage.
+//  fallback. Use case này trả kết quả về cho người gọi; `ResolveAndStoreCurrentVessel`
+//  mới là chỗ ghi xuống `canonical_current_vessels`.
 //
 //  Bốn truy vấn riêng là CHẤP NHẬN ĐƯỢC ở phase này: mỗi truy vấn đã bị chặn
 //  bởi SỐ NGUỒN (hiện 3), và bốn nhóm có cửa sổ thời gian KHÁC NHAU (position

@@ -1,0 +1,49 @@
+{
+  "phase": "PHASE-3.2-LIVE-MOTION-GATE",
+  "cycle": 1,
+  "pid": 42324,
+  "database": "soosky_marine_bot_dev",
+  "ais": false,
+  "paid": false,
+  "startedAt": "2026-08-18T14:04:02.747Z",
+  "durationMs": 33453,
+  "collectionsBefore": [],
+  "collectionsAfter": [
+    "canonical_current_vessels",
+    "vessel_observations"
+  ],
+  "legacyCollectionsPresent": [],
+  "sampleSize": 0,
+  "requestMetrics": {
+    "mapRequests": 6,
+    "detailRequests": 0,
+    "requestsPerVessel": 0,
+    "status": {
+      "timeout": 1,
+      "cooldown": 5
+    },
+    "avgLatencyMs": 33437,
+    "p95LatencyMs": 33437
+  },
+  "coverage": {
+    "vessels": 0,
+    "latLon": 0,
+    "speed": 0,
+    "course": 0,
+    "navStatus": 0,
+    "motionObservedAt": 0,
+    "motionPresent": 0
+  },
+  "maxPerSource": 4,
+  "observationCount": 0,
+  "canonicalCount": 0,
+  "resources": {
+    "label": "after-cycle-1",
+    "pid": 42324,
+    "rssMb": 366,
+    "heapUsedMb": 300,
+    "cpuUserMs": 9296,
+    "cpuSystemMs": 1921
+  },
+  "vessels": []
+}

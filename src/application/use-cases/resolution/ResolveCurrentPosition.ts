@@ -10,7 +10,8 @@
 //  KHÔNG mạng, KHÔNG provider, KHÔNG runtime P4, KHÔNG ghi DB, KHÔNG fallback.
 //  Resolver chỉ ĐỌC thứ đã thu thập; việc thu thập là mối lo khác.
 //
-//  Kết quả KHÔNG được lưu ở đâu cả — P8.2 chưa có canonical storage.
+//  Use case này chỉ ĐỌC và phân xử; nó không tự ghi. Việc ghi xuống
+//  `canonical_current_vessels` do `ResolveAndStoreCurrentVessel` đảm nhiệm.
 // ============================================================================
 
 import {
@@ -72,12 +73,36 @@ export class ResolveCurrentPosition {
     // sẽ khiến bậc EXPIRED và NO_SOURCE_TIME không bao giờ tới được resolver.
     const since = new Date(now.getTime() - this.policy.candidateWindowMs);
 
-    const candidates = await this.repository.findLatestPerSourceByVesselAndType(
-      key,
-      VesselObservationType.POSITION,
-      { since, maxPerSource: this.maxPerSource }
-      // includeInvalid mặc định false — bản ghi hỏng không phải ứng viên.
-    );
+    // HAI truy vấn, cả hai đều có chặn trên.
+    //
+    //  1. mới nhất mỗi nguồn      -> toạ độ tốt nhất
+    //  2. mới nhất CÓ CHUYỂN ĐỘNG -> bề mặt thưa không bị bề mặt dày đẩy ra
+    //
+    // Chỉ dùng truy vấn (1) là chưa đủ: ô map ghi mỗi chu kỳ quét còn trang chi
+    // tiết thì thưa, nên sau vài chu kỳ đám ô map chiếm hết N khe và đẩy bản
+    // chi tiết ra ngoài — đúng lỗi mất chuyển động, chỉ ở quy mô lớn hơn.
+    const [recent, motionBearing] = await Promise.all([
+      this.repository.findLatestPerSourceByVesselAndType(key, VesselObservationType.POSITION, {
+        since,
+        maxPerSource: this.maxPerSource,
+        // includeInvalid mặc định false — bản ghi hỏng không phải ứng viên.
+      }),
+      this.repository.findLatestPerSourceByVesselAndType(key, VesselObservationType.POSITION, {
+        since,
+        maxPerSource: this.maxPerSource,
+        motionOnly: true,
+      }),
+    ]);
+
+    // Gộp, loại trùng. Bản ghi đã lưu luôn có `id`; bản chưa có id thì giữ
+    // nguyên (không có cách nào khẳng định nó trùng với bản khác).
+    const seen = new Set<string>();
+    const candidates = [...recent, ...motionBearing].filter((observation) => {
+      if (observation.id === undefined) return true;
+      if (seen.has(observation.id)) return false;
+      seen.add(observation.id);
+      return true;
+    });
 
     return this.resolver.resolve(candidates, now);
   }
