@@ -44,7 +44,11 @@
     "proof:free-motion:b": "ts-node scripts/data-proof/freeMotionProof.ts --stage=B",
     "proof:regional": "ts-node scripts/data-proof/regionalCoverage.ts",
     "proof:regional:a": "ts-node scripts/data-proof/regionalCoverage.ts --stage=A",
-    "proof:regional:b": "ts-node scripts/data-proof/regionalCoverage.ts --stage=B"
+    "proof:regional:b": "ts-node scripts/data-proof/regionalCoverage.ts --stage=B",
+    "proof:atlas": "ts-node scripts/data-proof/adaptiveRegionAtlasProof.ts --mode=connect",
+    "adaptive:cycle": "ts-node scripts/data-proof/adaptiveRegionAtlasProof.ts --mode=cycle",
+    "adaptive:soak": "ts-node scripts/data-proof/adaptiveRegionAtlasProof.ts --mode=soak",
+    "adaptive:report": "ts-node scripts/data-proof/adaptiveRegionAtlasProof.ts --mode=report"
   },
   "engines": {
     "node": ">=18"

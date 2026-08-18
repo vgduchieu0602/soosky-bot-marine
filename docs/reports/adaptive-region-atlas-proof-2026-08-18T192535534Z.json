@@ -1,0 +1,118 @@
+{
+  "mongo": {
+    "kind": "ATLAS",
+    "database": "soosky_marine_bot_dev",
+    "host": "***.rfyiyqt.mongodb.net:27017"
+  },
+  "collections": [
+    "canonical_current_vessels",
+    "crawl_region_states",
+    "vessel_observations"
+  ],
+  "counts": {
+    "vessel_observations": 59,
+    "canonical_current_vessels": 19,
+    "crawl_region_states": 2,
+    "canonicalWith": {
+      "name": 19,
+      "mmsi": 19,
+      "latLon": 10,
+      "speed": 10,
+      "course": 8,
+      "navStatus": 6,
+      "vType": 0,
+      "motionObservedAt": 10
+    }
+  },
+  "regionStates": [
+    {
+      "_id": "6a84b05be15f9a3d5ad99eb3",
+      "regionId": "no-oslofjord",
+      "averageVesselCount": null,
+      "consecutiveEmptyScans": 0,
+      "createdAt": "2026-08-18T19:19:55.340Z",
+      "intervalMs": 3383117,
+      "lastErrorAt": null,
+      "lastOutcome": "SKIPPED_COOLDOWN",
+      "lastScanAt": null,
+      "lastVesselCount": null,
+      "newVesselCount": null,
+      "nextScanAt": "2026-08-18T19:29:55.340Z",
+      "tier": "MEDIUM",
+      "updatedAt": "2026-08-18T19:19:55.340Z"
+    },
+    {
+      "_id": "6a84b01ce15f9a3d5ad99eb2",
+      "regionId": "uk-english-channel",
+      "averageVesselCount": null,
+      "consecutiveEmptyScans": 0,
+      "createdAt": "2026-08-18T19:18:52.651Z",
+      "intervalMs": 739439,
+      "lastErrorAt": "2026-08-18T19:18:52.650Z",
+      "lastOutcome": "FAILED",
+      "lastScanAt": null,
+      "lastVesselCount": null,
+      "newVesselCount": null,
+      "nextScanAt": "2026-08-18T19:28:52.650Z",
+      "tier": "HIGH",
+      "updatedAt": "2026-08-18T19:18:52.651Z"
+    }
+  ],
+  "samples": [
+    {
+      "mmsi": "368119660",
+      "name": "CHARLESTON",
+      "vType": null,
+      "lat": 40.6403,
+      "lon": -74.0476,
+      "speed": 0.1,
+      "course": 61,
+      "navStatus": "At anchor",
+      "observedAt": "2026-08-18T19:22:44.000Z"
+    },
+    {
+      "mmsi": "367022790",
+      "name": "QUENAMES",
+      "vType": null,
+      "lat": 40.531083333333335,
+      "lon": -74.25165,
+      "speed": 0,
+      "course": 265.5,
+      "navStatus": "Under way using engine",
+      "observedAt": "2026-08-18T19:22:51.000Z"
+    },
+    {
+      "mmsi": "338417325",
+      "name": "PROKAT28",
+      "vType": null,
+      "lat": 40.55416666666667,
+      "lon": -74.25605,
+      "speed": 0,
+      "course": 0,
+      "navStatus": null,
+      "observedAt": "2026-08-18T16:08:12.000Z"
+    },
+    {
+      "mmsi": "232215000",
+      "name": "SAND FALCON",
+      "vType": null,
+      "lat": 51.27165,
+      "lon": 1.68925,
+      "speed": 6.5,
+      "course": 193.2,
+      "navStatus": "Under way using engine",
+      "observedAt": "2026-08-18T19:24:44.000Z"
+    },
+    {
+      "mmsi": "235101095",
+      "name": "RNLI LIFEBOAT 1302",
+      "vType": null,
+      "lat": 50.92648333333333,
+      "lon": 0.97645,
+      "speed": 0,
+      "course": null,
+      "navStatus": "Under way using engine",
+      "observedAt": "2026-08-18T11:18:19.000Z"
+    }
+  ]
+}
