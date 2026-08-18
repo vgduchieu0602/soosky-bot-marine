@@ -13,6 +13,11 @@
 import { Vessel } from "../../../legacy/entities/Vessel";
 import { VesselPosition } from "../../../legacy/entities/VesselPosition";
 import { VesselDetails } from "../../../application/contracts/providers/IVesselDetailsSource";
+import { isValidCourse, isValidSpeed } from "../../../domain/validators/motion";
+import {
+  isUsableVesselFinderNavStatusText,
+  parseVesselFinderNavStatusCode,
+} from "./vesselFinderNavStatus";
 
 /** Hình dạng JSON trong #djson (chỉ khai báo field ta dùng) */
 interface DJson {
@@ -95,14 +100,28 @@ export class VesselFinderHtmlMapper {
     const hasLatLon =
       typeof dj.ship_lat === "number" && typeof dj.ship_lon === "number";
 
+    // AIS dùng giá trị BIÊN làm "không có": SOG 102.3 và COG 360.0. Chúng lọt
+    // qua `typeof === "number"` nhưng bị domain validator loại — không lọc thì
+    // canonical nhận `course = 360`, một hướng đi không tồn tại.
+    // ⚠️ Kiểm bằng validator, KHÔNG bằng truthiness: `sog = 0` và `cog = 0` là
+    // giá trị THẬT của tàu đang neo/buộc bến.
+    const speedKn = isValidSpeed(dj.ship_sog) ? dj.ship_sog : null;
+    const courseDeg = isValidCourse(dj.ship_cog) ? dj.ship_cog : null;
+
+    // Ô trống của nguồn là "-", không phải một trạng thái. Đưa về "Unknown" để
+    // mapping canonical bỏ hẳn nhóm, thay vì lưu một nhãn giả.
+    const rawNavStatus = tbl["Navigation Status"] ?? null;
+    const usableNavStatus = isUsableVesselFinderNavStatusText(rawNavStatus);
+
     const position = new VesselPosition({
       mmsi,
       imo,
       lat: hasLatLon ? dj.ship_lat : null,
       lon: hasLatLon ? dj.ship_lon : null,
-      speedKn: typeof dj.ship_sog === "number" ? dj.ship_sog : null,
-      courseDeg: typeof dj.ship_cog === "number" ? dj.ship_cog : null,
-      navStatusText: tbl["Navigation Status"] ?? "Unknown",
+      speedKn,
+      courseDeg,
+      navStatusCode: parseVesselFinderNavStatusCode(rawNavStatus),
+      navStatusText: usableNavStatus ? (rawNavStatus as string).trim() : "Unknown",
       positionTime: dj.lrpd ? dj.lrpd.trim() : null,
       source: "vesselfinder",
       latLonApproximate: hasLatLon, // toạ độ VF miễn phí bị làm tròn!

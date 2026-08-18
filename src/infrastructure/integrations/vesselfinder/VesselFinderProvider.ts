@@ -14,8 +14,11 @@
 //      Các field đó để VẮNG MẶT, không phải null cho đủ bộ.
 //    • mp2 không kèm mốc thời gian của nguồn -> `sourceReceivedAt = null`.
 //      TUYỆT ĐỐI không lấy `fetchedAt` (đồng hồ của bot) gán sang.
-//    • Trang chi tiết có `lrpd` ("0 min ago") nhưng là chuỗi TƯƠNG ĐỐI, parse ra
-//      sẽ sai -> cũng không dùng làm `sourceReceivedAt`.
+//    • Trang chi tiết CÓ `lrpd` ("5 min ago") — tuổi TƯƠNG ĐỐI. Neo vào
+//      `fetchedAt` thì nó là mốc nguồn dùng được: `observedAt = fetchedAt - age`
+//      (xem `vesselFinderPositionTime.ts`). Chỉ nhóm POSITION nhận mốc này;
+//      identity/particulars là dữ liệu tĩnh, không có tuổi -> vẫn null.
+//      Đọc không ra tuổi -> null, KHÔNG rơi về `fetchedAt`.
 //    • Voyage: mapper hiện KHÔNG bóc destination/eta, nên provider KHÔNG trả
 //      nhóm voyage — trả một khối toàn null là tự nhận có phủ sóng mà thực tế
 //      không (khớp SOURCE_CAPABILITY_MATRIX: vesselfinder.voyage = false).
@@ -40,6 +43,7 @@ import {
   toVesselPositionReport,
 } from "../../../legacy/mappers/legacyMapping";
 import { SourceMetadata, createSourceMetadata } from "../../../domain/value-objects/SourceMetadata";
+import { deriveVesselFinderObservedAt } from "./vesselFinderPositionTime";
 import { VesselIdentifier } from "../../../domain/value-objects/VesselIdentifier";
 import { VesselSource } from "../../../domain/enums/VesselSource";
 
@@ -93,7 +97,7 @@ export class VesselFinderProvider implements VesselDataProvider {
     };
 
     // Trang chi tiết có thể thiếu toạ độ -> mapping trả null -> bỏ hẳn nhóm.
-    const position = toVesselPositionReport(details.position, metadata);
+    const position = toVesselPositionReport(details.position, this.positionMetadata(details, metadata));
     if (position !== null) result.position = position;
 
     // KHÔNG có nhóm voyage: xem ghi chú đầu file.
@@ -110,7 +114,7 @@ export class VesselFinderProvider implements VesselDataProvider {
     if (legacy === null) return null;
 
     const { details, metadata } = legacy;
-    const position = toVesselPositionReport(details.position, metadata);
+    const position = toVesselPositionReport(details.position, this.positionMetadata(details, metadata));
     if (position === null) return null;
 
     return { position, identity: toVesselIdentity(details.vessel, metadata) };
@@ -152,8 +156,26 @@ export class VesselFinderProvider implements VesselDataProvider {
   }
 
   /**
-   * `sourceReceivedAt` LUÔN null cho VesselFinder: mp2 không kèm timestamp, và
-   * `lrpd` của trang chi tiết là chuỗi tương đối không đáng tin.
+   * Metadata RIÊNG của nhóm POSITION: chỉ nhóm này có tuổi nguồn (`lrpd`).
+   *
+   * Gắn mốc suy ra vào identity/particulars sẽ là bịa — lý lịch tàu không "được
+   * quan sát lúc 5 phút trước". Giữ hai metadata tách nhau cũng chính là điều
+   * kiện atomicity: mốc thời gian đi CÙNG đúng bản ghi vị trí sinh ra nó.
+   */
+  private positionMetadata(
+    details: { position: { positionTime: string | null } },
+    base: SourceMetadata
+  ): SourceMetadata {
+    return createSourceMetadata({
+      source: VesselSource.VESSELFINDER,
+      fetchedAt: base.fetchedAt,
+      sourceReceivedAt: deriveVesselFinderObservedAt(details.position.positionTime, base.fetchedAt),
+    });
+  }
+
+  /**
+   * Metadata mặc định (nhóm TĨNH): `sourceReceivedAt` null. mp2 không kèm
+   * timestamp và lý lịch tàu không mang tuổi.
    */
   private buildMetadata(fetchedAt: Date): SourceMetadata {
     return createSourceMetadata({

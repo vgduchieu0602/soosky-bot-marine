@@ -18,6 +18,13 @@ import { mmsiIdentifier } from "../../src/domain/value-objects/VesselIdentifier"
 import { VesselSource } from "../../src/domain/enums/VesselSource";
 import { VesselFinderHtmlSource } from "../../src/infrastructure/integrations/vesselfinder/VesselFinderHtmlSource";
 import { HttpClient } from "../../src/infrastructure/http/HttpClient";
+// Source-specific parsing belongs to the source's own folder. This script must
+// never carry a second, independent copy of it (PHASE-3 §6).
+import { parseVesselFinderNavStatusCode } from "../../src/infrastructure/integrations/vesselfinder/vesselFinderNavStatus";
+import { parseVesselFinderRelativeAgeMs } from "../../src/infrastructure/integrations/vesselfinder/vesselFinderPositionTime";
+// Range rules live in the domain; a proof script must not hold a second opinion
+// about what a valid speed or course is.
+import { isValidCourse, isValidSpeed } from "../../src/domain/validators/motion";
 
 type Region = "US" | "UK" | "NORWAY";
 type ProviderKey = "vesselfinder" | "shipfinder" | "shipinfo";
@@ -39,24 +46,6 @@ type MotionRow = {
   ageMinutes: number | null;
   error?: string;
   surface: string;
-};
-
-/** Explicit AIS nav-status text → code. Unknown text → null (no guessing). */
-const NAV_TEXT_TO_CODE: Record<string, number> = {
-  "under way using engine": 0,
-  "at anchor": 1,
-  "not under command": 2,
-  "restricted manoeuvrability": 3,
-  "restricted maneuverability": 3,
-  "constrained by her draught": 4,
-  "constrained by draught": 4,
-  moored: 5,
-  aground: 6,
-  "engaged in fishing": 7,
-  "under way sailing": 8,
-  "under way": 0,
-  "ais-sart": 14,
-  undefined: 15,
 };
 
 type TileSpec = { region: Region; name: string; box: BoundingBox };
@@ -107,33 +96,7 @@ function pct(n: number, d: number): number {
 
 function mapNavCode(text: string | null | undefined, code: number | null | undefined): number | null {
   if (typeof code === "number" && Number.isInteger(code) && code >= 0 && code <= 15) return code;
-  if (!text) return null;
-  const key = text.trim().toLowerCase().replace(/\s+/g, " ");
-  if (key in NAV_TEXT_TO_CODE) return NAV_TEXT_TO_CODE[key];
-  return null;
-}
-
-function isValidSpeed(v: unknown): v is number {
-  return typeof v === "number" && Number.isFinite(v) && v >= 0 && v < 100;
-}
-
-function isValidCourse(v: unknown): v is number {
-  return typeof v === "number" && Number.isFinite(v) && v >= 0 && v < 360;
-}
-
-/** Parse VF-style relative age: "0 min ago", "5 mins ago", "1 hour ago". */
-function parseRelativeAgeMs(raw: string | null | undefined): number | null {
-  if (!raw) return null;
-  const t = raw.trim().toLowerCase();
-  if (!t || t === "-" || t === "n/a") return null;
-  let m = /^(\d+)\s*m(?:in(?:ute)?s?)?\s*ago$/.exec(t);
-  if (m) return Number(m[1]) * 60_000;
-  m = /^(\d+)\s*h(?:our)?s?\s*ago$/.exec(t);
-  if (m) return Number(m[1]) * 3_600_000;
-  m = /^(\d+)\s*d(?:ay)?s?\s*ago$/.exec(t);
-  if (m) return Number(m[1]) * 86_400_000;
-  if (t === "just now" || t === "0 min ago") return 0;
-  return null;
+  return parseVesselFinderNavStatusCode(text);
 }
 
 function classifyHttp(err: unknown): string {
@@ -255,7 +218,7 @@ async function probeProvider(
       // Measure whether relative age EXISTS on the HTML surface.
       try {
         const raw = await vfHtml.getDetails(mmsi);
-        const ageMs = parseRelativeAgeMs(raw.position.positionTime);
+        const ageMs = parseVesselFinderRelativeAgeMs(raw.position.positionTime);
         if (ageMs !== null) {
           const obs = new Date(fetchedAt.getTime() - ageMs);
           base.observedAt = obs.toISOString();

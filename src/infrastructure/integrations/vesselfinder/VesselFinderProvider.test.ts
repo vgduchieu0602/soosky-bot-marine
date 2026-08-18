@@ -140,18 +140,103 @@ test("getDetails KHÔNG trả nhóm voyage — mapper hiện không bóc destina
   assert.equal(result?.voyage, undefined);
 });
 
-test("metadata: source=VESSELFINDER, fetchedAt là Date, sourceReceivedAt null", async () => {
+test("metadata: nhóm TĨNH không có mốc nguồn, nhóm POSITION thì có", async () => {
   const result = await buildProvider({}).getDetails(imoIdentifier("9074729"));
   const metadata = result?.identity?.metadata;
 
   assert.equal(metadata?.source, VesselSource.VESSELFINDER);
   assert.equal(metadata?.fetchedAt instanceof Date, true);
   assert.equal(metadata?.fetchedAt.getTime(), FETCHED_AT.getTime());
-  // "0 min ago" là chuỗi tương đối -> KHÔNG được dùng làm mốc của nguồn.
+  // Lý lịch tàu KHÔNG mang tuổi -> mốc nguồn vẫn null.
   assert.equal(metadata?.sourceReceivedAt, null);
-  // Mọi nhóm dùng chung một metadata của lần gọi đó.
-  assert.equal(result?.particulars?.metadata.source, VesselSource.VESSELFINDER);
+  assert.equal(result?.particulars?.metadata.sourceReceivedAt, null);
+
+  // POSITION mang tuổi tương đối "0 min ago" -> mốc nguồn = fetchedAt - 0.
   assert.equal(result?.position?.metadata.fetchedAt.getTime(), FETCHED_AT.getTime());
+  assert.equal(
+    result?.position?.metadata.sourceReceivedAt?.getTime(),
+    FETCHED_AT.getTime()
+  );
+});
+
+test("lrpd '5 min ago' -> observedAt = fetchedAt - 5 phút, CHỈ ở nhóm POSITION", async () => {
+  const details = legacyDetails();
+  const provider = buildProvider({
+    detailsSource: detailsSourceReturning({
+      vessel: details.vessel,
+      position: new VesselPosition({
+        mmsi: "305803000",
+        lat: 1.5,
+        lon: 103.5,
+        speedKn: 7.6,
+        courseDeg: 229.6,
+        navStatusText: "Under way using engine",
+        positionTime: "5 min ago",
+        source: "vesselfinder",
+        latLonApproximate: true,
+      }),
+    }),
+  });
+
+  const result = await provider.getDetails(mmsiIdentifier("305803000"));
+  assert.equal(
+    result?.position?.metadata.sourceReceivedAt?.toISOString(),
+    "2026-08-13T09:55:00.000Z"
+  );
+  // Nhóm tĩnh KHÔNG được mượn mốc của vị trí (atomicity).
+  assert.equal(result?.identity?.metadata.sourceReceivedAt, null);
+});
+
+test("KHÔNG có lrpd -> sourceReceivedAt null, KHÔNG rơi về fetchedAt", async () => {
+  const details = legacyDetails();
+  const provider = buildProvider({
+    detailsSource: detailsSourceReturning({
+      vessel: details.vessel,
+      position: new VesselPosition({
+        mmsi: "305803000",
+        lat: 1.5,
+        lon: 103.5,
+        speedKn: 7.6,
+        positionTime: null,
+        source: "vesselfinder",
+        latLonApproximate: true,
+      }),
+    }),
+  });
+
+  const result = await provider.getDetails(mmsiIdentifier("305803000"));
+  assert.equal(result?.position?.metadata.sourceReceivedAt, null);
+  assert.notEqual(result?.position?.metadata.sourceReceivedAt, FETCHED_AT);
+});
+
+test("giá trị 0 của tàu đứng yên đi qua provider nguyên vẹn", async () => {
+  const details = legacyDetails();
+  const provider = buildProvider({
+    detailsSource: detailsSourceReturning({
+      vessel: details.vessel,
+      position: new VesselPosition({
+        mmsi: "305803000",
+        lat: 1.5,
+        lon: 103.5,
+        speedKn: 0,
+        courseDeg: 0,
+        navStatusCode: 0,
+        navStatusText: "Under way using engine",
+        positionTime: "0 min ago",
+        source: "vesselfinder",
+        latLonApproximate: true,
+      }),
+    }),
+  });
+
+  const position = (await provider.getDetails(mmsiIdentifier("305803000")))?.position;
+  // 0 là GIÁ TRỊ. `speed || null` / `course || null` sẽ làm ba assert này đỏ.
+  assert.equal(position?.speed, 0);
+  assert.equal(position?.course, 0);
+  assert.equal(position?.navStatus?.code, 0);
+  assert.notEqual(position?.speed, null);
+  assert.notEqual(position?.course, null);
+  assert.notEqual(position?.navStatus, null);
 });
 
 test("identifier chỉ truyền phần value xuống source cũ (giữ tương thích redirect)", async () => {

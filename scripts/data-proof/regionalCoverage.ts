@@ -22,6 +22,10 @@
  *   npm run proof:regional:a          # Stage A, 30 vessels per region
  *   npm run proof:regional:b          # Stage B, 100 vessels per region (manual)
  *   ts-node scripts/data-proof/regionalCoverage.ts --discovery-only --max-subregions=2
+ *
+ * `observedAt` is NOT derived here. VesselFinder's relative age is parsed by the
+ * production provider (`vesselFinderPositionTime.ts`); this script only reports
+ * what the pipeline actually persisted.
  */
 import * as fs from "fs";
 import * as path from "path";
@@ -50,8 +54,6 @@ import { VesselSource } from "../../src/domain/enums/VesselSource";
 import { CrawlCheckpointModel } from "../../src/infrastructure/persistence/mongo/crawlCheckpointModel";
 import { CurrentVesselModel } from "../../src/infrastructure/persistence/mongo/currentVesselModel";
 import { VesselObservationModel } from "../../src/infrastructure/persistence/mongo/observationModels";
-import { HttpClient } from "../../src/infrastructure/http/HttpClient";
-import { VesselFinderHtmlSource } from "../../src/infrastructure/integrations/vesselfinder/VesselFinderHtmlSource";
 
 import { PROOF_REGIONS, PROOF_SUB_REGIONS, ProofRegion, ProofSubRegion } from "./regions";
 import {
@@ -86,6 +88,24 @@ const PROVIDER_SOURCE: Readonly<Record<ProviderKey, VesselSource>> = Object.free
   shipinfo: VesselSource.SHIPINFO,
 });
 
+/**
+ * How each source expresses its observation time (§21). This is a property of
+ * the SOURCE, not of a row: `sourceReceivedAt` is a Date by the time it reaches
+ * the observation, so the row alone can no longer say how it was obtained.
+ *
+ *   vesselfinder — page shows a relative age ("5 min ago"); the production
+ *                  provider anchors it to fetchedAt (vesselFinderPositionTime.ts)
+ *   shipinfo     — embedded JSON track points carry absolute timestamps
+ *   shipfinder   — "Last update" is absolute, but the provider suppresses the
+ *                  position group entirely unless the operator declares the
+ *                  source timezone, so in practice it yields no source time
+ */
+const SOURCE_TIME_KIND: Readonly<Record<ProviderKey, TimestampDerivation>> = Object.freeze({
+  vesselfinder: TimestampDerivation.RELATIVE_SOURCE_AGE,
+  shipfinder: TimestampDerivation.ABSOLUTE_SOURCE_TIME,
+  shipinfo: TimestampDerivation.ABSOLUTE_SOURCE_TIME,
+});
+
 const DISCOVERY_JOB = "regional-data-proof-discovery";
 const DISCOVERY_PARSER_VERSION = "regional-data-proof-vf-map-v1";
 
@@ -107,12 +127,6 @@ function flagInt(args: string[], name: string, fallback: number): number {
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) throw new Error(`Invalid --${name}=${raw}`);
   return Math.floor(n);
-}
-
-function flagBool(args: string[], name: string, fallback: boolean): boolean {
-  const raw = flag(args, name);
-  if (raw === undefined || raw === "") return fallback;
-  return raw.toLowerCase() === "true";
 }
 
 function sleep(ms: number): Promise<void> {
@@ -456,24 +470,6 @@ interface ProbeResult {
   metricsByRegionProvider: Record<string, RequestMetrics>;
   stoppedProviders: ProviderKey[];
   cooldownWaitsByProvider: Record<ProviderKey, number>;
-  /** MMSI -> relative source age, measured on the raw VesselFinder detail page. */
-  vesselFinderRelativeAge: Map<string, { observedAt: Date; ageMinutes: number }>;
-  vesselFinderProbeMetrics: RequestMetrics;
-}
-
-/** "5 min ago" / "1 hour ago" -> milliseconds. Anything unrecognised -> null. */
-function parseRelativeAgeMs(raw: string | null | undefined): number | null {
-  if (!raw) return null;
-  const text = raw.trim().toLowerCase();
-  if (text === "" || text === "-" || text === "n/a") return null;
-  if (text === "just now" || text === "0 min ago") return 0;
-  let m = /^(\d+)\s*m(?:in(?:ute)?s?)?\s*ago$/.exec(text);
-  if (m) return Number(m[1]) * 60_000;
-  m = /^(\d+)\s*h(?:our)?s?\s*ago$/.exec(text);
-  if (m) return Number(m[1]) * 3_600_000;
-  m = /^(\d+)\s*d(?:ay)?s?\s*ago$/.exec(text);
-  if (m) return Number(m[1]) * 86_400_000;
-  return null;
 }
 
 async function runProbe(
@@ -481,7 +477,6 @@ async function runProbe(
   vessels: readonly SampledVessel[],
   options: {
     providers: readonly ProviderKey[];
-    vesselFinderTimestampProbe: boolean;
     maxCooldownWaits: number;
     resources: ResourceTracker;
   }
@@ -499,8 +494,6 @@ async function runProbe(
     shipfinder: new CooldownBudget(options.maxCooldownWaits),
     shipinfo: new CooldownBudget(options.maxCooldownWaits),
   } as Record<ProviderKey, CooldownBudget>;
-  const vesselFinderRelativeAge = new Map<string, { observedAt: Date; ageMinutes: number }>();
-  const vesselFinderProbeMetrics = newRequestMetrics();
 
   const regionProviderMetrics = (region: ProofRegion, provider: ProviderKey): RequestMetrics => {
     const key = `${region}/${provider}`;
@@ -593,55 +586,7 @@ async function runProbe(
     }
   }
 
-  /**
-   * Diagnostic-only VesselFinder surface probe (§21).
-   *
-   * The production provider deliberately refuses the `lrpd` relative age as
-   * `sourceReceivedAt`, so the pipeline stores NO source time for VesselFinder.
-   * To classify the SOURCE rather than the mapping, the raw detail page is read
-   * once more — through the SAME crawl-runtime executor, so VesselFinder still
-   * sees one request at a time at the configured pace.
-   */
-  async function vesselFinderTimestampLane(): Promise<void> {
-    const executor = container.crawlRuntime.getExecutor(VesselSource.VESSELFINDER);
-    const html = new VesselFinderHtmlSource(
-      new HttpClient({ timeoutMs: container.crawlRuntime.getConfig(VesselSource.VESSELFINDER).timeoutMs })
-    );
-    for (const vessel of vessels) {
-      let attemptVessel = true;
-      while (attemptVessel) {
-        attemptVessel = false;
-        const startedAt = Date.now();
-        try {
-          const details = await executor.execute(() => html.getDetails(vessel.mmsi), {
-            operation: ProviderOperation.GET_DETAILS,
-          });
-          const latencyMs = Date.now() - startedAt;
-          recordRequest(vesselFinderProbeMetrics, "200", latencyMs);
-          const ageMs = parseRelativeAgeMs(details.position?.positionTime);
-          if (ageMs !== null) {
-            vesselFinderRelativeAge.set(vessel.mmsi, {
-              observedAt: new Date(Date.now() - ageMs),
-              ageMinutes: Math.round(ageMs / 60_000),
-            });
-          }
-        } catch (err) {
-          if (await cooldownByProvider.vesselfinder.waitFor(err, "probe/vf-timestamp")) {
-            attemptVessel = true;
-            continue;
-          }
-          recordRequest(vesselFinderProbeMetrics, outcomeOf(err), Date.now() - startedAt);
-        }
-      }
-      options.resources.sample();
-    }
-  }
-
-  const lanes = options.providers.map((provider) => lane(provider));
-  if (options.vesselFinderTimestampProbe && options.providers.includes("vesselfinder")) {
-    lanes.push(vesselFinderTimestampLane());
-  }
-  await Promise.all(lanes);
+  await Promise.all(options.providers.map((provider) => lane(provider)));
 
   return {
     rows,
@@ -653,8 +598,6 @@ async function runProbe(
       shipfinder: cooldownByProvider.shipfinder.spent,
       shipinfo: cooldownByProvider.shipinfo.spent,
     },
-    vesselFinderRelativeAge,
-    vesselFinderProbeMetrics,
   };
 }
 
@@ -731,7 +674,8 @@ function applyIdentity(sample: VesselBasicsSample, identity: VesselIdentity): vo
 function applyPosition(
   sample: VesselBasicsSample,
   position: VesselPositionReport,
-  sourceReceivedAt: Date | null | undefined
+  sourceReceivedAt: Date | null | undefined,
+  derivation: TimestampDerivation
 ): void {
   sample.lat = position.lat ?? sample.lat;
   sample.lon = position.lng ?? sample.lon;
@@ -742,14 +686,13 @@ function applyPosition(
   sample.imo = sample.imo ?? position.imo ?? null;
   if (sourceReceivedAt instanceof Date && Number.isFinite(sourceReceivedAt.getTime())) {
     sample.observedAt = sourceReceivedAt;
-    sample.timestampDerivation = TimestampDerivation.ABSOLUTE_SOURCE_TIME;
+    sample.timestampDerivation = derivation;
   }
 }
 
 async function measure(
   container: Container,
-  vessels: readonly SampledVessel[],
-  vesselFinderRelativeAge: Map<string, { observedAt: Date; ageMinutes: number }>
+  vessels: readonly SampledVessel[]
 ): Promise<MeasuredVessel[]> {
   const measured: MeasuredVessel[] = [];
 
@@ -785,19 +728,12 @@ async function measure(
     for (const observation of positionObs) {
       const provider = providerOf(observation);
       if (!provider || observation.type !== VesselObservationType.POSITION) continue;
-      applyPosition(byProvider[provider], observation.data, observation.sourceReceivedAt);
-    }
-
-    // VesselFinder only: the source exposes a RELATIVE age, which the production
-    // mapper refuses. Classify the source honestly without pretending the
-    // pipeline stored it.
-    const relative = vesselFinderRelativeAge.get(vessel.mmsi);
-    if (
-      relative &&
-      byProvider.vesselfinder.timestampDerivation === TimestampDerivation.NO_SOURCE_TIME
-    ) {
-      byProvider.vesselfinder.observedAt = relative.observedAt;
-      byProvider.vesselfinder.timestampDerivation = TimestampDerivation.RELATIVE_SOURCE_AGE;
+      applyPosition(
+        byProvider[provider],
+        observation.data,
+        observation.sourceReceivedAt,
+        SOURCE_TIME_KIND[provider]
+      );
     }
 
     const doc = (await CurrentVesselModel.findOne({ mmsi: vessel.mmsi }).lean()) as
@@ -827,8 +763,11 @@ async function measure(
       canonical.navStatusText = p.navStatus?.text ?? null;
       const observedAt = doc.position.observedAt;
       if (observedAt instanceof Date && Number.isFinite(observedAt.getTime())) {
+        const winner = PROVIDER_KEYS.find((p) => PROVIDER_SOURCE[p] === doc.position.source);
         canonical.observedAt = observedAt;
-        canonical.timestampDerivation = TimestampDerivation.ABSOLUTE_SOURCE_TIME;
+        canonical.timestampDerivation = winner
+          ? SOURCE_TIME_KIND[winner]
+          : TimestampDerivation.ABSOLUTE_SOURCE_TIME;
       }
     }
 
@@ -964,7 +903,6 @@ async function main(): Promise<void> {
   const resetCheckpoint = args.includes("--reset-checkpoint");
   const discoveryOnly = args.includes("--discovery-only");
   const resolveConcurrency = flagInt(args, "resolve-concurrency", 4);
-  const vesselFinderTimestampProbe = flagBool(args, "vf-timestamp-probe", true);
   const maxCooldownWaits = flagInt(args, "max-cooldown-waits", 2);
   const providers = (flag(args, "providers") ?? PROVIDER_KEYS.join(","))
     .split(",")
@@ -994,7 +932,7 @@ async function main(): Promise<void> {
   console.log("\n========== REGIONAL DATA PROOF 1 ==========");
   console.log(`stage=${stage} perRegion=${perRegion} providers=${providers.join(",")}`);
   console.log(`database=${dbName} ais=false paid=false myShipTrackingProvider=absent`);
-  console.log(`subRegions=${PROOF_SUB_REGIONS.length} vfTimestampProbe=${vesselFinderTimestampProbe}`);
+  console.log(`subRegions=${PROOF_SUB_REGIONS.length} maxCooldownWaits=${maxCooldownWaits}`);
   console.log("===========================================\n");
 
   const discoveryCooldown = new CooldownBudget(maxCooldownWaits);
@@ -1026,13 +964,12 @@ async function main(): Promise<void> {
 
   const probe = await runProbe(container, discovery.vessels, {
     providers,
-    vesselFinderTimestampProbe,
     maxCooldownWaits,
     resources,
   });
 
   const resolution = await resolveAll(container, discovery.vessels, resolveConcurrency);
-  const measured = await measure(container, discovery.vessels, probe.vesselFinderRelativeAge);
+  const measured = await measure(container, discovery.vessels);
   const database = await databaseProof(dbName, discovery.vessels.map((v) => v.mmsi));
   const durationMs = Date.now() - t0;
 
@@ -1103,12 +1040,6 @@ async function main(): Promise<void> {
     requestRows.push({
       scope: `ALL/${provider}`,
       summary: summarizeRequests(probe.metricsByProvider[provider]),
-    });
-  }
-  if (vesselFinderTimestampProbe) {
-    requestRows.push({
-      scope: "ALL/vesselfinder-timestamp-probe",
-      summary: summarizeRequests(probe.vesselFinderProbeMetrics),
     });
   }
 
@@ -1185,7 +1116,6 @@ async function main(): Promise<void> {
       myShipTrackingCalls: 0,
       canonicalWrittenViaResolver: true,
       providers,
-      vesselFinderTimestampProbe,
     },
     regions: PROOF_SUB_REGIONS,
     discovery: {
