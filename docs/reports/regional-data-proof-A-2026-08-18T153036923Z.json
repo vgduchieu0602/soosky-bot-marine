@@ -1,0 +1,4541 @@
+{
+  "meta": {
+    "phase": "REGIONAL-DATA-PROOF-1",
+    "stage": "A",
+    "baselineCommit": "e715ce6f06ffcb84677ffaf720e9b414096cb2ea",
+    "startedAt": "2026-08-18T15:13:55.305Z",
+    "finishedAt": "2026-08-18T15:30:36.923Z",
+    "durationMs": 1001615,
+    "database": "soosky_marine_bot_dev",
+    "aisEnabled": false,
+    "paidFallbackEnabled": false,
+    "myShipTrackingProviderRegistered": false,
+    "myShipTrackingCalls": 0,
+    "canonicalWrittenViaResolver": true,
+    "providers": [
+      "vesselfinder",
+      "shipfinder",
+      "shipinfo"
+    ]
+  },
+  "regions": [
+    {
+      "region": "US",
+      "name": "US-EAST-COAST",
+      "label": "East Coast (New York / New Jersey approaches)",
+      "box": {
+        "minLat": 40.4,
+        "minLon": -74.3,
+        "maxLat": 40.9,
+        "maxLon": -73.7
+      }
+    },
+    {
+      "region": "US",
+      "name": "US-WEST-COAST",
+      "label": "West Coast (Los Angeles / Long Beach)",
+      "box": {
+        "minLat": 33.5,
+        "minLon": -118.4,
+        "maxLat": 33.9,
+        "maxLon": -118
+      }
+    },
+    {
+      "region": "US",
+      "name": "US-GULF",
+      "label": "Gulf (Houston / Galveston ship channel)",
+      "box": {
+        "minLat": 29.2,
+        "minLon": -95.2,
+        "maxLat": 29.8,
+        "maxLon": -94.5
+      }
+    },
+    {
+      "region": "UK",
+      "name": "UK-ENGLISH-CHANNEL",
+      "label": "English Channel (Dover Strait)",
+      "box": {
+        "minLat": 50.8,
+        "minLon": 0.8,
+        "maxLat": 51.3,
+        "maxLon": 1.6
+      }
+    },
+    {
+      "region": "UK",
+      "name": "UK-THAMES",
+      "label": "Thames (estuary)",
+      "box": {
+        "minLat": 51.3,
+        "minLon": 0.4,
+        "maxLat": 51.7,
+        "maxLon": 1.2
+      }
+    },
+    {
+      "region": "UK",
+      "name": "UK-IRISH-SEA",
+      "label": "Irish Sea (Liverpool Bay)",
+      "box": {
+        "minLat": 53.2,
+        "minLon": -3.3,
+        "maxLat": 53.6,
+        "maxLon": -2.8
+      }
+    },
+    {
+      "region": "NORWAY",
+      "name": "NO-OSLOFJORD",
+      "label": "Oslofjord",
+      "box": {
+        "minLat": 59.6,
+        "minLon": 10.3,
+        "maxLat": 59.95,
+        "maxLon": 10.9
+      }
+    },
+    {
+      "region": "NORWAY",
+      "name": "NO-BERGEN-COAST",
+      "label": "Bergen / coastal",
+      "box": {
+        "minLat": 60.2,
+        "minLon": 4.9,
+        "maxLat": 60.5,
+        "maxLon": 5.5
+      }
+    },
+    {
+      "region": "NORWAY",
+      "name": "NO-NORTHERN-COAST",
+      "label": "Northern / coastal waters (Tromsø)",
+      "box": {
+        "minLat": 69.5,
+        "minLon": 18.7,
+        "maxLat": 69.8,
+        "maxLon": 19.3
+      }
+    }
+  ],
+  "discovery": {
+    "subRegions": [
+      {
+        "region": "US",
+        "subRegion": "US-EAST-COAST",
+        "label": "East Coast (New York / New Jersey approaches)",
+        "box": {
+          "minLat": 40.4,
+          "minLon": -74.3,
+          "maxLat": 40.9,
+          "maxLon": -73.7
+        },
+        "shipsReturned": 149,
+        "uniqueAdded": 149,
+        "outcome": "200",
+        "latencyMs": 601,
+        "observationsSaved": 298
+      },
+      {
+        "region": "US",
+        "subRegion": "US-WEST-COAST",
+        "label": "West Coast (Los Angeles / Long Beach)",
+        "box": {
+          "minLat": 33.5,
+          "minLon": -118.4,
+          "maxLat": 33.9,
+          "maxLon": -118
+        },
+        "shipsReturned": 68,
+        "uniqueAdded": 68,
+        "outcome": "200",
+        "latencyMs": 1876,
+        "observationsSaved": 136
+      },
+      {
+        "region": "US",
+        "subRegion": "US-GULF",
+        "label": "Gulf (Houston / Galveston ship channel)",
+        "box": {
+          "minLat": 29.2,
+          "minLon": -95.2,
+          "maxLat": 29.8,
+          "maxLon": -94.5
+        },
+        "shipsReturned": 186,
+        "uniqueAdded": 186,
+        "outcome": "200",
+        "latencyMs": 3022,
+        "observationsSaved": 372
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-ENGLISH-CHANNEL",
+        "label": "English Channel (Dover Strait)",
+        "box": {
+          "minLat": 50.8,
+          "minLon": 0.8,
+          "maxLat": 51.3,
+          "maxLon": 1.6
+        },
+        "shipsReturned": 27,
+        "uniqueAdded": 27,
+        "outcome": "200",
+        "latencyMs": 4795,
+        "observationsSaved": 54
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-THAMES",
+        "label": "Thames (estuary)",
+        "box": {
+          "minLat": 51.3,
+          "minLon": 0.4,
+          "maxLat": 51.7,
+          "maxLon": 1.2
+        },
+        "shipsReturned": 62,
+        "uniqueAdded": 62,
+        "outcome": "200",
+        "latencyMs": 1845,
+        "observationsSaved": 124
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-IRISH-SEA",
+        "label": "Irish Sea (Liverpool Bay)",
+        "box": {
+          "minLat": 53.2,
+          "minLon": -3.3,
+          "maxLat": 53.6,
+          "maxLon": -2.8
+        },
+        "shipsReturned": 31,
+        "uniqueAdded": 31,
+        "outcome": "200",
+        "latencyMs": 2322,
+        "observationsSaved": 62
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-OSLOFJORD",
+        "label": "Oslofjord",
+        "box": {
+          "minLat": 59.6,
+          "minLon": 10.3,
+          "maxLat": 59.95,
+          "maxLon": 10.9
+        },
+        "shipsReturned": 85,
+        "uniqueAdded": 85,
+        "outcome": "200",
+        "latencyMs": 2251,
+        "observationsSaved": 170
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-BERGEN-COAST",
+        "label": "Bergen / coastal",
+        "box": {
+          "minLat": 60.2,
+          "minLon": 4.9,
+          "maxLat": 60.5,
+          "maxLon": 5.5
+        },
+        "shipsReturned": 105,
+        "uniqueAdded": 105,
+        "outcome": "200",
+        "latencyMs": 4766,
+        "observationsSaved": 210
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-NORTHERN-COAST",
+        "label": "Northern / coastal waters (Tromsø)",
+        "box": {
+          "minLat": 69.5,
+          "minLon": 18.7,
+          "maxLat": 69.8,
+          "maxLon": 19.3
+        },
+        "shipsReturned": 24,
+        "uniqueAdded": 24,
+        "outcome": "200",
+        "latencyMs": 2380,
+        "observationsSaved": 48
+      }
+    ],
+    "resumedFromIndex": 0,
+    "completedIndex": 9,
+    "sampleSize": {
+      "US": 30,
+      "UK": 30,
+      "NORWAY": 30,
+      "total": 90,
+      "uniqueMmsi": 90
+    }
+  },
+  "requestMetrics": {
+    "discovery/US": {
+      "requests": 3,
+      "outcomes": {
+        "200": 3,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 1833,
+      "p95LatencyMs": 3022
+    },
+    "discovery/UK": {
+      "requests": 3,
+      "outcomes": {
+        "200": 3,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 2987,
+      "p95LatencyMs": 4795
+    },
+    "discovery/NORWAY": {
+      "requests": 3,
+      "outcomes": {
+        "200": 3,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 3132,
+      "p95LatencyMs": 4766
+    },
+    "US/vesselfinder": {
+      "requests": 30,
+      "outcomes": {
+        "200": 30,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 3556,
+      "p95LatencyMs": 5129
+    },
+    "UK/vesselfinder": {
+      "requests": 30,
+      "outcomes": {
+        "200": 30,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 3473,
+      "p95LatencyMs": 5498
+    },
+    "NORWAY/vesselfinder": {
+      "requests": 30,
+      "outcomes": {
+        "200": 30,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 3632,
+      "p95LatencyMs": 5612
+    },
+    "ALL/vesselfinder": {
+      "requests": 90,
+      "outcomes": {
+        "200": 90,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 3554,
+      "p95LatencyMs": 5405
+    },
+    "US/shipfinder": {
+      "requests": 30,
+      "outcomes": {
+        "200": 30,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 5649,
+      "p95LatencyMs": 7914
+    },
+    "UK/shipfinder": {
+      "requests": 30,
+      "outcomes": {
+        "200": 29,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 1,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 5339,
+      "p95LatencyMs": 7882
+    },
+    "NORWAY/shipfinder": {
+      "requests": 30,
+      "outcomes": {
+        "200": 30,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 5510,
+      "p95LatencyMs": 7484
+    },
+    "ALL/shipfinder": {
+      "requests": 90,
+      "outcomes": {
+        "200": 89,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 1,
+        "unknown": 0,
+        "skipped": 0
+      },
+      "avgLatencyMs": 5499,
+      "p95LatencyMs": 7882
+    },
+    "US/shipinfo": {
+      "requests": 15,
+      "outcomes": {
+        "200": 10,
+        "403": 5,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 15
+      },
+      "avgLatencyMs": 5008,
+      "p95LatencyMs": 7769
+    },
+    "UK/shipinfo": {
+      "requests": 0,
+      "outcomes": {
+        "200": 0,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 30
+      },
+      "avgLatencyMs": null,
+      "p95LatencyMs": null
+    },
+    "NORWAY/shipinfo": {
+      "requests": 0,
+      "outcomes": {
+        "200": 0,
+        "403": 0,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 30
+      },
+      "avgLatencyMs": null,
+      "p95LatencyMs": null
+    },
+    "ALL/shipinfo": {
+      "requests": 15,
+      "outcomes": {
+        "200": 10,
+        "403": 5,
+        "404": 0,
+        "429": 0,
+        "3xx": 0,
+        "5xx": 0,
+        "timeout": 0,
+        "networkError": 0,
+        "parseError": 0,
+        "notFound": 0,
+        "unknown": 0,
+        "skipped": 75
+      },
+      "avgLatencyMs": 5008,
+      "p95LatencyMs": 7769
+    }
+  },
+  "vesselBasicsRegionalMatrix": {
+    "US": {
+      "vesselName": {
+        "available": 19,
+        "sample": 30,
+        "pct": 63.3,
+        "classification": "WEAK"
+      },
+      "mmsi": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 2,
+        "sample": 30,
+        "pct": 6.7,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 6,
+        "sample": 30,
+        "pct": 20,
+        "classification": "VERY_WEAK"
+      },
+      "lat": {
+        "available": 19,
+        "sample": 30,
+        "pct": 63.3,
+        "classification": "WEAK"
+      },
+      "lon": {
+        "available": 19,
+        "sample": 30,
+        "pct": 63.3,
+        "classification": "WEAK"
+      },
+      "latLon": {
+        "available": 19,
+        "sample": 30,
+        "pct": 63.3,
+        "classification": "WEAK"
+      },
+      "course": {
+        "available": 0,
+        "sample": 30,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "speed": {
+        "available": 3,
+        "sample": 30,
+        "pct": 10,
+        "classification": "VERY_WEAK"
+      },
+      "navStatus": {
+        "available": 0,
+        "sample": 30,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "received": {
+        "available": 3,
+        "sample": 30,
+        "pct": 10,
+        "classification": "VERY_WEAK"
+      }
+    },
+    "UK": {
+      "vesselName": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "mmsi": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 11,
+        "sample": 30,
+        "pct": 36.7,
+        "classification": "WEAK"
+      },
+      "vType": {
+        "available": 28,
+        "sample": 30,
+        "pct": 93.3,
+        "classification": "GOOD"
+      },
+      "lat": {
+        "available": 28,
+        "sample": 30,
+        "pct": 93.3,
+        "classification": "GOOD"
+      },
+      "lon": {
+        "available": 28,
+        "sample": 30,
+        "pct": 93.3,
+        "classification": "GOOD"
+      },
+      "latLon": {
+        "available": 28,
+        "sample": 30,
+        "pct": 93.3,
+        "classification": "GOOD"
+      },
+      "course": {
+        "available": 8,
+        "sample": 30,
+        "pct": 26.7,
+        "classification": "VERY_WEAK"
+      },
+      "speed": {
+        "available": 9,
+        "sample": 30,
+        "pct": 30,
+        "classification": "WEAK"
+      },
+      "navStatus": {
+        "available": 8,
+        "sample": 30,
+        "pct": 26.7,
+        "classification": "VERY_WEAK"
+      },
+      "received": {
+        "available": 9,
+        "sample": 30,
+        "pct": 30,
+        "classification": "WEAK"
+      }
+    },
+    "NORWAY": {
+      "vesselName": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "mmsi": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 5,
+        "sample": 30,
+        "pct": 16.7,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "lat": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "lon": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "latLon": {
+        "available": 30,
+        "sample": 30,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "course": {
+        "available": 11,
+        "sample": 30,
+        "pct": 36.7,
+        "classification": "WEAK"
+      },
+      "speed": {
+        "available": 11,
+        "sample": 30,
+        "pct": 36.7,
+        "classification": "WEAK"
+      },
+      "navStatus": {
+        "available": 5,
+        "sample": 30,
+        "pct": 16.7,
+        "classification": "VERY_WEAK"
+      },
+      "received": {
+        "available": 11,
+        "sample": 30,
+        "pct": 36.7,
+        "classification": "WEAK"
+      }
+    },
+    "ALL": {
+      "vesselName": {
+        "available": 79,
+        "sample": 90,
+        "pct": 87.8,
+        "classification": "USABLE"
+      },
+      "mmsi": {
+        "available": 90,
+        "sample": 90,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 18,
+        "sample": 90,
+        "pct": 20,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 64,
+        "sample": 90,
+        "pct": 71.1,
+        "classification": "USABLE"
+      },
+      "lat": {
+        "available": 77,
+        "sample": 90,
+        "pct": 85.6,
+        "classification": "USABLE"
+      },
+      "lon": {
+        "available": 77,
+        "sample": 90,
+        "pct": 85.6,
+        "classification": "USABLE"
+      },
+      "latLon": {
+        "available": 77,
+        "sample": 90,
+        "pct": 85.6,
+        "classification": "USABLE"
+      },
+      "course": {
+        "available": 19,
+        "sample": 90,
+        "pct": 21.1,
+        "classification": "VERY_WEAK"
+      },
+      "speed": {
+        "available": 23,
+        "sample": 90,
+        "pct": 25.6,
+        "classification": "VERY_WEAK"
+      },
+      "navStatus": {
+        "available": 13,
+        "sample": 90,
+        "pct": 14.4,
+        "classification": "VERY_WEAK"
+      },
+      "received": {
+        "available": 23,
+        "sample": 90,
+        "pct": 25.6,
+        "classification": "VERY_WEAK"
+      }
+    }
+  },
+  "providerMatrix": {
+    "vesselfinder": {
+      "vesselName": {
+        "available": 78,
+        "sample": 90,
+        "pct": 86.7,
+        "classification": "USABLE"
+      },
+      "mmsi": {
+        "available": 90,
+        "sample": 90,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 13,
+        "sample": 90,
+        "pct": 14.4,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 49,
+        "sample": 90,
+        "pct": 54.4,
+        "classification": "WEAK"
+      },
+      "lat": {
+        "available": 78,
+        "sample": 90,
+        "pct": 86.7,
+        "classification": "USABLE"
+      },
+      "lon": {
+        "available": 78,
+        "sample": 90,
+        "pct": 86.7,
+        "classification": "USABLE"
+      },
+      "latLon": {
+        "available": 78,
+        "sample": 90,
+        "pct": 86.7,
+        "classification": "USABLE"
+      },
+      "course": {
+        "available": 32,
+        "sample": 90,
+        "pct": 35.6,
+        "classification": "WEAK"
+      },
+      "speed": {
+        "available": 40,
+        "sample": 90,
+        "pct": 44.4,
+        "classification": "WEAK"
+      },
+      "navStatus": {
+        "available": 18,
+        "sample": 90,
+        "pct": 20,
+        "classification": "VERY_WEAK"
+      },
+      "received": {
+        "available": 40,
+        "sample": 90,
+        "pct": 44.4,
+        "classification": "WEAK"
+      }
+    },
+    "shipfinder": {
+      "vesselName": {
+        "available": 58,
+        "sample": 90,
+        "pct": 64.4,
+        "classification": "WEAK"
+      },
+      "mmsi": {
+        "available": 90,
+        "sample": 90,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 16,
+        "sample": 90,
+        "pct": 17.8,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 58,
+        "sample": 90,
+        "pct": 64.4,
+        "classification": "WEAK"
+      },
+      "lat": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "lon": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "latLon": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "course": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "speed": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "navStatus": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "received": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      }
+    },
+    "shipinfo": {
+      "vesselName": {
+        "available": 4,
+        "sample": 90,
+        "pct": 4.4,
+        "classification": "VERY_WEAK"
+      },
+      "mmsi": {
+        "available": 90,
+        "sample": 90,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 2,
+        "sample": 90,
+        "pct": 2.2,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 2,
+        "sample": 90,
+        "pct": 2.2,
+        "classification": "VERY_WEAK"
+      },
+      "lat": {
+        "available": 4,
+        "sample": 90,
+        "pct": 4.4,
+        "classification": "VERY_WEAK"
+      },
+      "lon": {
+        "available": 4,
+        "sample": 90,
+        "pct": 4.4,
+        "classification": "VERY_WEAK"
+      },
+      "latLon": {
+        "available": 4,
+        "sample": 90,
+        "pct": 4.4,
+        "classification": "VERY_WEAK"
+      },
+      "course": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "speed": {
+        "available": 4,
+        "sample": 90,
+        "pct": 4.4,
+        "classification": "VERY_WEAK"
+      },
+      "navStatus": {
+        "available": 0,
+        "sample": 90,
+        "pct": 0,
+        "classification": "NOT_AVAILABLE"
+      },
+      "received": {
+        "available": 4,
+        "sample": 90,
+        "pct": 4.4,
+        "classification": "VERY_WEAK"
+      }
+    },
+    "combined": {
+      "vesselName": {
+        "available": 79,
+        "sample": 90,
+        "pct": 87.8,
+        "classification": "USABLE"
+      },
+      "mmsi": {
+        "available": 90,
+        "sample": 90,
+        "pct": 100,
+        "classification": "GOOD"
+      },
+      "imo": {
+        "available": 18,
+        "sample": 90,
+        "pct": 20,
+        "classification": "VERY_WEAK"
+      },
+      "vType": {
+        "available": 64,
+        "sample": 90,
+        "pct": 71.1,
+        "classification": "USABLE"
+      },
+      "lat": {
+        "available": 77,
+        "sample": 90,
+        "pct": 85.6,
+        "classification": "USABLE"
+      },
+      "lon": {
+        "available": 77,
+        "sample": 90,
+        "pct": 85.6,
+        "classification": "USABLE"
+      },
+      "latLon": {
+        "available": 77,
+        "sample": 90,
+        "pct": 85.6,
+        "classification": "USABLE"
+      },
+      "course": {
+        "available": 19,
+        "sample": 90,
+        "pct": 21.1,
+        "classification": "VERY_WEAK"
+      },
+      "speed": {
+        "available": 23,
+        "sample": 90,
+        "pct": 25.6,
+        "classification": "VERY_WEAK"
+      },
+      "navStatus": {
+        "available": 13,
+        "sample": 90,
+        "pct": 14.4,
+        "classification": "VERY_WEAK"
+      },
+      "received": {
+        "available": 23,
+        "sample": 90,
+        "pct": 25.6,
+        "classification": "VERY_WEAK"
+      }
+    }
+  },
+  "providerMatrixByRegion": {
+    "US": {
+      "vesselfinder": {
+        "vesselName": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7,
+          "classification": "WEAK"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "vType": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7,
+          "classification": "VERY_WEAK"
+        },
+        "lat": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7,
+          "classification": "WEAK"
+        },
+        "lon": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7,
+          "classification": "WEAK"
+        },
+        "latLon": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7,
+          "classification": "WEAK"
+        },
+        "course": {
+          "available": 1,
+          "sample": 30,
+          "pct": 3.3,
+          "classification": "VERY_WEAK"
+        },
+        "speed": {
+          "available": 2,
+          "sample": 30,
+          "pct": 6.7,
+          "classification": "VERY_WEAK"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 2,
+          "sample": 30,
+          "pct": 6.7,
+          "classification": "VERY_WEAK"
+        }
+      },
+      "shipfinder": {
+        "vesselName": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "vType": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lat": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "latLon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        }
+      },
+      "shipinfo": {
+        "vesselName": {
+          "available": 4,
+          "sample": 30,
+          "pct": 13.3,
+          "classification": "VERY_WEAK"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 2,
+          "sample": 30,
+          "pct": 6.7,
+          "classification": "VERY_WEAK"
+        },
+        "vType": {
+          "available": 2,
+          "sample": 30,
+          "pct": 6.7,
+          "classification": "VERY_WEAK"
+        },
+        "lat": {
+          "available": 4,
+          "sample": 30,
+          "pct": 13.3,
+          "classification": "VERY_WEAK"
+        },
+        "lon": {
+          "available": 4,
+          "sample": 30,
+          "pct": 13.3,
+          "classification": "VERY_WEAK"
+        },
+        "latLon": {
+          "available": 4,
+          "sample": 30,
+          "pct": 13.3,
+          "classification": "VERY_WEAK"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 4,
+          "sample": 30,
+          "pct": 13.3,
+          "classification": "VERY_WEAK"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 4,
+          "sample": 30,
+          "pct": 13.3,
+          "classification": "VERY_WEAK"
+        }
+      },
+      "combined": {
+        "vesselName": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3,
+          "classification": "WEAK"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 2,
+          "sample": 30,
+          "pct": 6.7,
+          "classification": "VERY_WEAK"
+        },
+        "vType": {
+          "available": 6,
+          "sample": 30,
+          "pct": 20,
+          "classification": "VERY_WEAK"
+        },
+        "lat": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3,
+          "classification": "WEAK"
+        },
+        "lon": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3,
+          "classification": "WEAK"
+        },
+        "latLon": {
+          "available": 19,
+          "sample": 30,
+          "pct": 63.3,
+          "classification": "WEAK"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 3,
+          "sample": 30,
+          "pct": 10,
+          "classification": "VERY_WEAK"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 3,
+          "sample": 30,
+          "pct": 10,
+          "classification": "VERY_WEAK"
+        }
+      }
+    },
+    "UK": {
+      "vesselfinder": {
+        "vesselName": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 8,
+          "sample": 30,
+          "pct": 26.7,
+          "classification": "VERY_WEAK"
+        },
+        "vType": {
+          "available": 14,
+          "sample": 30,
+          "pct": 46.7,
+          "classification": "WEAK"
+        },
+        "lat": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "lon": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "latLon": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "course": {
+          "available": 11,
+          "sample": 30,
+          "pct": 36.7,
+          "classification": "WEAK"
+        },
+        "speed": {
+          "available": 13,
+          "sample": 30,
+          "pct": 43.3,
+          "classification": "WEAK"
+        },
+        "navStatus": {
+          "available": 10,
+          "sample": 30,
+          "pct": 33.3,
+          "classification": "WEAK"
+        },
+        "received": {
+          "available": 13,
+          "sample": 30,
+          "pct": 43.3,
+          "classification": "WEAK"
+        }
+      },
+      "shipfinder": {
+        "vesselName": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 11,
+          "sample": 30,
+          "pct": 36.7,
+          "classification": "WEAK"
+        },
+        "vType": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "lat": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "latLon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        }
+      },
+      "shipinfo": {
+        "vesselName": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "vType": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lat": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "latLon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        }
+      },
+      "combined": {
+        "vesselName": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 11,
+          "sample": 30,
+          "pct": 36.7,
+          "classification": "WEAK"
+        },
+        "vType": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "lat": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "lon": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "latLon": {
+          "available": 28,
+          "sample": 30,
+          "pct": 93.3,
+          "classification": "GOOD"
+        },
+        "course": {
+          "available": 8,
+          "sample": 30,
+          "pct": 26.7,
+          "classification": "VERY_WEAK"
+        },
+        "speed": {
+          "available": 9,
+          "sample": 30,
+          "pct": 30,
+          "classification": "WEAK"
+        },
+        "navStatus": {
+          "available": 8,
+          "sample": 30,
+          "pct": 26.7,
+          "classification": "VERY_WEAK"
+        },
+        "received": {
+          "available": 9,
+          "sample": 30,
+          "pct": 30,
+          "classification": "WEAK"
+        }
+      }
+    },
+    "NORWAY": {
+      "vesselfinder": {
+        "vesselName": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7,
+          "classification": "VERY_WEAK"
+        },
+        "vType": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "lat": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "lon": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "latLon": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "course": {
+          "available": 20,
+          "sample": 30,
+          "pct": 66.7,
+          "classification": "WEAK"
+        },
+        "speed": {
+          "available": 25,
+          "sample": 30,
+          "pct": 83.3,
+          "classification": "USABLE"
+        },
+        "navStatus": {
+          "available": 8,
+          "sample": 30,
+          "pct": 26.7,
+          "classification": "VERY_WEAK"
+        },
+        "received": {
+          "available": 25,
+          "sample": 30,
+          "pct": 83.3,
+          "classification": "USABLE"
+        }
+      },
+      "shipfinder": {
+        "vesselName": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7,
+          "classification": "VERY_WEAK"
+        },
+        "vType": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "lat": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "latLon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        }
+      },
+      "shipinfo": {
+        "vesselName": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "vType": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lat": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "lon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "latLon": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "course": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "speed": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "navStatus": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        },
+        "received": {
+          "available": 0,
+          "sample": 30,
+          "pct": 0,
+          "classification": "NOT_AVAILABLE"
+        }
+      },
+      "combined": {
+        "vesselName": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "mmsi": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "imo": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7,
+          "classification": "VERY_WEAK"
+        },
+        "vType": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "lat": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "lon": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "latLon": {
+          "available": 30,
+          "sample": 30,
+          "pct": 100,
+          "classification": "GOOD"
+        },
+        "course": {
+          "available": 11,
+          "sample": 30,
+          "pct": 36.7,
+          "classification": "WEAK"
+        },
+        "speed": {
+          "available": 11,
+          "sample": 30,
+          "pct": 36.7,
+          "classification": "WEAK"
+        },
+        "navStatus": {
+          "available": 5,
+          "sample": 30,
+          "pct": 16.7,
+          "classification": "VERY_WEAK"
+        },
+        "received": {
+          "available": 11,
+          "sample": 30,
+          "pct": 36.7,
+          "classification": "WEAK"
+        }
+      }
+    }
+  },
+  "timestampDerivation": {
+    "vesselfinder": {
+      "ABSOLUTE_SOURCE_TIME": 0,
+      "RELATIVE_SOURCE_AGE": 40,
+      "NO_SOURCE_TIME": 50
+    },
+    "shipfinder": {
+      "ABSOLUTE_SOURCE_TIME": 0,
+      "RELATIVE_SOURCE_AGE": 0,
+      "NO_SOURCE_TIME": 90
+    },
+    "shipinfo": {
+      "ABSOLUTE_SOURCE_TIME": 4,
+      "RELATIVE_SOURCE_AGE": 0,
+      "NO_SOURCE_TIME": 86
+    },
+    "canonical": {
+      "ABSOLUTE_SOURCE_TIME": 3,
+      "RELATIVE_SOURCE_AGE": 20,
+      "NO_SOURCE_TIME": 67
+    }
+  },
+  "resolution": {
+    "resolved": 90,
+    "failed": 0,
+    "errors": []
+  },
+  "database": {
+    "database": "soosky_marine_bot_dev",
+    "vessel_observations": 1590,
+    "canonical_current_vessels": 80,
+    "canonicalWithPosition": 78,
+    "canonicalWithIdentity": 80,
+    "canonicalWithParticulars": 65,
+    "canonicalWithVoyage": 21,
+    "sampledVessels": {
+      "mmsiCount": 90,
+      "vessel_observations": 438,
+      "canonical_current_vessels": 79,
+      "canonicalWithPosition": 77,
+      "canonicalWithIdentity": 79,
+      "canonicalWithParticulars": 64,
+      "canonicalWithVoyage": 21
+    },
+    "observationsBySourceAndType": [
+      {
+        "source": "vesselfinder",
+        "type": "POSITION",
+        "count": 825
+      },
+      {
+        "source": "vesselfinder",
+        "type": "IDENTITY",
+        "count": 568
+      },
+      {
+        "source": "shipfinder",
+        "type": "PARTICULARS",
+        "count": 58
+      },
+      {
+        "source": "shipfinder",
+        "type": "IDENTITY",
+        "count": 58
+      },
+      {
+        "source": "vesselfinder",
+        "type": "PARTICULARS",
+        "count": 51
+      },
+      {
+        "source": "shipfinder",
+        "type": "VOYAGE",
+        "count": 21
+      },
+      {
+        "source": "shipinfo",
+        "type": "POSITION",
+        "count": 4
+      },
+      {
+        "source": "shipinfo",
+        "type": "IDENTITY",
+        "count": 4
+      },
+      {
+        "source": "shipinfo",
+        "type": "PARTICULARS",
+        "count": 1
+      }
+    ]
+  },
+  "canonicalSamples": {
+    "US": [
+      {
+        "region": "US",
+        "subRegion": "US-EAST-COAST",
+        "mmsi": "367022790",
+        "imo": null,
+        "vesselName": "QUENAMES",
+        "vesselType": "Tug",
+        "lat": 40.531075,
+        "lon": -74.25169166666667,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:19:47.372Z"
+      },
+      {
+        "region": "US",
+        "subRegion": "US-EAST-COAST",
+        "mmsi": "338417325",
+        "imo": null,
+        "vesselName": "PROKAT28",
+        "vesselType": "Pleasure craft",
+        "lat": 40.55417166666667,
+        "lon": -74.25603833333334,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:19:47.395Z"
+      },
+      {
+        "region": "US",
+        "subRegion": "US-EAST-COAST",
+        "mmsi": "368119660",
+        "imo": null,
+        "vesselName": "CHARLESTON",
+        "vesselType": "Local type",
+        "lat": 40.49666,
+        "lon": -74.25842166666666,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:19:47.404Z"
+      },
+      {
+        "region": "US",
+        "subRegion": "US-EAST-COAST",
+        "mmsi": "369230000",
+        "imo": null,
+        "vesselName": "PHILADELPHIA",
+        "vesselType": null,
+        "lat": 40.49171333333334,
+        "lon": -74.25492666666666,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:30:36.051Z"
+      },
+      {
+        "region": "US",
+        "subRegion": "US-EAST-COAST",
+        "mmsi": "368327980",
+        "imo": null,
+        "vesselName": "HENRY GIRLS",
+        "vesselType": null,
+        "lat": 40.539051666666666,
+        "lon": -74.25416833333334,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:30:36.068Z"
+      }
+    ],
+    "UK": [
+      {
+        "region": "UK",
+        "subRegion": "UK-ENGLISH-CHANNEL",
+        "mmsi": "244181179",
+        "imo": null,
+        "vesselName": "LAAXUM",
+        "vesselType": "Pleasure craft",
+        "lat": 50.80009833333333,
+        "lon": 0.9599683333333333,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:19:47.432Z"
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-ENGLISH-CHANNEL",
+        "mmsi": "235101095",
+        "imo": null,
+        "vesselName": "RNLI LIFEBOAT 13-02",
+        "vesselType": "SAR",
+        "lat": 50.92648833333333,
+        "lon": 0.9764983333333334,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:18:46.746Z"
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-ENGLISH-CHANNEL",
+        "mmsi": "232215000",
+        "imo": "9151553",
+        "vesselName": "SAND FALCON",
+        "vesselType": "Dredging or UW ops",
+        "lat": 50.898316666666666,
+        "lon": 1.008115,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:19:47.447Z"
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-ENGLISH-CHANNEL",
+        "mmsi": "235052005",
+        "imo": null,
+        "vesselName": "JOSEPHINE",
+        "vesselType": "Sailing",
+        "lat": 50.986705,
+        "lon": 1.0261333333333333,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:30:36.215Z"
+      },
+      {
+        "region": "UK",
+        "subRegion": "UK-ENGLISH-CHANNEL",
+        "mmsi": "244900007",
+        "imo": null,
+        "vesselName": "ALCESTE",
+        "vesselType": "Pleasure craft",
+        "lat": 50.91515833333333,
+        "lon": 1.0750333333333333,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:30:36.216Z"
+      }
+    ],
+    "NORWAY": [
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-OSLOFJORD",
+        "mmsi": "258083180",
+        "imo": null,
+        "vesselName": "DELIGHT",
+        "vesselType": "Pleasure craft",
+        "lat": 59.73097833333333,
+        "lon": 10.300258333333334,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:21:22.316Z"
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-OSLOFJORD",
+        "mmsi": "257777000",
+        "imo": null,
+        "vesselName": "NIRO",
+        "vesselType": "Pleasure craft",
+        "lat": 59.61985,
+        "lon": 10.410396666666667,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:21:22.340Z"
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-OSLOFJORD",
+        "mmsi": "258220920",
+        "imo": null,
+        "vesselName": "BORGEZIN",
+        "vesselType": "Sailing vessel",
+        "lat": 59.606335,
+        "lon": 10.411201666666667,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:21:22.350Z"
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-OSLOFJORD",
+        "mmsi": "259023490",
+        "imo": null,
+        "vesselName": "MORMORA",
+        "vesselType": "Pleasure craft",
+        "lat": 59.62352666666666,
+        "lon": 10.439618333333334,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:30:36.407Z"
+      },
+      {
+        "region": "NORWAY",
+        "subRegion": "NO-OSLOFJORD",
+        "mmsi": "257168500",
+        "imo": null,
+        "vesselName": "ARMANKA II",
+        "vesselType": "Pleasure craft",
+        "lat": 59.835766666666665,
+        "lon": 10.479406666666666,
+        "course": null,
+        "speed": null,
+        "navStatus": null,
+        "observedAt": null,
+        "positionSource": "vesselfinder",
+        "positionFreshness": "NO_SOURCE_TIME",
+        "resolvedAt": "2026-08-18T15:30:36.408Z"
+      }
+    ]
+  },
+  "operational": {
+    "durationMs": 1001615,
+    "totalRequests": 399,
+    "vessels": 90,
+    "requestsPerVessel": 4.43,
+    "vesselsPerMinute": 5.4,
+    "peakRssMb": 510,
+    "peakHeapUsedMb": 418,
+    "cpuUserMs": 6141,
+    "cpuSystemMs": 1797
+  },
+  "sourceHealth": {
+    "vesselfinder": {
+      "source": "vesselfinder",
+      "state": "HEALTHY",
+      "totalRequests": 99,
+      "successCount": 99,
+      "failureCount": 0,
+      "consecutiveFailures": 0,
+      "notFoundCount": 0,
+      "timeoutCount": 0,
+      "blockedCount": 0,
+      "rateLimitedCount": 0,
+      "serverErrorCount": 0,
+      "networkErrorCount": 0,
+      "parseErrorCount": 0,
+      "unknownErrorCount": 0,
+      "lastSuccessAt": "2026-08-18T15:19:39.716Z",
+      "averageLatencyMs": 3466.050505050505
+    },
+    "shipfinder": {
+      "source": "shipfinder",
+      "state": "HEALTHY",
+      "totalRequests": 90,
+      "successCount": 89,
+      "failureCount": 0,
+      "consecutiveFailures": 0,
+      "notFoundCount": 1,
+      "timeoutCount": 0,
+      "blockedCount": 0,
+      "rateLimitedCount": 0,
+      "serverErrorCount": 0,
+      "networkErrorCount": 0,
+      "parseErrorCount": 0,
+      "unknownErrorCount": 0,
+      "lastSuccessAt": "2026-08-18T15:22:34.782Z",
+      "averageLatencyMs": 5504.595505617977
+    },
+    "shipinfo": {
+      "source": "shipinfo",
+      "state": "DEGRADED",
+      "totalRequests": 15,
+      "successCount": 10,
+      "failureCount": 5,
+      "consecutiveFailures": 2,
+      "notFoundCount": 0,
+      "timeoutCount": 0,
+      "blockedCount": 5,
+      "rateLimitedCount": 0,
+      "serverErrorCount": 0,
+      "networkErrorCount": 0,
+      "parseErrorCount": 0,
+      "unknownErrorCount": 0,
+      "lastSuccessAt": "2026-08-18T15:30:25.708Z",
+      "lastFailureAt": "2026-08-18T15:30:36.013Z",
+      "averageLatencyMs": 5012.6
+    }
+  },
+  "stageBGate": {
+    "eligible": false,
+    "severeByProvider": {
+      "vesselfinder": 0,
+      "shipfinder": 0,
+      "shipinfo": 5
+    },
+    "stopped": [
+      "shipinfo"
+    ],
+    "cooldownWaitsByProvider": {
+      "vesselfinder": 0,
+      "shipfinder": 0,
+      "shipinfo": 1
+    },
+    "cooldownWaitsDiscovery": 0
+  },
+  "probeRows": [
+    {
+      "mmsi": "367022790",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 188,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367022790",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 2238,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367022790",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4372,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338417325",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 3807,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338417325",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1693,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338417325",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6408,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368119660",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3224,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368119660",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5405,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368119660",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 7769,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "369230000",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4021,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "369230000",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4200,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368327980",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3640,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368327980",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2209,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "369230000",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 7528,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368246350",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4601,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368246350",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7681,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338024391",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4793,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368327980",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 6899,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338024391",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4809,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368246350",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "403",
+      "latencyMs": 3062,
+      "error": "[BLOCKED] shipinfo.GET_DETAILS: Bị VesselFinder chặn (HTTP 403)"
+    },
+    {
+      "mmsi": "366516370",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5129,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367309390",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4825,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "366516370",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7644,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338024391",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "403",
+      "latencyMs": 6635,
+      "error": "[BLOCKED] shipinfo.GET_DETAILS: Bị VesselFinder chặn (HTTP 403)"
+    },
+    {
+      "mmsi": "367586910",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2150,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338171745",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1901,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "366516370",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "403",
+      "latencyMs": 4956,
+      "error": "[BLOCKED] shipinfo.GET_DETAILS: Bị VesselFinder chặn (HTTP 403)"
+    },
+    {
+      "mmsi": "367309390",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5587,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368259690",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5058,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367586910",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4373,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338489635",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4264,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "369225000",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3671,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338171745",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6849,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367655460",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3796,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368259690",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6585,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338496992",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4905,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338489635",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4408,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338172000",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4446,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368136950",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1698,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "369225000",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6918,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367006790",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3633,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368375410",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2419,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367547750",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3646,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367655460",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7577,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338724000",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4184,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367799320",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2002,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338496992",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7192,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367013390",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2963,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368611000",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2906,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338172000",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6851,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "366993270",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4371,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368136950",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4513,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368062270",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3866,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "563284100",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3466,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367006790",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4362,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367599850",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1395,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367562810",
+      "region": "US",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2723,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "244181179",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2990,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368375410",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 8046,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235101095",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2196,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232215000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3047,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235052005",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2453,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367547750",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7314,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338724000",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3182,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "244900007",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5129,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235083598",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4384,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367799320",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6122,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235005245",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4310,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235038943",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2061,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367013390",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7914,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235114021",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3102,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "211753130",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5352,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368611000",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6789,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235082675",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4192,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "366993270",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4579,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232066198",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2557,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368062270",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5035,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232058262",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3681,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232014960",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2703,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "563284100",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6914,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232000840",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5498,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367599850",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4499,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235016122",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3433,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "636018075",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4923,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367562810",
+      "region": "US",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6238,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235054373",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1481,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232015133",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2087,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232054836",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4381,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "244181179",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7503,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232033047",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1385,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235101095",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5662,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232025088",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5155,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235079386",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3609,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232215000",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5963,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "245497000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3480,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "305453000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1540,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235052005",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5047,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "215804000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4571,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "210430000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1654,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "244900007",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6655,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232037001",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2271,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232041396",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5601,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235083598",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6307,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "219200000",
+      "region": "UK",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4956,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235005245",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "notFound",
+      "latencyMs": 4586,
+      "status": "NOT_FOUND"
+    },
+    {
+      "mmsi": "258083180",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1875,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257777000",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2066,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258220920",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2387,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235038943",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6428,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235114021",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 2973,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259023490",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5161,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257168500",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2823,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "211753130",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4903,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258535610",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3864,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235082675",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4421,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232066198",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3088,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257291700",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4109,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257817080",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3601,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232058262",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7301,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257691380",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5612,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259000070",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1694,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232014960",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4983,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257128190",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4993,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232000840",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4180,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235016122",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3502,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257997800",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4969,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257836800",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4727,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "636018075",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6275,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259040600",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4199,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235054373",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3902,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232015133",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3227,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257349910",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4698,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257341120",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3706,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257172740",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1833,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232054836",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7882,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257163320",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 3049,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258144270",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4806,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232033047",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7085,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257729630",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2217,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257014900",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2162,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232025088",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5469,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257580170",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4937,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "235079386",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5597,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259042130",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2228,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257005140",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4992,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "245497000",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5622,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257169940",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 1795,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "305453000",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3898,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257292400",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 5648,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "215804000",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5766,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257536700",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4863,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "210430000",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5626,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259195000",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 4512,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257806090",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2929,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232037001",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4615,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259657000",
+      "region": "NORWAY",
+      "provider": "vesselfinder",
+      "outcome": "200",
+      "latencyMs": 2508,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "232041396",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3775,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "219200000",
+      "region": "UK",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7915,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258083180",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3582,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257777000",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4767,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258220920",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6046,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259023490",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6656,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257168500",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4220,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258535610",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6772,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257291700",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4543,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257817080",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3491,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257691380",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5172,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259000070",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5575,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257128190",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6950,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257997800",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3408,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257836800",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6992,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259040600",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7234,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257349910",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7083,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257341120",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6965,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257172740",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6345,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257163320",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3178,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "258144270",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5573,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257729630",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3022,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257014900",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4243,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257580170",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 6282,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259042130",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 4686,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257005140",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7484,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257169940",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3594,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257292400",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 3234,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257536700",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7922,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259195000",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7050,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "257806090",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 5940,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "259657000",
+      "region": "NORWAY",
+      "provider": "shipfinder",
+      "outcome": "200",
+      "latencyMs": 7279,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367309390",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 3326,
+      "error": "Nguồn \"shipinfo\" đang hạ nhiệt tới 2026-08-18T15:30:02.767Z",
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "367586910",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 4600,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338171745",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 3808,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "368259690",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 2730,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "338489635",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "200",
+      "latencyMs": 7465,
+      "status": "RECORDED"
+    },
+    {
+      "mmsi": "369225000",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "403",
+      "latencyMs": 5104,
+      "error": "[BLOCKED] shipinfo.GET_DETAILS: Bị VesselFinder chặn (HTTP 403)"
+    },
+    {
+      "mmsi": "367655460",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "403",
+      "latencyMs": 5198,
+      "error": "[BLOCKED] shipinfo.GET_DETAILS: Bị VesselFinder chặn (HTTP 403)"
+    },
+    {
+      "mmsi": "338496992",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "338172000",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "368136950",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "367006790",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "368375410",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "367547750",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "338724000",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "367799320",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "367013390",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "368611000",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "366993270",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "368062270",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "563284100",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "367599850",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "367562810",
+      "region": "US",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "244181179",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235101095",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232215000",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235052005",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "244900007",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235083598",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235005245",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235038943",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235114021",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "211753130",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235082675",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232066198",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232058262",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232014960",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232000840",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235016122",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "636018075",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235054373",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232015133",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232054836",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232033047",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232025088",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "235079386",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "245497000",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "305453000",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "215804000",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "210430000",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232037001",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "232041396",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "219200000",
+      "region": "UK",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "258083180",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257777000",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "258220920",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "259023490",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257168500",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "258535610",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257291700",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257817080",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257691380",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "259000070",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257128190",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257997800",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257836800",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "259040600",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257349910",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257341120",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257172740",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257163320",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "258144270",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257729630",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257014900",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257580170",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "259042130",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257005140",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257169940",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257292400",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257536700",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "259195000",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "257806090",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    },
+    {
+      "mmsi": "259657000",
+      "region": "NORWAY",
+      "provider": "shipinfo",
+      "outcome": "skipped",
+      "latencyMs": 0,
+      "error": "lane stopped after severe blocking"
+    }
+  ]
+}

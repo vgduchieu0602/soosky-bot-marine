@@ -1,0 +1,160 @@
+{
+  "phase": "PHASE-3.3-MULTI-SOURCE",
+  "database": "soosky_marine_bot_dev",
+  "measuredAt": "2026-08-18T15:47:01.769Z",
+  "ais": false,
+  "paid": false,
+  "sample": {
+    "total": 90,
+    "byRegion": {
+      "US": 30,
+      "UK": 30,
+      "NORWAY": 30
+    }
+  },
+  "shipFinderUtcOffsetConfigured": null,
+  "runtime": {
+    "vesselfinder": {
+      "maxConcurrency": 1,
+      "minDelayMs": 2000,
+      "maxDelayMs": 5000,
+      "timeoutMs": 10000,
+      "maxRetries": 2,
+      "initialBackoffMs": 1000,
+      "maxBackoffMs": 10000,
+      "consecutiveFailuresBeforeCooldown": 3,
+      "cooldownMs": 300000
+    },
+    "shipfinder": {
+      "maxConcurrency": 1,
+      "minDelayMs": 3000,
+      "maxDelayMs": 8000,
+      "timeoutMs": 15000,
+      "maxRetries": 1,
+      "initialBackoffMs": 5000,
+      "maxBackoffMs": 30000,
+      "consecutiveFailuresBeforeCooldown": 3,
+      "cooldownMs": 900000
+    },
+    "shipinfo": {
+      "maxConcurrency": 1,
+      "minDelayMs": 3000,
+      "maxDelayMs": 8000,
+      "timeoutMs": 20000,
+      "maxRetries": 1,
+      "initialBackoffMs": 5000,
+      "maxBackoffMs": 30000,
+      "consecutiveFailuresBeforeCooldown": 3,
+      "cooldownMs": 900000
+    }
+  },
+  "coverage": {
+    "vesselfinder": {
+      "vesselName": 100,
+      "mmsi": 100,
+      "imo": 0,
+      "vTypeNumeric": 0,
+      "vesselTypeText": 1.1,
+      "lat": 100,
+      "lon": 100,
+      "latLon": 100,
+      "course": 0,
+      "speed": 1.1,
+      "navStatusText": 0,
+      "navStatusCode": 0,
+      "received": 1.1
+    },
+    "shipfinder": {
+      "vesselName": 95.6,
+      "mmsi": 95.6,
+      "imo": 32.2,
+      "vTypeNumeric": 0,
+      "vesselTypeText": 90,
+      "lat": 0,
+      "lon": 0,
+      "latLon": 0,
+      "course": 0,
+      "speed": 0,
+      "navStatusText": 0,
+      "navStatusCode": 0,
+      "received": 0
+    },
+    "shipinfo": {
+      "vesselName": 5.6,
+      "mmsi": 5.6,
+      "imo": 2.2,
+      "vTypeNumeric": 0,
+      "vesselTypeText": 3.3,
+      "lat": 5.6,
+      "lon": 5.6,
+      "latLon": 5.6,
+      "course": 2.2,
+      "speed": 5.6,
+      "navStatusText": 0,
+      "navStatusCode": 0,
+      "received": 5.6
+    }
+  },
+  "fallbackWithoutVesselFinder": {
+    "vesselName": 95.6,
+    "mmsi": 95.6,
+    "imo": 32.2,
+    "vTypeNumeric": 0,
+    "vesselTypeText": 90,
+    "lat": 5.6,
+    "lon": 5.6,
+    "latLon": 5.6,
+    "course": 2.2,
+    "speed": 5.6,
+    "navStatusText": 0,
+    "navStatusCode": 0,
+    "received": 5.6
+  },
+  "cases": {
+    "A_all": {
+      "vesselName": 100,
+      "mmsi": 100,
+      "imo": 32.2,
+      "vTypeNumeric": 0,
+      "vesselTypeText": 90,
+      "lat": 100,
+      "lon": 100,
+      "latLon": 100,
+      "course": 2.2,
+      "speed": 6.7,
+      "navStatusText": 0,
+      "navStatusCode": 0,
+      "received": 6.7
+    },
+    "B_noVesselFinder": {
+      "vesselName": 95.6,
+      "mmsi": 95.6,
+      "imo": 32.2,
+      "vTypeNumeric": 0,
+      "vesselTypeText": 90,
+      "lat": 5.6,
+      "lon": 5.6,
+      "latLon": 5.6,
+      "course": 2.2,
+      "speed": 5.6,
+      "navStatusText": 0,
+      "navStatusCode": 0,
+      "received": 5.6
+    },
+    "C_shipInfoOnly": {
+      "vesselName": 5.6,
+      "mmsi": 5.6,
+      "imo": 2.2,
+      "vTypeNumeric": 0,
+      "vesselTypeText": 3.3,
+      "lat": 5.6,
+      "lon": 5.6,
+      "latLon": 5.6,
+      "course": 2.2,
+      "speed": 5.6,
+      "navStatusText": 0,
+      "navStatusCode": 0,
+      "received": 5.6
+    }
+  }
+}

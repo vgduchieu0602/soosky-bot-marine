@@ -1,0 +1,44 @@
+{
+  "sample": 90,
+  "disabled": [],
+  "metrics": {
+    "vesselfinder": {
+      "requests": 1,
+      "outcomes": {
+        "timeout": 1,
+        "cooldown": 89
+      },
+      "avgLatencyMs": 33365,
+      "p95LatencyMs": 33365
+    },
+    "shipfinder": {
+      "requests": 90,
+      "outcomes": {
+        "200": 86,
+        "notFound": 4
+      },
+      "avgLatencyMs": 5603,
+      "p95LatencyMs": 7719
+    },
+    "shipinfo": {
+      "requests": 8,
+      "outcomes": {
+        "200": 5,
+        "403": 3,
+        "cooldown": 82
+      },
+      "avgLatencyMs": 4437,
+      "p95LatencyMs": 7893
+    }
+  },
+  "positionGroupMissing": {
+    "vesselfinder": 0,
+    "shipfinder": 86,
+    "shipinfo": 1
+  },
+  "recorded": {
+    "vesselfinder": 0,
+    "shipfinder": 86,
+    "shipinfo": 5
+  }
+}

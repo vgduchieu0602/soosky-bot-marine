@@ -58,8 +58,8 @@ import { VesselFinderProvider } from "../../src/infrastructure/integrations/vess
 
 import { PROOF_REGIONS, PROOF_SUB_REGIONS, ProofRegion } from "./regions";
 
-/** §10 — small but real. Not 100/region yet. */
-const PER_REGION = 10;
+/** §8/§9 — start small and real: 5 per region. Override with --per-region=N. */
+const DEFAULT_PER_REGION = 5;
 /** §11 — spread across sub-regions, never one tile. */
 const SUB_REGIONS_PER_REGION = 2;
 
@@ -155,15 +155,19 @@ async function loadSample(): Promise<{ mmsi: string; region: ProofRegion; subReg
 
 async function discover(
   pipeline: ReturnType<typeof buildPipeline>,
-  metrics: Metrics
+  metrics: Metrics,
+  perRegion: number
 ): Promise<{ mmsi: string; region: ProofRegion; subRegion: string }[]> {
   const executor = pipeline.runtime.getExecutor(VesselSource.VESSELFINDER);
   const picked: { mmsi: string; region: ProofRegion; subRegion: string }[] = [];
 
   for (const region of PROOF_REGIONS) {
     const subs = PROOF_SUB_REGIONS.filter((s) => s.region === region).slice(0, SUB_REGIONS_PER_REGION);
-    const perSub = Math.ceil(PER_REGION / Math.max(1, subs.length));
+    const perSub = Math.ceil(perRegion / Math.max(1, subs.length));
     const seen = new Set<string>();
+    // Hạn ngạch tính RIÊNG cho từng vùng. Trước đây chỉ cắt một lần ở cuối, nên
+    // vùng xét sau cùng bị cắt cụt và có thể mất hẳn một sub-region (§11).
+    const regionPicked: { mmsi: string; region: ProofRegion; subRegion: string }[] = [];
 
     for (const sub of subs) {
       const startedAt = Date.now();
@@ -181,10 +185,11 @@ async function discover(
           const mmsi = row.position?.mmsi ?? null;
           if (!isValidMmsi(mmsi) || seen.has(mmsi!)) continue;
           seen.add(mmsi!);
-          picked.push({ mmsi: mmsi!, region, subRegion: sub.name });
+          regionPicked.push({ mmsi: mmsi!, region, subRegion: sub.name });
           if (++taken >= perSub) break;
         }
         console.log(`[discover] ${sub.name} rows=${rows.length} sampled=${taken}`);
+        if (regionPicked.length >= perRegion) break;
       } catch (err) {
         metrics.mapRequests += 1;
         const kind = classify(err);
@@ -192,8 +197,9 @@ async function discover(
         console.log(`[discover] ${sub.name} ${kind}: ${(err as Error).message?.slice(0, 160)}`);
       }
     }
+    picked.push(...regionPicked.slice(0, perRegion));
   }
-  return picked.slice(0, PER_REGION * PROOF_REGIONS.length);
+  return picked;
 }
 
 async function enrich(
@@ -281,6 +287,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const cycle = args.find((a) => a.startsWith("--cycle="))?.slice(8);
   const mode = args.find((a) => a.startsWith("--mode="))?.slice(7);
+  const perRegion = Number(args.find((a) => a.startsWith("--per-region="))?.slice(13) ?? DEFAULT_PER_REGION);
 
   if (!isProofModeEnabled()) throw new Error("Set BOT_DATA_PROOF_MODE=true");
   const { dbName } = assertSafeBotDatabase({ mongoUri: loadedConfig.mongoUri, proofMode: true });
@@ -321,13 +328,13 @@ async function main(): Promise<void> {
 
   let sample: { mmsi: string; region: ProofRegion; subRegion: string }[];
   if (cycle === "1") {
-    sample = await discover(pipeline, metrics);
+    sample = await discover(pipeline, metrics, perRegion);
     await saveSample(sample);
     console.log(`[cycle 1] sample=${sample.length} unique=${new Set(sample.map((s) => s.mmsi)).size}`);
     await enrich(pipeline, sample, metrics);
   } else {
     // §16 — map discovery ONLY. No detail pass. This is the old bug condition.
-    await discover(pipeline, metrics);
+    await discover(pipeline, metrics, perRegion);
     sample = await loadSample();
     console.log(`[cycle 2] map-only refresh done; resolving the SAME ${sample.length} vessels`);
   }
