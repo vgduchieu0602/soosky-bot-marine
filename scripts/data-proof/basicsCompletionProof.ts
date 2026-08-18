@@ -114,6 +114,7 @@ function buildUseCase() {
   });
   return new CompleteVesselBasics({
     currentVesselRepository: new MongoCurrentVesselRepository(),
+    observationRepository,
     collect,
     resolveAndStore: new ResolveAndStoreCurrentVessel({
       resolve: new ResolveCurrentVessel({ repository: observationRepository }),

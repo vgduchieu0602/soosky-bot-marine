@@ -204,3 +204,30 @@ test("giá trị 0 được coi là CÓ dữ liệu, không phải thiếu", asy
   assert.equal(result.status, CompleteBasicsStatus.ALREADY_SUFFICIENT);
   assert.deepEqual(calls, []);
 });
+
+test("§12 — nguồn vừa được hỏi thì KHÔNG hỏi lại ở chu kỳ sau", async () => {
+  // Canonical vẫn thiếu vType (không nguồn nào ngoài VesselFinder có), nhưng
+  // VesselFinder VỪA được hỏi cách đây 1 phút -> không được hỏi lại.
+  const withoutTypeCode = completeVessel();
+  (withoutTypeCode.identity as any).vesselTypeCode = null;
+  const { repo } = repositoryOf([withoutTypeCode, withoutTypeCode]);
+  const { calls, collect } = collectorOf(() => CollectStatus.RECORDED);
+
+  const observationRepository = {
+    async findRecentByVessel() {
+      return [{ source: VesselSource.VESSELFINDER, fetchedAt: new Date(NOW.getTime() - 60_000) }];
+    },
+  } as never;
+
+  const result = await new CompleteVesselBasics({
+    currentVesselRepository: repo,
+    observationRepository,
+    collect,
+    resolveAndStore,
+    now: () => NOW,
+  }).execute(MMSI);
+
+  assert.deepEqual(calls, [], "không được bắn request nào");
+  assert.equal(result.requests, 0);
+  assert.equal(result.attempts[0].outcome, "RECENTLY_ASKED");
+});

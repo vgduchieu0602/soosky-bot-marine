@@ -26,6 +26,8 @@
 // ============================================================================
 
 import { ICurrentVesselRepository } from "../../contracts/repositories/ICurrentVesselRepository";
+import { IVesselObservationRepository } from "../../contracts/repositories/IVesselObservationRepository";
+import { DEFAULT_FREE_SOURCE_SELECTION_POLICY } from "../../services/acquisition/FreeSourceSelectionPolicy";
 import {
   DEFAULT_POSITION_RESOLVER_POLICY,
   PositionResolverPolicy,
@@ -117,7 +119,7 @@ export interface SourceAttempt {
   readonly source: VesselSource;
   /** Field còn thiếu mà nguồn này được kỳ vọng lấp. */
   readonly targeted: readonly VesselField[];
-  readonly outcome: "RECORDED" | "NOT_FOUND" | "UNAVAILABLE" | "ERROR";
+  readonly outcome: "RECORDED" | "NOT_FOUND" | "UNAVAILABLE" | "ERROR" | "RECENTLY_ASKED";
   readonly error?: string;
 }
 
@@ -140,6 +142,13 @@ export interface CompleteVesselBasicsDeps {
   resolveAndStore: ResolveAndStoreCurrentVessel;
   /** Ngưỡng "còn tươi" cho nhóm motion. Mặc định dùng lại policy của resolver. */
   policy?: PositionResolverPolicy;
+  /**
+   * Dùng để biết một nguồn VỪA được hỏi hay chưa. Không truyền -> mất hàng rào
+   * chống hỏi lại, và mỗi chu kỳ sẽ hỏi lại đúng những nguồn vừa trả lời "không có".
+   */
+  observationRepository?: IVesselObservationRepository;
+  /** Khoảng thời gian tối thiểu trước khi hỏi LẠI cùng một nguồn về cùng một tàu. */
+  sourceRetryTtlMs?: number;
   sourceOrder?: readonly VesselSource[];
   now?: () => Date;
 }
@@ -149,6 +158,8 @@ export class CompleteVesselBasics {
   private readonly collect: CollectVesselObservations;
   private readonly resolveAndStore: ResolveAndStoreCurrentVessel;
   private readonly policy: PositionResolverPolicy;
+  private readonly observations?: IVesselObservationRepository;
+  private readonly sourceRetryTtlMs: number;
   private readonly sourceOrder: readonly VesselSource[];
   private readonly now: () => Date;
 
@@ -157,6 +168,9 @@ export class CompleteVesselBasics {
     this.collect = deps.collect;
     this.resolveAndStore = deps.resolveAndStore;
     this.policy = deps.policy ?? DEFAULT_POSITION_RESOLVER_POLICY;
+    this.observations = deps.observationRepository;
+    this.sourceRetryTtlMs =
+      deps.sourceRetryTtlMs ?? DEFAULT_FREE_SOURCE_SELECTION_POLICY.recentSuccessTtlMs;
     this.sourceOrder = deps.sourceOrder ?? DEFAULT_BASICS_SOURCE_ORDER;
     this.now = deps.now ?? (() => new Date());
   }
@@ -193,6 +207,18 @@ export class CompleteVesselBasics {
       const canFill = (FIELDS_BY_SOURCE[source] ?? []).filter((f) => missing.includes(f));
       // Nguồn không lấp được gì đang thiếu -> KHÔNG gọi. Tiết kiệm nguyên một request.
       if (canFill.length === 0) continue;
+
+      // Nguồn VỪA được hỏi về đúng con tàu này -> KHÔNG hỏi lại.
+      //
+      // Đây là hàng rào quan trọng nhất chống bão request: field mà KHÔNG nguồn
+      // nào có (VD `imo` của tàu nhỏ) sẽ "còn thiếu" mãi mãi, và nếu không có
+      // luật này thì mỗi chu kỳ lại đi hỏi đủ ba nguồn về đúng field đó.
+      // Bằng chứng là "đã hỏi" nằm sẵn trong observation store nên nó SỐNG SÓT
+      // qua restart, không phải bộ nhớ tạm trong tiến trình.
+      if (await this.askedRecently(mmsi, source, now)) {
+        attempts.push({ source, targeted: canFill, outcome: "RECENTLY_ASKED" });
+        continue;
+      }
 
       requests += 1;
       try {
@@ -276,6 +302,21 @@ export class CompleteVesselBasics {
       }
     }
     return missing;
+  }
+
+  /** Nguồn này đã trả lời về tàu này trong `sourceRetryTtlMs` gần đây chưa. */
+  private async askedRecently(
+    mmsi: string,
+    source: VesselSource,
+    now: Date
+  ): Promise<boolean> {
+    if (this.observations === undefined) return false;
+    const since = new Date(now.getTime() - this.sourceRetryTtlMs);
+    const recent = await this.observations.findRecentByVessel(
+      { mmsi },
+      { since, includeInvalid: true }
+    );
+    return recent.some((observation) => observation.source === source);
   }
 
   private hasField(vessel: ResolvedCurrentVessel | null, field: VesselField): boolean {

@@ -1,0 +1,102 @@
+{
+  "database": "soosky_marine_bot_dev",
+  "sample": 90,
+  "before": {
+    "vesselName": 98.9,
+    "mmsi": 98.9,
+    "imo": 35.6,
+    "vType": 0,
+    "latLon": 98.9,
+    "course": 70,
+    "speed": 94.4,
+    "navStatus": 50,
+    "received": 94.4
+  },
+  "after": {
+    "vesselName": 98.9,
+    "mmsi": 98.9,
+    "imo": 35.6,
+    "vType": 92.2,
+    "latLon": 98.9,
+    "course": 71.1,
+    "speed": 98.9,
+    "navStatus": 52.2,
+    "received": 98.9
+  },
+  "byRegion": {
+    "US": {
+      "vesselName": 96.7,
+      "mmsi": 96.7,
+      "imo": 40,
+      "vType": 96.7,
+      "latLon": 96.7,
+      "course": 73.3,
+      "speed": 96.7,
+      "navStatus": 63.3,
+      "received": 96.7
+    },
+    "UK": {
+      "vesselName": 100,
+      "mmsi": 100,
+      "imo": 33.3,
+      "vType": 100,
+      "latLon": 100,
+      "course": 73.3,
+      "speed": 100,
+      "navStatus": 53.3,
+      "received": 100
+    },
+    "NORWAY": {
+      "vesselName": 100,
+      "mmsi": 100,
+      "imo": 33.3,
+      "vType": 80,
+      "latLon": 100,
+      "course": 66.7,
+      "speed": 100,
+      "navStatus": 40,
+      "received": 100
+    }
+  },
+  "cycles": [
+    {
+      "_id": "6a849ce73ef2dd0085a84d43",
+      "tag": "cycle1",
+      "cycle": 1,
+      "vessels": 90,
+      "lookupRequests": 210,
+      "lookupRequestsPer100Vessels": 233,
+      "statuses": {
+        "COMPLETED": 29,
+        "PARTIAL": 60,
+        "NO_SOURCE_AVAILABLE": 1
+      },
+      "sourceCalls": {
+        "vesselfinder": 90,
+        "shipfinder": 61,
+        "shipinfo": 62
+      },
+      "durationMs": 395255
+    },
+    {
+      "_id": "6a849ecd06ba45c1aa01fea2",
+      "tag": "cycle3",
+      "cycle": 3,
+      "vessels": 90,
+      "lookupRequests": 66,
+      "lookupRequestsPer100Vessels": 73,
+      "statuses": {
+        "ALREADY_SUFFICIENT": 28,
+        "NO_SOURCE_AVAILABLE": 57,
+        "PARTIAL": 4,
+        "COMPLETED": 1
+      },
+      "sourceCalls": {
+        "shipfinder": 61,
+        "vesselfinder": 53,
+        "shipinfo": 62
+      },
+      "durationMs": 86291
+    }
+  ]
+}
