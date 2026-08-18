@@ -70,6 +70,15 @@ export interface AppConfig {
    */
   botAisEnabled: boolean;
   /**
+   * Bật vòng quét vùng thích ứng trong runtime production.
+   *
+   * Mặc định TẮT: lần triển khai đầu tiên nên chỉ kết nối DB và đứng yên, để
+   * người vận hành xác nhận đúng database rồi mới mở van traffic (§20).
+   */
+  adaptiveCrawlerEnabled: boolean;
+  /** Nhịp HỎI "có vùng nào tới hạn chưa". KHÔNG phải nhịp crawl. */
+  regionPollMs: number;
+  /**
    * Chu kỳ gộp AIS, ms. Trong một cửa sổ, mỗi MMSI chỉ giữ vị trí MỚI NHẤT —
    * các điểm trung gian bị bỏ CÓ CHỦ Ý (buffer phục vụ map hiện tại, không
    * phải lịch sử hành trình).
@@ -280,6 +289,10 @@ export function loadConfig(env: Env = process.env): AppConfig {
     // Không có mặc định, và KHÔNG hardcode hostname production ở bất kỳ đâu.
     marineAisWsUrl: str(env, "MARINE_AIS_WS_URL"),
     botAisEnabled: str(env, "BOT_AIS_ENABLED").trim().toLowerCase() === "true",
+    // `=== "true"` chứ không phải `!== "false"`: mọi giá trị lạ đều là TẮT.
+    adaptiveCrawlerEnabled:
+      str(env, "ADAPTIVE_CRAWLER_ENABLED").trim().toLowerCase() === "true",
+    regionPollMs: positiveNum(env, "REGION_POLL_MS", 60_000),
     aisCoalesceWindowMs: positiveNum(env, "AIS_COALESCE_WINDOW_MS", 60_000),
     aisMaxBufferedVessels: positiveNum(env, "AIS_MAX_BUFFERED_VESSELS", 50_000),
     aisFlushBatchSize: positiveNum(env, "AIS_FLUSH_BATCH_SIZE", 500),

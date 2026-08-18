@@ -85,3 +85,28 @@ export function assertSafeBotDatabase(options: {
 
   return { dbName };
 }
+
+/**
+ * Yêu cầu tối thiểu cho runtime PRODUCTION.
+ *
+ * Khác `assertSafeBotDatabase`: production ĐƯỢC PHÉP chạm database production,
+ * nên ở đây KHÔNG có danh sách cấm và KHÔNG có `BOT_DATA_PROOF_MODE`. Nó chỉ
+ * ép đúng một điều: URI phải nói rõ tên database.
+ *
+ * Vì sao vẫn cần: thiếu tên database thì driver rơi về default, và bot sẽ ghi
+ * vào một chỗ không ai chọn. Nhầm im lặng nguy hiểm hơn là dừng ngay.
+ *
+ * @throws Error khi URI rỗng hoặc không có tên database.
+ */
+export function assertProductionDatabase(mongoUri: string): { dbName: string } {
+  if (!mongoUri || mongoUri.trim() === "") {
+    throw new Error("MONGODB_URI is required for the production runtime.");
+  }
+  const dbName = extractMongoDatabaseName(mongoUri);
+  if (dbName === null) {
+    throw new Error(
+      "MONGODB_URI must include an explicit database name (e.g. mongodb+srv://host/soosky_marine_bot_dev)."
+    );
+  }
+  return { dbName };
+}

@@ -66,6 +66,7 @@ export async function buildContainer(options: BuildContainerOptions = {}): Promi
     collectVesselObservations: canonical.collectVesselObservations,
     resolveAndStoreCurrentVessel: canonical.resolveAndStoreCurrentVessel,
     acquireFreeVesselData: canonical.acquireFreeVesselData,
+    completeVesselBasics: canonical.completeVesselBasics,
     ingestAisBatch: canonical.ingestAisBatch,
     getCanonicalVesselDetail: acquisition.getCanonicalVesselDetail,
     getOrRefreshVesselDetail: acquisition.getOrRefreshVesselDetail,

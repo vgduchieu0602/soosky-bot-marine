@@ -12,6 +12,7 @@ import { ResolveAndStoreCurrentVessel } from "../application/use-cases/resolutio
 import { AcquireFreeVesselData } from "../application/use-cases/acquisition/AcquireFreeVesselData";
 import { CheckLocalVesselSufficiency } from "../application/use-cases/acquisition/CheckLocalVesselSufficiency";
 import { CollectVesselObservations } from "../application/use-cases/observation/CollectVesselObservations";
+import { CompleteVesselBasics } from "../application/use-cases/vessel/CompleteVesselBasics";
 import { IngestAisBatch } from "../application/use-cases/ingestion/IngestAisBatch";
 import { VesselSource } from "../domain/enums/VesselSource";
 import { ShipFinderClient } from "../infrastructure/integrations/shipfinder/ShipFinderClient";
@@ -40,6 +41,8 @@ export interface CanonicalDependencies {
   resolveAndStoreCurrentVessel: ResolveAndStoreCurrentVessel;
   acquireFreeVesselData: AcquireFreeVesselData;
   ingestAisBatch: IngestAisBatch;
+  /** Lấp nốt VesselBasics còn thiếu của MỘT tàu đã biết, có trần request. */
+  completeVesselBasics: CompleteVesselBasics;
 }
 
 export interface CanonicalDependencyInputs {
@@ -115,6 +118,13 @@ export function createCanonicalDependencies(
         : SourceHealthState.DISABLED,
   });
 
+  const completeVesselBasics = new CompleteVesselBasics({
+    currentVesselRepository,
+    observationRepository,
+    collect: collectVesselObservations,
+    resolveAndStore: resolveAndStoreCurrentVessel,
+  });
+
   return {
     providerRegistry,
     crawlRuntime,
@@ -125,5 +135,6 @@ export function createCanonicalDependencies(
     resolveAndStoreCurrentVessel,
     acquireFreeVesselData,
     ingestAisBatch,
+    completeVesselBasics,
   };
 }

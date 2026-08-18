@@ -26,7 +26,9 @@ const crawlRegionStateSchema = new Schema(
 
 // Chỉ HAI index, đúng hai câu hỏi scheduler thực sự hỏi (§52):
 //   "trạng thái của vùng X?"  và  "vùng nào đã đến hạn?"
-crawlRegionStateSchema.index({ regionId: 1 }, { unique: true });
+//
+// `regionId` đã có unique index từ `unique: true` ở khai báo field — khai thêm
+// `schema.index()` nữa chỉ tạo ra một định nghĩa TRÙNG (mongoose cảnh báo đúng).
 crawlRegionStateSchema.index({ nextScanAt: 1 });
 
 export const CrawlRegionStateModel = model(
