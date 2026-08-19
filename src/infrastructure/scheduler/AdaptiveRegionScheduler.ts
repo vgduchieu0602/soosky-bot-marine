@@ -102,6 +102,11 @@ export class AdaptiveRegionScheduler {
   /** Khoá chống chạy chồng (§45): một vùng không thể có hai lượt quét cùng lúc. */
   private readonly running = new Set<string>();
   private tickInFlight = false;
+  /**
+   * Đang tắt máy. Cờ nhỏ, cố ý KHÔNG phải AbortController: ta không cần huỷ
+   * giữa chừng một lượt quét, chỉ cần KHÔNG bắt đầu vùng tiếp theo.
+   */
+  private stopping = false;
 
   constructor(deps: AdaptiveRegionSchedulerDeps) {
     this.deps = deps;
@@ -110,6 +115,23 @@ export class AdaptiveRegionScheduler {
     this.now = deps.now ?? (() => new Date());
     this.random = deps.random ?? Math.random;
     this.sleep = deps.sleep ?? defaultSleep;
+  }
+
+  /** Số vùng scheduler này phụ trách — cho log/stats. */
+  regionCount(): number {
+    return this.regions.length;
+  }
+
+  /**
+   * Ngừng nhận vùng mới. Lượt đang chạy vẫn được ghi nốt xuống DB (nửa vời còn
+   * tệ hơn chậm), nhưng sau nó sẽ không có vùng nào được bắt đầu nữa.
+   */
+  async stop(): Promise<void> {
+    this.stopping = true;
+    // Chờ lượt đang chạy kết thúc để Mongo không bị đóng giữa chừng.
+    while (this.tickInFlight) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
   }
 
   /** Vùng đã đến hạn, cũ nhất trước để không vùng nào bị bỏ đói (§44). */
@@ -132,12 +154,14 @@ export class AdaptiveRegionScheduler {
    * Tick chồng lên tick trước sẽ bị bỏ qua, giống `IntervalScheduler` hiện có.
    */
   async tick(): Promise<RegionCycleMetrics[]> {
-    if (this.tickInFlight) return [];
+    if (this.tickInFlight || this.stopping) return [];
     this.tickInFlight = true;
     const metrics: RegionCycleMetrics[] = [];
     try {
       const due = await this.dueRegions();
       for (const { region, state } of due) {
+        // Tắt máy giữa lượt -> dừng ngay, không mở thêm vùng nào.
+        if (this.stopping) break;
         // Sức khoẻ nguồn ĐỨNG TRÊN lịch: nguồn đang hạ nhiệt thì dừng cả lượt,
         // không đi lê la thử từng vùng cho tới khi bị chặn nặng hơn (§20/§21).
         if (!this.sourceUsable()) {
@@ -150,13 +174,29 @@ export class AdaptiveRegionScheduler {
         if (this.running.has(region.id)) continue;
         metrics.push(await this.scanRegion(region, state));
         if (this.deps.skipRegionPause !== true) {
-          await this.sleep(jitteredDelay(REGION_PAUSE_MS, this.random));
+          await this.pauseBetweenRegions();
         }
       }
     } finally {
       this.tickInFlight = false;
     }
     return metrics;
+  }
+
+  /**
+   * Nghỉ giữa hai vùng, nhưng NGẮT ĐƯỢC.
+   *
+   * Nghỉ 30–90 giây có thể dài hơn `RUNTIME_SHUTDOWN_TIMEOUT_MS`, nên ngủ một
+   * mạch sẽ khiến shutdown quá hạn. Chia thành nhiều lát ngắn và thoát ngay khi
+   * có tín hiệu tắt — đủ để giữ nhịp lịch sự với nguồn mà vẫn tắt máy nhanh.
+   */
+  private async pauseBetweenRegions(): Promise<void> {
+    const totalMs = jitteredDelay(REGION_PAUSE_MS, this.random);
+    const sliceMs = 250;
+    for (let waited = 0; waited < totalMs; waited += sliceMs) {
+      if (this.stopping) return;
+      await this.sleep(Math.min(sliceMs, totalMs - waited));
+    }
   }
 
   private sourceUsable(): boolean {

@@ -38,6 +38,14 @@ export interface LegacyBootstrapDependencies extends LegacyDependencies {
 export interface LegacyBootstrapOptions {
   /** ProductionRuntime owns connection order; legacy callers retain current behavior. */
   connectMongo?: boolean;
+  /**
+   * Gieo watchlist từ `.env` vào `watchlistitems`.
+   *
+   * Mặc định BẬT để HTTP/CLI giữ nguyên hành vi. Bot production PHASE 6.2 tắt
+   * nó: bot không còn chạy crawler watchlist nữa, nên việc ghi một document
+   * legacy mỗi lần khởi động chỉ tạo ra dữ liệu không ai đọc trên Atlas.
+   */
+  seedWatchlist?: boolean;
 }
 
 /**
@@ -72,10 +80,12 @@ export async function createLegacyDependencies(
     watchlistRepository = new JsonWatchlistRepository(config.dataDir);
   }
 
-  const current = await watchlistRepository.getAll();
-  if (current.length === 0 && config.watchlist.length > 0) {
-    for (const id of config.watchlist) await watchlistRepository.add(id);
-    console.log(`🌱 Seed watchlist từ .env: ${config.watchlist.join(", ")}`);
+  if (options.seedWatchlist !== false) {
+    const current = await watchlistRepository.getAll();
+    if (current.length === 0 && config.watchlist.length > 0) {
+      for (const id of config.watchlist) await watchlistRepository.add(id);
+      console.log(`🌱 Seed watchlist từ .env: ${config.watchlist.join(", ")}`);
+    }
   }
 
   const getVesselDetails = new GetVesselDetails({

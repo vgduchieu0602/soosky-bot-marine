@@ -1,9 +1,7 @@
 import { config } from "../config";
 import { assertProductionDatabase } from "../config/databaseSafety";
 import { MARITIME_REGIONS } from "../config/maritimeRegions";
-import { AdaptiveRegionScheduler } from "../infrastructure/scheduler/AdaptiveRegionScheduler";
-import { MongoCrawlRegionStateRepository } from "../infrastructure/persistence/mongo/MongoCrawlRegionStateRepository";
-import { VesselSource } from "../domain/enums/VesselSource";
+import { createAdaptiveRegionWorker, REGION_DUE_CHECK_EVERY_MS } from "./createAdaptiveRegionWorker";
 import { MarineAisIngestionCoordinator } from "../infrastructure/integrations/marine-ais/MarineAisIngestionCoordinator";
 import { MarineAisLifecycleState, MarineAisWebSocketClient } from "../infrastructure/integrations/marine-ais/MarineAisWebSocketClient";
 import { connectMongo, disconnectMongo } from "../infrastructure/persistence/mongo/connection";
@@ -28,79 +26,32 @@ export function createProductionRuntime(): ProductionRuntime {
       console.log(`[bot] production runtime started`);
       console.log(`[bot] Mongo             : ${database} (${kind})`);
       console.log(`[bot] Adaptive regions  : ${config.adaptiveCrawlerEnabled ? MARITIME_REGIONS.length : 0}`);
-      console.log(`[bot] Region poll       : ${Math.round(config.regionPollMs / 1000)}s`);
-      console.log(`[bot] Adaptive crawler  : ${config.adaptiveCrawlerEnabled ? "enabled" : "disabled (set ADAPTIVE_CRAWLER_ENABLED=true)"}`);
+      console.log(`[bot] Region due check  : ${Math.round(REGION_DUE_CHECK_EVERY_MS / 1000)}s (not the scan interval)`);
+      console.log(`[bot] Adaptive crawler  : ${config.adaptiveCrawlerEnabled ? "enabled" : "disabled (ADAPTIVE_CRAWLER_ENABLED=false)"}`);
       console.log(`[bot] VesselFinder      : enabled`);
       console.log(`[bot] AIS               : ${config.botAisEnabled ? "ON" : "OFF"}`);
       console.log(`[bot] Paid              : ${config.paidFallbackEnabled ? "ON" : "OFF"}`);
       await connectMongo(config.mongoUri);
     },
     buildWorkers: async () => {
-      const container = await buildContainer({ connectMongo: false });
-      const schedulerInstances: IntervalScheduler[] = [];
+      // `seedWatchlist: false` — bot không còn chạy crawler watchlist, nên
+      // không được ghi document legacy nào lúc khởi động (TASK 5).
+      const container = await buildContainer({ connectMongo: false, seedWatchlist: false });
 
-      // ---- vòng quét vùng thích ứng --------------------------------------
-      // MỘT instance duy nhất cho mỗi tiến trình (§8). Nó KHÔNG tự crawl theo
-      // nhịp poll: poll chỉ hỏi "có vùng nào tới hạn chưa", còn traffic thật
-      // vẫn do `nextScanAt` của từng vùng quyết định (§7).
-      if (config.adaptiveCrawlerEnabled) {
-        const provider = container.providerRegistry.get(VesselSource.VESSELFINDER);
-        if (provider?.scanArea === undefined) {
-          throw new Error("VesselFinder provider with scanArea is required for the adaptive crawler.");
-        }
-        const adaptive = new AdaptiveRegionScheduler({
-          provider,
-          runtime: container.crawlRuntime,
-          recorder: container.observationRecorder,
-          resolveAndStore: container.resolveAndStoreCurrentVessel,
-          regionStates: new MongoCrawlRegionStateRepository(),
-          currentVesselRepository: container.currentVesselRepository,
-          completeBasics: container.completeVesselBasics,
-        });
-        schedulerInstances.push(
-          new IntervalScheduler({
-            label: "adaptive region scan",
-            everyMs: config.regionPollMs,
-            task: async () => { await adaptive.tick(); },
-          })
-        );
-      }
+      // PHASE 6.2: bot production chỉ chạy MỘT workload — quét vùng thích ứng.
+      //
+      // `crawl watchlist` và `cleanup stale positions` CỐ Ý không còn tự khởi
+      // động ở đây. Cả hai đi đường LEGACY và ghi vào `vessels` /
+      // `latestpositions` / `vesselpositions`, tức là dựng song song một pipeline
+      // dữ liệu thứ hai bên cạnh canonical trên chính Atlas production. Code của
+      // chúng KHÔNG bị xoá — CLI/HTTP còn dùng — chỉ là bot không tự chạy nữa.
+      const schedulers = config.adaptiveCrawlerEnabled
+        ? [createAdaptiveRegionWorker(container)]
+        : [];
 
-      // ---- watchlist (đường LEGACY) ---------------------------------------
-      // Chỉ chạy khi thực sự có tàu được theo dõi. Nó dùng đường legacy và ghi
-      // vào `vessels`/`latestpositions`, đồng thời cũng gọi VesselFinder — tức
-      // là TRÙNG traffic với vòng quét vùng. Xem báo cáo §9: để WATCHLIST rỗng
-      // khi bật adaptive, trừ khi thực sự cần theo dõi tàu chỉ định.
-      if (config.watchlist.length > 0) {
-        schedulerInstances.push(
-          new IntervalScheduler({
-            label: "crawl watchlist",
-            everyMs: config.crawlEveryMs,
-            task: async () => {
-              const ids = await container.manageWatchlist.list();
-              if (ids.length > 0) await container.crawlFleetPositions.execute(ids);
-            },
-          })
-        );
-      }
-
-      schedulerInstances.push(
-        new IntervalScheduler({
-          label: "cleanup stale positions",
-          everyMs: config.positionCleanupEveryMs,
-          task: async () => { await container.cleanupStalePositions.execute(); },
-        })
-      );
-
-      const schedulers = schedulerInstances.map((scheduler) => ({
-        start: () => scheduler.start(),
-        stop: () => scheduler.stop(),
-        stats: () => scheduler.getStats(),
-      }));
-
-      // The bot never owns the paid upstream AISStream connection.  Its
-      // optional client is useful only for explicit canonical-ingestion tests
-      // and staging; default production deployment leaves it disabled.
+      // Bot KHÔNG sở hữu kết nối AISStream trả tiền. Client tuỳ chọn này chỉ
+      // hữu ích cho test ingestion canonical và staging; triển khai production
+      // mặc định để tắt. Không bật cờ -> KHÔNG mở socket nào.
       if (!config.botAisEnabled || !config.marineAisWsUrl) return { schedulers };
 
       const client = new MarineAisWebSocketClient({

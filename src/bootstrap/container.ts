@@ -24,12 +24,17 @@ export interface Container
 
 export interface BuildContainerOptions {
   connectMongo?: boolean;
+  /** Tắt việc gieo watchlist legacy (bot production dùng). */
+  seedWatchlist?: boolean;
 }
 
 export async function buildContainer(options: BuildContainerOptions = {}): Promise<Container> {
   // Compatibility path: legacy VesselFinder entities and workflows remain
   // available to the existing HTTP and CLI entry points.
-  const legacy = await createLegacyDependencies(config, { connectMongo: options.connectMongo });
+  const legacy = await createLegacyDependencies(config, {
+    connectMongo: options.connectMongo,
+    seedWatchlist: options.seedWatchlist,
+  });
 
   // Target path: multi-source providers, observations and canonical current
   // vessel dependencies. Construction is inert; no AIS client is started.

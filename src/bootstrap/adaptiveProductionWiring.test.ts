@@ -147,3 +147,27 @@ test("§10 nguồn đang cooldown -> poll cũng không sinh request nào", async
   await scheduler.tick();
   assert.deepEqual(scans, [], "cooldown của nguồn đứng trên lịch quét");
 });
+
+// ---------------------------------------------------------------------------
+//  E. AIS tắt -> runtime KHÔNG dựng worker AIS nào
+// ---------------------------------------------------------------------------
+
+test("E. BOT_AIS_ENABLED=false -> không có AIS worker trong runtime", async () => {
+  const runtime = new ProductionRuntime({
+    connectMongo: async () => undefined,
+    disconnectMongo: async () => undefined,
+    shutdownTimeoutMs: 5_000,
+    logger: { info: () => undefined, warn: () => undefined },
+    // Đúng hình dạng `createProductionRuntime` trả về khi AIS tắt: chỉ schedulers.
+    buildWorkers: async () => ({ schedulers: [] }),
+  });
+
+  await runtime.start();
+  const health = runtime.health();
+  assert.equal(health.ais.enabled, false, "AIS phải vắng mặt hoàn toàn");
+  assert.equal(health.ais.connected, false);
+  // AIS tắt KHÔNG được kéo runtime xuống DEGRADED.
+  assert.equal(health.status, ProductionRuntimeStatus.READY);
+
+  await runtime.stop();
+});
