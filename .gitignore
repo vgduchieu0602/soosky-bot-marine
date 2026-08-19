@@ -4,7 +4,6 @@ data/
 tmp/
 .env
 *.log
-*.md
 docs/*
 # Tài liệu kiến trúc PHẢI đi cùng code (A1/A2) -> gỡ khỏi 2 luật trên.
 # Phải mở cả THƯ MỤC CON: git không đi vào thư mục đã bị ignore, nên chỉ
