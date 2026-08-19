@@ -167,7 +167,7 @@ async function saveCheckpoint(job: string, provider: string, cursor: TileCursor,
   await CrawlCheckpointModel.findOneAndUpdate(
     { job },
     { job, provider, cursor, stats, updatedAt: new Date() },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: "after" }
   );
 }
 

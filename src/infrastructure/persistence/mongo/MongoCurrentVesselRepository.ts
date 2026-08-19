@@ -115,8 +115,11 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
         ? { $set: doc, $unset: { location: "" } }
         : { $set: { ...doc, location } };
 
+    // `returnDocument: "after"` thay cho `new: true` — cùng hành vi (trả về bản
+    // ghi SAU khi cập nhật), chỉ là tên hiện hành của driver. Mongoose cảnh báo
+    // `new` đã deprecated.
     const updated = await CurrentVesselModel.findByIdAndUpdate(existing._id, update, {
-      new: true,
+      returnDocument: "after",
     }).lean<CurrentVesselDoc>();
 
     return {

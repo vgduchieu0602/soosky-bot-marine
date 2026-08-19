@@ -66,7 +66,16 @@ export function createAdaptiveRegionWorker(
     label: "adaptive maritime regions",
     everyMs: deps.dueCheckEveryMs ?? REGION_DUE_CHECK_EVERY_MS,
     task: async () => {
-      await scheduler.tick();
+      const metrics = await scheduler.tick();
+      // Không có vùng nào tới hạn -> IM LẶNG. Nhịp kiểm tra 30 giây mà log mỗi
+      // lần sẽ nhấn chìm chính những dòng đáng đọc.
+      for (const m of metrics) {
+        const line =
+          `[region] ${m.regionId} ${m.outcome} vessels=${m.vesselCount} new=${m.newVesselCount} ` +
+          `scanCalls=${m.scanAreaCalls} httpReq=${m.httpRequests} basicsReq=${m.completionRequests} ${m.durationMs}ms`;
+        if (m.outcome === "FAILED") console.warn(`${line} err=${m.error ?? ""}`);
+        else console.log(line);
+      }
     },
   });
 

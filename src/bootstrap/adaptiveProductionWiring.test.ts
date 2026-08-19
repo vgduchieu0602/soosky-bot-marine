@@ -72,6 +72,7 @@ function buildAdaptive(options: { health?: SourceHealthState; states?: RegionSch
     } as never,
     recorder: { async recordPositions() { return []; } } as never,
     resolveAndStore: { async execute() { return {} as never; } } as never,
+    currentVesselRepository: { async findManyByMmsi() { return []; } } as never,
   });
   return { scheduler, scans };
 }

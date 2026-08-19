@@ -73,7 +73,9 @@ function build(options: {
         return ships(options.vessels ?? 60) as never;
       },
     } as never,
-    currentVesselRepository: options.currentVesselRepository as never,
+    currentVesselRepository: (options.currentVesselRepository ?? {
+      async findManyByMmsi() { return []; },
+    }) as never,
     runtime: {
       getHealth: () => ({
         state: options.health ?? SourceHealthState.HEALTHY,
@@ -227,4 +229,146 @@ test("§15 ứng viên hoàn thiện: tàu MỚI được ưu tiên trước tà
     completed.every((m) => m === "200000002"),
     `phải chọn tàu mới, nhận: ${completed.join(",")}`
   );
+});
+
+// ===========================================================================
+//  PHASE 6.3 — "tàu mới" phải đếm theo CANONICAL, không theo observation
+// ---------------------------------------------------------------------------
+//  Lỗi gốc: mỗi ProviderPositionResult sinh HAI observation (IDENTITY +
+//  POSITION), nên đếm bản ghi SAVED cho ra gấp đôi số tàu (59 -> 118).
+// ===========================================================================
+
+/** Recorder thật trả về MỘT kết quả cho MỖI observation, không phải mỗi row. */
+function recorderEmitting(perRow: number, status = "SAVED") {
+  return {
+    async recordPositions(rows: unknown[]) {
+      return Array.from({ length: rows.length * perRow }, () => ({ status }));
+    },
+  } as never;
+}
+
+function buildCounting(options: {
+  vessels: number;
+  perRow?: number;
+  savedStatus?: string;
+  canonicalMmsis?: string[];
+  rows?: { position: { mmsi: string } }[];
+}) {
+  const states = new MemoryRegionStates();
+  const canonical = new Set(options.canonicalMmsis ?? []);
+  const completed: string[] = [];
+  const scheduler = new AdaptiveRegionScheduler({
+    regions: [REGIONS[0]],
+    regionStates: states,
+    now: () => NOW,
+    random: () => 0.5,
+    sleep: async () => undefined,
+    skipRegionPause: true,
+    provider: {
+      source: "vesselfinder" as never,
+      async scanArea() { return (options.rows ?? ships(options.vessels)) as never; },
+    } as never,
+    runtime: {
+      getHealth: () => ({ state: SourceHealthState.HEALTHY, totalRequests: 0 }),
+      getExecutor: () => ({ execute: async (task: () => Promise<unknown>) => task() }),
+    } as never,
+    recorder: recorderEmitting(options.perRow ?? 2, options.savedStatus ?? "SAVED"),
+    resolveAndStore: { async execute() { return {} as never; } } as never,
+    currentVesselRepository: {
+      async findManyByMmsi(mmsis: readonly string[]) {
+        return mmsis.filter((m) => canonical.has(m)).map((m) => ({ vesselKey: { mmsi: m } }));
+      },
+    } as never,
+    completeBasics: {
+      async execute(mmsi: string) { completed.push(mmsi); return { requests: 1 } as never; },
+    } as never,
+  });
+  return { scheduler, states, completed };
+}
+
+test("A. 3 tàu sinh 6 observation -> newVesselCount = 3, KHÔNG phải 6", async () => {
+  const { scheduler, states } = buildCounting({ vessels: 3, perRow: 2 });
+  const metrics = await scheduler.tick();
+
+  assert.equal(metrics[0].vesselCount, 3);
+  assert.equal(metrics[0].newVesselCount, 3, "đếm tàu, không đếm observation");
+  assert.equal(states.saved.get("r1")?.newVesselCount, 3);
+});
+
+test("B. một số tàu đã có canonical -> chỉ đếm phần thật sự mới", async () => {
+  // Quét 200000000/200000001/200000002; canonical đã có hai con đầu.
+  const { scheduler, states } = buildCounting({
+    vessels: 3,
+    canonicalMmsis: ["200000000", "200000001"],
+  });
+  const metrics = await scheduler.tick();
+
+  assert.equal(metrics[0].vesselCount, 3);
+  assert.equal(metrics[0].newVesselCount, 1);
+  assert.equal(states.saved.get("r1")?.newVesselCount, 1);
+});
+
+test("C. observation bị dedupe vẫn KHÔNG che mất tàu mới", async () => {
+  // Recorder trả toàn SKIPPED_DUPLICATE, nhưng canonical chưa có con tàu này.
+  const { scheduler } = buildCounting({ vessels: 1, perRow: 2, savedStatus: "SKIPPED_DUPLICATE" });
+  const metrics = await scheduler.tick();
+
+  assert.equal(metrics[0].newVesselCount, 1, "mới hay không do canonical quyết, không do dedupe");
+});
+
+test("D. tàu cũ dù observation SAVED vẫn KHÔNG phải tàu mới", async () => {
+  const { scheduler } = buildCounting({
+    vessels: 1,
+    savedStatus: "SAVED",
+    canonicalMmsis: ["200000000"],
+  });
+  const metrics = await scheduler.tick();
+
+  assert.equal(metrics[0].newVesselCount, 0);
+});
+
+test("E. MMSI trùng trong một lần quét -> newVesselCount tính theo MMSI duy nhất", async () => {
+  const rows = [
+    { position: { mmsi: "200000000" } },
+    { position: { mmsi: "200000000" } },
+    { position: { mmsi: "200000001" } },
+  ];
+  const { scheduler } = buildCounting({ vessels: 0, rows });
+  const metrics = await scheduler.tick();
+
+  // `vesselCount` giữ nguyên ngữ nghĩa cũ: số dòng nguồn trả về.
+  assert.equal(metrics[0].vesselCount, 3);
+  // `newVesselCount` là số MMSI DUY NHẤT chưa có canonical.
+  assert.equal(metrics[0].newVesselCount, 2);
+});
+
+test("một region = ĐÚNG MỘT truy vấn canonical (không N+1, không hỏi hai lần)", async () => {
+  let lookups = 0;
+  const states = new MemoryRegionStates();
+  const scheduler = new AdaptiveRegionScheduler({
+    regions: [REGIONS[0]],
+    regionStates: states,
+    now: () => NOW,
+    random: () => 0.5,
+    sleep: async () => undefined,
+    skipRegionPause: true,
+    completionBudget: 5,
+    provider: {
+      source: "vesselfinder" as never,
+      async scanArea() { return ships(20) as never; },
+    } as never,
+    runtime: {
+      getHealth: () => ({ state: SourceHealthState.HEALTHY, totalRequests: 0 }),
+      getExecutor: () => ({ execute: async (task: () => Promise<unknown>) => task() }),
+    } as never,
+    recorder: recorderEmitting(2),
+    resolveAndStore: { async execute() { return {} as never; } } as never,
+    currentVesselRepository: {
+      async findManyByMmsi() { lookups += 1; return []; },
+    } as never,
+    completeBasics: { async execute() { return { requests: 1 } as never; } } as never,
+  });
+
+  await scheduler.tick();
+  assert.equal(lookups, 1, `20 tàu phải chỉ tốn 1 truy vấn canonical, thấy ${lookups}`);
 });

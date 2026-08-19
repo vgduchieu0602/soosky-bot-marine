@@ -18,6 +18,7 @@
 
 import { ICrawlRegionStateRepository } from "../../application/contracts/repositories/ICrawlRegionStateRepository";
 import { ICurrentVesselRepository } from "../../application/contracts/repositories/ICurrentVesselRepository";
+import { ResolvedCurrentVessel } from "../../application/services/resolution/ResolvedCurrentVessel";
 import { ProviderPositionResult } from "../../application/contracts/providers/ProviderResults";
 import { VesselDataProvider } from "../../application/contracts/providers/VesselDataProvider";
 import { ProviderOperation } from "../../application/contracts/providers/VesselDataProvider";
@@ -77,8 +78,11 @@ export interface AdaptiveRegionSchedulerDeps {
   recorder: ObservationRecorder;
   resolveAndStore: ResolveAndStoreCurrentVessel;
   regionStates: ICrawlRegionStateRepository;
-  /** Chỉ dùng để XẾP HẠNG ứng viên hoàn thiện. Không có -> giữ nguyên thứ tự quét. */
-  currentVesselRepository?: ICurrentVesselRepository;
+  /**
+   * BẮT BUỘC. Dùng để trả lời "MMSI này đã có canonical chưa" — cơ sở DUY NHẤT
+   * để nói một con tàu là MỚI. Thiếu nó thì `newVesselCount` không có nghĩa.
+   */
+  currentVesselRepository: ICurrentVesselRepository;
   policy?: RegionSchedulePolicy;
   completeBasics?: CompleteVesselBasics;
   regions?: readonly MaritimeRegion[];
@@ -212,17 +216,14 @@ export class AdaptiveRegionScheduler {
    *   3. chuyển động đã ôi
    *   4. đã đủ dùng                 — xếp cuối, thường bị trần cắt mất
    *
-   * Đọc canonical bằng MỘT truy vấn cho cả mẻ, không phải N truy vấn: xếp hạng
-   * không được đắt hơn chính việc nó tiết kiệm.
+   * Nhận sẵn ảnh chụp canonical đã đọc ở `scanRegion` — KHÔNG tự truy vấn lại.
+   * Một vùng = đúng một truy vấn canonical.
    */
-  private async prioritiseCandidates(
+  private prioritiseCandidates(
     mmsis: readonly string[],
-    newMmsis: ReadonlySet<string>
-  ): Promise<string[]> {
-    const known = this.deps.currentVesselRepository
-      ? await this.deps.currentVesselRepository.findManyByMmsi(mmsis)
-      : [];
-    const byMmsi = new Map(known.map((v) => [v.vesselKey.mmsi ?? "", v]));
+    newMmsis: ReadonlySet<string>,
+    byMmsi: ReadonlyMap<string, ResolvedCurrentVessel>
+  ): string[] {
     const staleBefore = this.now().getTime() - STALE_MOTION_MS;
 
     const rank = (mmsi: string): number => {
@@ -284,11 +285,6 @@ export class AdaptiveRegionScheduler {
       );
       vesselCount = rows.length;
 
-      const saved = await this.deps.recorder.recordPositions(rows, {
-        parserVersion: "vesselfinder-map-v1",
-      });
-      newVesselCount = saved.filter((s) => s.status === "SAVED").length;
-
       const mmsis = Array.from(
         new Set(
           rows
@@ -296,20 +292,38 @@ export class AdaptiveRegionScheduler {
             .filter((m): m is string => isValidMmsi(m))
         )
       );
-      // `recordPositions` trả kết quả THEO ĐÚNG THỨ TỰ đầu vào -> ghép được
-      // "bản ghi này có phải mới không" về đúng con tàu.
-      const newMmsis = new Set<string>();
-      rows.forEach((row, index) => {
-        const mmsi = row.position?.mmsi ?? null;
-        if (isValidMmsi(mmsi) && saved[index]?.status === "SAVED") newMmsis.add(mmsi!);
+
+      // ẢNH CHỤP canonical TRƯỚC khi phân xử.
+      //
+      // Phải đọc ở ĐÂY, không phải sau `resolveAndStore`: sau khi phân xử thì
+      // MỌI con tàu đều đã có canonical, và "mới" sẽ luôn bằng 0.
+      //
+      // ⛔ TUYỆT ĐỐI không suy "tàu mới" từ `ObservationSaveStatus.SAVED`.
+      // Một `ProviderPositionResult` sinh HAI observation (IDENTITY + POSITION),
+      // nên đếm bản ghi SAVED cho ra đúng gấp đôi số tàu — đó chính là lỗi
+      // 59 tàu -> newVesselCount 118. Observation mới ≠ tàu mới.
+      const existing = await this.deps.currentVesselRepository.findManyByMmsi(mmsis);
+      const existingByMmsi = new Map(
+        existing.map((vessel) => [vessel.vesselKey.mmsi ?? "", vessel])
+      );
+      const newMmsis = new Set(mmsis.filter((mmsi) => !existingByMmsi.has(mmsi)));
+      newVesselCount = newMmsis.size;
+
+      // Observation vẫn ghi đủ hai nhóm như cũ — không đổi ngữ nghĩa lưu trữ
+      // chỉ để sửa một con số thống kê.
+      await this.deps.recorder.recordPositions(rows, {
+        parserVersion: "vesselfinder-map-v1",
       });
+
+      // Phân xử cho MỌI tàu, không chỉ tàu mới: tàu cũ vẫn cần cập nhật vị trí.
       for (const mmsi of mmsis) await this.deps.resolveAndStore.execute({ mmsi });
 
       // Hoàn thiện VesselBasics là công việc RIÊNG và CÓ TRẦN (§23/§24):
       // quét ra 500 tàu không có nghĩa là bắn 500 lượt tra cứu.
       if (this.deps.completeBasics !== undefined) {
         const budget = this.deps.completionBudget ?? COMPLETION_BUDGET_PER_CYCLE;
-        const ordered = await this.prioritiseCandidates(mmsis, newMmsis);
+        // Dùng lại ĐÚNG ảnh chụp ở trên -> một region vẫn chỉ một truy vấn canonical.
+        const ordered = this.prioritiseCandidates(mmsis, newMmsis, existingByMmsi);
         for (const mmsi of ordered.slice(0, budget)) {
           const result = await this.deps.completeBasics.execute(mmsi);
           completionRequests += result.requests;
