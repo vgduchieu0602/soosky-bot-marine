@@ -1,4 +1,4 @@
-# GLOBAL_DISCOVERY_ARCHITECTURE — Phase 10.1 (thiết kế, KHÔNG implement)
+# Kiến trúc tìm tàu toàn cầu — giai đoạn 10.1 (thiết kế, KHÔNG lập trình)
 
 > Trả lời một câu: **làm sao phủ gần hết đội tàu thế giới mà không quét mù cả bản đồ và không tiêu tiền?**
 >
@@ -71,7 +71,7 @@ Vì sao cần cả hai: A một mình phải chờ tàu tình cờ xuất hiện
 
 ---
 
-## 5. Discovery ≠ Enrichment
+## 5. Tìm tàu khác với làm giàu dữ liệu
 
 Đây là ranh giới quan trọng nhất của toàn phase.
 
@@ -218,7 +218,7 @@ Nguồn không cho mốc thời gian → độ tươi của vị trí đó là *
 
 ---
 
-## 9. Vessel universe
+## 9. Tập hợp toàn bộ tàu đã biết
 
 ```ts
 // ⚠️ CHƯA VIẾT. Collection đề xuất: `known_vessels`.
@@ -475,7 +475,7 @@ Phần lớn đã có trong `SourceHealthSnapshot` (P4) — thiếu **median lat
 
 ---
 
-## 20. `ScanArea` — LEGACY
+## 20. `ScanArea` — CODE CŨ
 
 | | |
 |---|---|

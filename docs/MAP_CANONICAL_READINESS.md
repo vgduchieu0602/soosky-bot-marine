@@ -1,8 +1,8 @@
-# MAP_CANONICAL_READINESS — phase MAP-1
+# Chuẩn bị dữ liệu chuẩn cho bản đồ — giai đoạn MAP-1
 
 > Chuẩn bị `canonical_current_vessels` để **sau này** Marine API truy vấn tàu theo viewport/bbox.
 >
-> Phase này **không** tạo endpoint, **không** clustering, **không** đụng production.
+> Giai đoạn này **không** tạo endpoint, **không** clustering, **không** đụng production.
 
 ---
 
@@ -236,7 +236,7 @@ Không đáng kể so với `vessel_observations` (hàng chục GB — AIS-5 §1
 
 ---
 
-## 9. File
+## 9. Danh sách file
 
 | File | |
 |---|---|

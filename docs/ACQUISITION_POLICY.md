@@ -1,4 +1,4 @@
-# ACQUISITION_POLICY — Phase 9.1 (thiết kế, KHÔNG implement)
+# Chính sách thu thập dữ liệu — giai đoạn 9.1 (thiết kế, KHÔNG lập trình)
 
 > Trả lời đúng bảy câu hỏi: **khi nào dữ liệu local là đủ · khi nào cần lấy thêm · lấy từ nguồn nào · khi nào dừng · khi nào mới được tiêu tiền · làm sao không gọi mọi nguồn mỗi request · làm sao không trùng AISStream.**
 >
@@ -6,9 +6,9 @@
 
 ---
 
-## A. Goals / Non-goals
+## A. Mục tiêu và những gì nằm ngoài phạm vi
 
-### Goals
+### Mục tiêu
 
 | # | Mục tiêu |
 |---|---|
@@ -19,7 +19,7 @@
 | G5 | Cổng chặn nguồn trả tiền có **4 điều kiện**, không phải "free lỗi thì gọi paid" |
 | G6 | Không mở connection AISStream thứ hai |
 
-### Non-goals (P9.1)
+### Nằm ngoài phạm vi (P9.1)
 
 Không implement orchestrator · không client MyShipTracking · không gọi API trả tiền · không Redis · không queue · không event bus · không scheduler/cron · không change stream · không mở AISStream · **không sửa resolver** · **không sửa provider** · không sửa Marine/FE · không bulk crawl · không auto-refresh toàn DB.
 
@@ -74,7 +74,7 @@ flowchart TD
     style C fill:#f3e5f5
 ```
 
-### B.1 Resolution ≠ Acquisition
+### B.1 Giải dữ liệu khác với thu thập dữ liệu
 
 | | Resolution (P8, ĐÃ CÓ) | Acquisition (P9, CHƯA CÓ) |
 |---|---|---|
@@ -89,7 +89,7 @@ flowchart TD
 
 ---
 
-## C. Data Need model
+## C. Mô hình nhu cầu dữ liệu
 
 Nhu cầu là **đầu vào của người gọi**, không phải thứ suy ra từ dữ liệu.
 
@@ -116,7 +116,7 @@ need: PARTICULARS + fields[builtYear]  -> "thiếu builtYear là CHƯA đủ"
 
 ---
 
-## D. Sufficiency rules
+## D. Luật xác định "đã đủ dữ liệu"
 
 ### D.0 Nguyên tắc chống đuổi theo sự hoàn hảo
 
@@ -206,7 +206,7 @@ Vì sao position nới ở `FULL`: `FULL` là nhu cầu **hiển thị hồ sơ 
 
 ---
 
-## E. Source selection rules
+## E. Luật chọn nguồn
 
 ### E.1 Thứ tự theo chi phí — bắt buộc
 
@@ -271,7 +271,7 @@ Ba trường hợp đã có bằng chứng, không phải giả thuyết:
 
 ---
 
-## F. Dùng capability matrix như thế nào
+## F. Dùng bảng năng lực nguồn như thế nào
 
 Chọn nguồn = **truy vấn matrix**, không viết `if (source === "shipfinder")`.
 
@@ -289,7 +289,7 @@ Mặc định an toàn của `capabilityQueries` khớp sẵn với §E.1: `incl
 
 ---
 
-## G. Source health handling
+## G. Xử lý sức khoẻ của nguồn
 
 Đọc từ `SourceHealthTracker` đã có (P4) — **không** dựng bộ đếm thứ hai.
 
@@ -320,7 +320,7 @@ Mặc định an toàn của `capabilityQueries` khớp sẵn với §E.1: `incl
 
 ---
 
-## H. Stop conditions
+## H. Điều kiện dừng
 
 Sau **MỖI** nguồn, không phải sau khi hết nguồn:
 
@@ -376,7 +376,7 @@ Ngược lại: `NOT_FOUND` / lỗi → **0 observation mới** → resolve lạ
 
 ---
 
-## I. Free-source attempt budget
+## I. Ngân sách thử nguồn miễn phí
 
 ### I.1 Số lần gọi
 
@@ -400,7 +400,7 @@ Kiểm ngân sách **TRƯỚC** khi bắt đầu attempt tiếp theo, **không**
 
 ---
 
-## J. Recent attempt suppression
+## J. Chặn thử lại quá gần nhau
 
 ### J.1 Vấn đề
 
@@ -444,7 +444,7 @@ Dòng cuối là quy tắc chống vòng lặp mạnh nhất: nếu vừa crawl 
 
 ---
 
-## K. Request coalescing
+## K. Gộp các request trùng nhau
 
 10 yêu cầu đồng thời cùng MMSI **không được** thành 10 lượt crawl giống hệt.
 
@@ -460,7 +460,7 @@ key = `${mmsi ?? imo}|${need}|${requiredFields.sort().join(",")}`
 
 ---
 
-## L. Paid fallback gate
+## L. Cổng chặn nhánh trả phí
 
 ### L.1 Bốn điều kiện — phải đủ CẢ BỐN
 
@@ -487,7 +487,7 @@ local → mọi nguồn free LIÊN QUAN → re-resolve → đánh giá lại →
 
 ⛔ Một lần `429`/`403` từ một nguồn free **không** mở cổng paid. Đó là sự cố tạm; nguồn free khác vẫn còn, và cooldown của P4 sẽ tự hết hạn.
 
-### L.2 Opt-in
+### L.2 Phải bật rõ ràng mới dùng
 
 `allowPaidFallback` **mặc định `false`**.
 
@@ -520,7 +520,7 @@ Mặc định `true` nghĩa là mọi đường gọi tương lai — API mới,
 
 ---
 
-## M. AISStream rule
+## M. Luật với AISStream
 
 > **Bot Phase 9 KHÔNG mở connection AISStream.**
 
@@ -536,9 +536,9 @@ Nếu sau này dữ liệu canonical của Marine được **chia sẻ** cho bot
 
 ---
 
-## N. Proposed orchestration flow
+## N. Luồng điều phối đề xuất
 
-### N.1 API concept — CHỈ thiết kế
+### N.1 Hình dung API — CHỈ là thiết kế
 
 ```ts
 // ⚠️ CHƯA IMPLEMENT. Đây là hình dạng đề xuất cho P9.2.
@@ -558,7 +558,7 @@ interface AcquireVesselDataResult {
 }
 ```
 
-### N.2 Compose hai use case đã có — KHÔNG merge
+### N.2 Ghép hai use case đã có — KHÔNG gộp làm một
 
 ```mermaid
 sequenceDiagram
@@ -590,7 +590,7 @@ sequenceDiagram
 
 ⛔ **Không merge code** của `CollectVesselObservations` và `ResolveAndStoreCurrentVessel`. Hai use case đó tách nhau có chủ ý: crawl hỏng không được kéo theo canonical hỏng, và resolve lại không được sinh request lên nguồn. Acquisition **gọi** chúng, không nuốt chúng.
 
-### N.3 Sync hay background — chốt cho Phase A
+### N.3 Chạy đồng bộ hay chạy nền — chốt cho giai đoạn A
 
 **Chọn: đồng bộ, có chặn (synchronous bounded).**
 
@@ -607,7 +607,7 @@ sequenceDiagram
 
 Thấy chật thì phase sau thêm hàng đợi — **không** thêm trước.
 
-### N.4 Attempt trace
+### N.4 Vết ghi lại từng lần thử
 
 Mỗi lần cân nhắc một nguồn ghi một dòng, **kể cả khi không gọi**:
 
@@ -640,7 +640,7 @@ Không persist ở P9.1/P9.2. Trace sống trong kết quả trả về, đủ �
 
 ---
 
-## O. Decision tables
+## O. Bảng quyết định
 
 ### O.1 Theo need
 
@@ -680,7 +680,7 @@ Dòng cuối cùng có hệ quả vận hành trực tiếp: **yêu cầu chỉ 
 
 ---
 
-## P. Real examples
+## P. Ví dụ thực tế
 
 Sáu ca, dùng số liệu thật của AGIA DOXA (MMSI 636018086) sau POC P6.4/P7.4.
 
@@ -773,7 +773,7 @@ Trace: `MYSHIPTRACKING · SKIPPED · PAID_NOT_ALLOWED`.
 
 ⚠️ **Không ném exception.** "Không có `grossTonnage`" là câu trả lời hợp lệ về thế giới, không phải sự cố hệ thống.
 
-### P.6 Paid được phép — P9.3+, chưa implement
+### P.6 Trả phí được cho phép — P9.3 trở đi, chưa lập trình
 
 ```
 Yêu cầu:    need = PARTICULARS · requiredFields = [grossTonnage]
@@ -790,7 +790,7 @@ P9.1 dừng ở đây. Không endpoint, không tên field, không giả định 
 
 ---
 
-## P9.2 · Trạng thái implementation
+## P9.2 · Trạng thái đã lập trình
 
 Hiện thực **mục 1, 2 và 4 (một phần)** của §Q. Chỉ phần **local**: checker dừng **trước** ranh giới mạng.
 
@@ -840,7 +840,7 @@ Chọn nguồn · health · ngân sách · chặn theo lần thử gần nhất 
 
 ---
 
-## P9.3 · Trạng thái implementation
+## P9.3 · Trạng thái đã lập trình
 
 Hiện thực **mục 3** của §Q. Vẫn **chưa chạm mạng**: selector trả về *kế hoạch*, không thực hiện nó.
 
@@ -931,7 +931,7 @@ Ngân sách attempt/thời gian · single-flight · cổng paid · orchestrator.
 
 ---
 
-## P9.4 · Trạng thái implementation
+## P9.4 · Trạng thái đã lập trình
 
 Hiện thực **mục 4** của §Q — vòng orchestration **đồng bộ, có chặn**. Đây là phase đầu tiên của §9 thực sự **chạm mạng**.
 

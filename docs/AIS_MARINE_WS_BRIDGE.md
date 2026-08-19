@@ -1,8 +1,8 @@
-# AIS_MARINE_WS_BRIDGE — phase AIS-2
+# Cầu WebSocket AIS nội bộ với Marine — giai đoạn AIS-2
 
 > Client WebSocket đọc stream AIS **nội bộ** mà Soosky-marine-api production đã phát sẵn, rồi đẩy qua mapper AIS-1.
 >
-> Phase này **CHỈ** là transport. Không Mongo, không recorder, không resolver, không gộp mẻ.
+> Giai đoạn này **CHỈ** là transport. Không Mongo, không recorder, không resolver, không gộp mẻ.
 >
 > Tiếp nối [AIS_CANONICAL_INGESTION.md](./AIS_CANONICAL_INGESTION.md) (AIS-1 — mapping).
 
@@ -133,7 +133,7 @@ POC đã nối `SIGINT`/`SIGTERM` → `stop()`. Bootstrap production chưa cần
 
 ---
 
-## 5. Reconnect
+## 5. Kết nối lại
 
 Backoff mũ **có trần**, single-flight:
 
@@ -245,7 +245,7 @@ Không tự chế heartbeat tầng ứng dụng: production không có phía đ�
 
 ---
 
-## 11. Type mới của production sau này
+## 11. Loại message mới của production sau này
 
 Nếu production broadcast thêm loại message:
 
@@ -259,7 +259,7 @@ Việc phải làm khi đó: cập nhật `MarineAisTypes.ts` + [AIS_CANONICAL_I
 
 ---
 
-## 12. Dependency
+## 12. Phụ thuộc
 
 Thêm `ws@^8` (runtime) + `@types/ws` (dev).
 
@@ -273,11 +273,11 @@ Thêm `ws@^8` (runtime) + `@types/ws` (dev).
 
 ---
 
-## 13. Chưa autostart
+## 13. Chưa tự khởi động
 
 `container.ts` **không** được sửa. Không service nào, không test nào, không lệnh build nào tự mở connection.
 
-Đường duy nhất tới socket ở phase này:
+Đường duy nhất tới socket ở giai đoạn này:
 
 ```bash
 npm run marine-ais:poc
@@ -294,7 +294,7 @@ In tối đa vài sample một dòng (mmsi, lat/lng hoặc name/type, `sourceRec
 
 ---
 
-## 14. File
+## 14. Danh sách file
 
 | File | |
 |---|---|

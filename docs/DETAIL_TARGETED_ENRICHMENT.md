@@ -1,4 +1,4 @@
-# DETAIL_TARGETED_ENRICHMENT — phase DETAIL-2
+# Làm giàu chi tiết có chủ đích — giai đoạn DETAIL-2
 
 > Bấm vào một con tàu → đọc canonical trước; thiếu thì **chỉ** lấy đúng nhóm đang thiếu, từ **nguồn free** đã có.
 >
@@ -61,7 +61,7 @@ Canonical `FOUND` + `needsRefresh = false` + `forceRefresh = false` → **trả 
 
 ---
 
-## 3. Chọn nguồn theo capability
+## 3. Chọn nguồn theo năng lực
 
 Cầu nối giữa DETAIL-1 và P9 là **mười dòng**, không phải một tầng abstraction mới:
 
@@ -85,7 +85,7 @@ Nhờ vậy DETAIL-2 **thừa hưởng toàn bộ** năm cổng lọc của P9 m
 
 ⛔ Không bảng ưu tiên thứ hai, không `if (group === PARTICULARS) return SHIPINFO`.
 
-### Nguồn nào lấp được nhóm nào (từ capability matrix)
+### Nguồn nào lấp được nhóm nào (theo bảng năng lực nguồn)
 
 | Nhóm | Nguồn free CONFIRMED |
 |---|---|
@@ -213,7 +213,7 @@ Log **một dòng** mỗi lượt: định danh · nhóm cần · nguồn đã t
 
 ---
 
-## 10. File
+## 10. Danh sách file
 
 | File | |
 |---|---|

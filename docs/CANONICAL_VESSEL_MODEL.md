@@ -1,227 +1,241 @@
-# CANONICAL_VESSEL_MODEL — Phase A1
+# Mô hình tàu chuẩn — Giai đoạn A1
 
-> Chuẩn bị domain model cho crawler multi-source. **Mở rộng incremental**, không rewrite.
-> Tiền đề: [CURRENT_ARCHITECTURE.md](./CURRENT_ARCHITECTURE.md), [CURRENT_DATA_FLOW.md](./CURRENT_DATA_FLOW.md).
-> A1 **không** đụng persistence, HTTP contract, crawler, scheduler, FE.
+> Chuẩn bị model domain cho crawler nhiều nguồn. Đây là **mở rộng từng bước**, không phải viết lại.
+> Đọc trước: [CURRENT_ARCHITECTURE.md](./CURRENT_ARCHITECTURE.md), [CURRENT_DATA_FLOW.md](./CURRENT_DATA_FLOW.md).
+> A1 **không** đụng tới lưu trữ, hợp đồng HTTP, crawler, scheduler hay frontend.
 
 ---
 
-## 1. Existing model TRƯỚC A1
+## 1. Model đang có TRƯỚC A1
 
 Hai class, cả hai vẫn đang chạy production và **không bị xoá**.
 
 ### `src/domain/entities/Vessel.ts` — lý lịch tàu
-| Field | Kiểu | Ai ghi thật |
+
+| Trường | Kiểu | Ai thực sự ghi vào |
 |---|---|---|
-| `mmsi` | `string` (khoá, BR-01: rơi về `imo` nếu thiếu) | ScanArea, Enrich, Crawl |
+| `mmsi` | `string` (khoá; theo luật BR-01 sẽ lấy `imo` thay thế nếu thiếu) | ScanArea, Enrich, Crawl |
 | `imo` | `string \| null` | Enrich, Crawl |
 | `name` | `string \| null` | ScanArea (mp2), Enrich |
-| `type` | `string \| null` | Enrich (nhãn "AIS Type") |
+| `type` | `string \| null` | Enrich (lấy từ nhãn "AIS Type") |
 | `callsign` | `string \| null` | Enrich |
-| `country` | `string \| null` | Enrich (nhãn "AIS Flag") |
+| `country` | `string \| null` | Enrich (lấy từ nhãn "AIS Flag") |
 | `lengthM` / `widthM` / `draughtM` | `number \| null` | Enrich |
-| `flagCode`, `yearBuilt`, `grossTonnage`, `deadweight`, `photoUrl` | `… \| null` | **không ai ghi** — mapper không bóc |
+| `flagCode`, `yearBuilt`, `grossTonnage`, `deadweight`, `photoUrl` | `… \| null` | **không ai ghi** — mapper không bóc tách những trường này |
 
 ### `src/domain/entities/VesselPosition.ts` — vị trí
-| Field | Kiểu | Ghi chú |
+
+| Trường | Kiểu | Ghi chú |
 |---|---|---|
-| `mmsi` / `imo` | `string \| null` | khoá rơi về `imo` |
-| `lat` / `lon` | `number \| null` | BR-03 loại toạ độ ngoài phạm vi |
+| `mmsi` / `imo` | `string \| null` | khoá; thiếu mmsi thì lấy imo |
+| `lat` / `lon` | `number \| null` | luật BR-03 loại bỏ toạ độ ngoài phạm vi |
 | `speedKn` / `courseDeg` / `headingDeg` | `number \| null` | `headingDeg` **không ai ghi** |
 | `navStatusCode` / `navStatusText` | `number \| null` / `string` | code **không ai ghi**; text mặc định `"Unknown"` |
 | `destination` / `eta` | `string \| null` | **không ai ghi** |
-| `positionTime` | `string \| null` | chuỗi TƯƠNG ĐỐI kiểu `"0 min ago"` |
-| `source` | `"vesselfinder" \| "unknown"` | **union đóng** |
-| `latLonApproximate` | `boolean` | toạ độ trang chi tiết bị làm tròn |
-| `receivedAt` | `string` ISO | **không phải Date** |
+| `positionTime` | `string \| null` | chuỗi **tương đối** kiểu `"0 min ago"` |
+| `source` | `"vesselfinder" \| "unknown"` | **union đóng**, chỉ hai giá trị |
+| `latLonApproximate` | `boolean` | toạ độ lấy từ trang chi tiết bị làm tròn |
+| `receivedAt` | `string` ISO | **là chuỗi, không phải Date** |
 
-Ba giới hạn chặn multi-source (audit A0 §6): `source` là union đóng (D-3), timestamp là chuỗi (D-13), không có provenance per-record (D-2).
+Ba giới hạn này chặn đường đi tới đa nguồn (theo rà soát A0 mục 6): `source` là union đóng (nợ D-3), mốc thời gian là chuỗi (nợ D-13), và không có thông tin nguồn gốc cho từng bản ghi (nợ D-2).
 
 ---
 
-## 2. Canonical model SAU A1
+## 2. Model chuẩn SAU A1
 
-Không có class mới, không có framework entity. Chỉ interface + value object thuần.
+Không thêm class mới, không dùng entity của framework nào. Chỉ có interface và value object thuần.
 
 ```
 src/domain/
   value-objects/
-    VesselSource.ts        # 10 nguồn, giá trị = chuỗi ĐANG lưu trong DB
-    SourceMetadata.ts      # provenance: source + fetchedAt + sourceReceivedAt + confidence
-    VesselField.ts         # (thêm ở A2) từ vựng 28 field canonical, dùng cho source matrix
+    VesselSource.ts        # 10 nguồn; giá trị chính là chuỗi ĐANG nằm trong DB
+    SourceMetadata.ts      # nguồn gốc: source + fetchedAt + sourceReceivedAt + confidence
+    VesselField.ts         # (thêm ở A2) từ vựng 28 trường chuẩn, dùng cho bảng năng lực nguồn
   validators/
     identifiers.ts         # isValidMmsi, isValidImo (checksum ISO 8713), imoCheckDigit
     geo.ts                 # isValidLatitude, isValidLongitude, isValidCoordinates
     motion.ts              # isValidSpeed, isValidCourse, isValidHeading
   canonical/
-    VesselIdentity.ts      # nhóm A + value object VesselFlag
-    VesselPositionReport.ts# nhóm B + value object NavigationStatus
-    VesselParticulars.ts   # nhóm C
-    VesselVoyage.ts        # nhóm D
-    legacyMapping.ts       # entity hiện tại -> canonical (thuần, CHƯA nối vào đâu)
-  entities/                # GIỮ NGUYÊN, chỉ sửa VesselPosition 2 chỗ (xem §5)
+    VesselIdentity.ts        # nhóm A + value object VesselFlag
+    VesselPositionReport.ts  # nhóm B + value object NavigationStatus
+    VesselParticulars.ts     # nhóm C
+    VesselVoyage.ts          # nhóm D
+    legacyMapping.ts         # entity hiện tại -> chuẩn (thuần tuý, CHƯA nối vào đâu)
+  entities/                  # GIỮ NGUYÊN, chỉ sửa VesselPosition ở 2 chỗ (xem mục 5)
 ```
 
 ### Nguyên tắc thiết kế
-- **Mỗi bản ghi canonical = "nguồn X nói gì về tàu Y"**, chưa phải kết quả đã hợp nhất. Vì vậy `metadata: SourceMetadata` là **bắt buộc** ở cả 4 nhóm — không có provenance thì không arbitrate được.
-- `mmsi: string` bắt buộc ở cả 4 nhóm (khớp BR-01 hiện tại). Mọi field dữ liệu khác **optional** — không nguồn nào cấp đủ.
-- Không import mongoose/express/crawler. Không chứa field của schema nguồn cụ thể.
-- Không CQRS, không event sourcing, không DI framework, không generic entity.
 
-### `VesselSource` — thay union đóng
-Value = **chuỗi chữ thường đang nằm trong MongoDB**, nên `"vesselfinder"` và `"unknown"` giữ nguyên bit-for-bit → **không cần migration**.
+- **Mỗi bản ghi chuẩn nghĩa là "nguồn X nói gì về tàu Y"**, chưa phải kết quả đã hợp nhất. Vì vậy `metadata: SourceMetadata` là **bắt buộc** ở cả 4 nhóm — không có nguồn gốc thì không thể phân xử khi các nguồn mâu thuẫn.
+- `mmsi: string` bắt buộc ở cả 4 nhóm (khớp luật BR-01 hiện tại). Mọi trường dữ liệu khác đều **tuỳ chọn** — không nguồn nào cấp đủ hết.
+- Không import mongoose/express/crawler. Không chứa trường thuộc schema riêng của một nguồn cụ thể.
+- Không CQRS, không event sourcing, không DI framework, không entity generic.
 
-`AISSTREAM · VESSELFINDER · SHIPINFO · SHIPFINDER · BOATNERD · MARINETRAFFIC_LIVE · SHIPTRAFFIC · VESSELTRACKER · MYSHIPTRACKING · UNKNOWN`
+### `VesselSource` — thay cho union đóng
 
-`parseVesselSource(raw)` nhận cả dạng hằng viết hoa lẫn dạng DB, giá trị lạ → `UNKNOWN`, **không ném lỗi** (dữ liệu cũ không được phép làm sập tiến trình đọc).
+Giá trị chính là **chuỗi chữ thường đang nằm trong MongoDB**, nên `"vesselfinder"` và `"unknown"` giữ nguyên từng byte, do đó **không cần migrate dữ liệu**.
 
-### `SourceMetadata` — tách 2 mốc thời gian
-| Field | Bắt buộc | Ý nghĩa |
+Danh sách: `AISSTREAM · VESSELFINDER · SHIPINFO · SHIPFINDER · BOATNERD · MARINETRAFFIC_LIVE · SHIPTRAFFIC · VESSELTRACKER · MYSHIPTRACKING · UNKNOWN`
+
+`parseVesselSource(raw)` nhận cả dạng hằng viết hoa lẫn dạng lưu trong DB. Gặp giá trị lạ thì trả `UNKNOWN` và **không ném lỗi** — dữ liệu cũ không được phép làm sập tiến trình đọc.
+
+### `SourceMetadata` — tách hai mốc thời gian
+
+| Trường | Bắt buộc | Ý nghĩa |
 |---|---|---|
-| `source` | ✅ | nguồn cấp bản ghi |
-| `fetchedAt` | ✅ `Date` | lúc **bot** lấy được — đồng hồ của ta |
-| `sourceReceivedAt` | optional `Date \| null` | lúc **nguồn** khai báo nhận tín hiệu — đồng hồ của nguồn |
-| `confidence` | optional `number \| null` | 0..1, do policy sau này gán |
+| `source` | có | nguồn đã cấp bản ghi này |
+| `fetchedAt` | có, kiểu `Date` | lúc **bot** lấy được — đồng hồ của ta |
+| `sourceReceivedAt` | tuỳ chọn, `Date \| null` | lúc **nguồn** khai báo đã nhận tín hiệu — đồng hồ của nguồn |
+| `confidence` | tuỳ chọn, `number \| null` | 0..1, do chính sách sau này gán |
 
-Tách 2 mốc là lý do tồn tại của value object này: so độ tươi giữa các nguồn phải dùng `sourceReceivedAt`, không phải `fetchedAt`. Entity hiện tại chỉ có **một** mốc (`receivedAt` = lúc ghi DB) nên không phân biệt được.
+Việc tách hai mốc chính là lý do value object này tồn tại: muốn so độ tươi giữa các nguồn thì phải dùng `sourceReceivedAt`, không phải `fetchedAt`. Entity hiện tại chỉ có **một** mốc (`receivedAt` = lúc ghi DB) nên không phân biệt được hai chuyện đó.
 
-`createSourceMetadata()` ném lỗi ngay khi gặp Invalid Date hoặc `confidence` ngoài [0,1].
+`createSourceMetadata()` ném lỗi ngay khi gặp Invalid Date hoặc `confidence` nằm ngoài khoảng [0,1].
 
 ---
 
-## 3. Mapping: entity hiện tại → canonical
+## 3. Ánh xạ: entity hiện tại → model chuẩn
 
-Bảng dưới được **khoá bằng test** trong `src/domain/canonical/legacyMapping.test.ts`. Sửa mapping mà quên sửa bảng này → test đỏ.
+Bảng dưới đây được **khoá bằng test** trong `src/domain/canonical/legacyMapping.test.ts`. Sửa mapping mà quên sửa bảng này thì test sẽ đỏ.
 
-### Nhóm A · Identity ← `Vessel`
-| Canonical | Legacy | Ghi chú |
+### Nhóm A · Danh tính ← `Vessel`
+
+| Chuẩn | Cũ | Ghi chú |
 |---|---|---|
 | `mmsi` | `Vessel.mmsi` | 1-1 |
 | `imo` | `Vessel.imo` | 1-1 |
 | `name` | `Vessel.name` | 1-1 |
 | `callsign` | `Vessel.callsign` | 1-1 |
-| `vesselType` | `Vessel.type` | đổi tên |
+| `vesselType` | `Vessel.type` | chỉ đổi tên |
 | `vesselTypeCode` | — | **luôn null**: mapper VesselFinder bỏ qua `#djson.ship_type` |
 | `flag.name` | `Vessel.country` | `country` thực chất là nhãn "AIS Flag" |
-| `flag.code` | `Vessel.flagCode` | legacy chưa bao giờ ghi → null |
-| `metadata` | — | mới |
+| `flag.code` | `Vessel.flagCode` | bản cũ chưa bao giờ ghi nên luôn null |
+| `metadata` | — | mới thêm |
 
-`flagCode` và `country` đều null → `flag = null` (không tạo object rỗng).
+Nếu cả `flagCode` và `country` đều null thì `flag = null` — không tạo object rỗng.
 
-### Nhóm B · Position ← `VesselPosition`
-| Canonical | Legacy | Ghi chú |
+### Nhóm B · Vị trí ← `VesselPosition`
+
+| Chuẩn | Cũ | Ghi chú |
 |---|---|---|
-| `mmsi` | `mmsi` | **bắt buộc**; legacy cho null → mapping trả `null` |
+| `mmsi` | `mmsi` | **bắt buộc**; bản cũ cho phép null nên mapping sẽ trả `null` |
 | `imo` | `imo` | 1-1 |
 | `lat` | `lat` | **bắt buộc** |
-| `lng` | `lon` | ⚠️ **đổi tên** `lon` → `lng` theo canonical spec |
-| `speed` | `speedKn` | bỏ hậu tố đơn vị, giá trị giữ nguyên knots |
+| `lng` | `lon` | **đổi tên** `lon` thành `lng` theo đặc tả chuẩn |
+| `speed` | `speedKn` | bỏ hậu tố đơn vị, giá trị vẫn là knot |
 | `course` | `courseDeg` | như trên |
 | `heading` | `headingDeg` | như trên |
 | `navStatus.code` | `navStatusCode` | gom vào value object |
-| `navStatus.text` | `navStatusText` | `"Unknown"` + code null → `navStatus = null` |
-| `latLngApproximate` | `latLonApproximate` | đổi tên theo `lng` |
-| `receivedAt` | `receivedAt` | ⚠️ **chuỗi ISO → `Date`** |
-| `metadata` | `source` (một phần) | `source` chuyển vào metadata |
-| — | `positionTime` | ❌ **KHÔNG map**: `"0 min ago"` là chuỗi tương đối, parse ra sẽ sai |
+| `navStatus.text` | `navStatusText` | nếu text là `"Unknown"` và code null thì `navStatus = null` |
+| `latLngApproximate` | `latLonApproximate` | đổi tên cho khớp với `lng` |
+| `receivedAt` | `receivedAt` | **chuỗi ISO đổi thành `Date`** |
+| `metadata` | `source` (một phần) | `source` chuyển vào trong metadata |
+| — | `positionTime` | **KHÔNG ánh xạ**: `"0 min ago"` là chuỗi tương đối, parse ra sẽ sai |
 
-`toVesselPositionReport()` trả `null` khi thiếu mmsi, thiếu/sai toạ độ, hoặc `receivedAt` không parse được.
+`toVesselPositionReport()` trả `null` khi thiếu mmsi, thiếu hoặc sai toạ độ, hoặc `receivedAt` không parse được.
 
-### Nhóm C · Particulars ← `Vessel`
-| Canonical | Legacy | Ghi chú |
+### Nhóm C · Thông số kỹ thuật ← `Vessel`
+
+| Chuẩn | Cũ | Ghi chú |
 |---|---|---|
-| `length` | `lengthM` | mét, giá trị giữ nguyên |
+| `length` | `lengthM` | mét, giữ nguyên giá trị |
 | `beam` | `widthM` | mét |
 | `draught` | `draughtM` | mét |
-| `builtYear` | `yearBuilt` | đổi tên |
-| `grossTonnage` / `deadweight` | 1-1 | legacy chưa bao giờ ghi |
+| `builtYear` | `yearBuilt` | chỉ đổi tên |
+| `grossTonnage` / `deadweight` | 1-1 | bản cũ chưa bao giờ ghi |
 
-⚠️ `draught` (mớn nước) đổi theo chuyến, khác `length`/`beam` là hằng số. Xếp chung nhóm để khớp canonical spec, nhưng merge policy sau này phải xử lý nó theo độ tươi.
+Lưu ý: `draught` (mớn nước) **thay đổi theo từng chuyến**, khác với `length`/`beam` là hằng số của con tàu. Xếp chung nhóm cho khớp đặc tả chuẩn, nhưng chính sách hợp nhất sau này phải xử lý nó theo độ tươi.
 
-### Nhóm D · Voyage ← `VesselPosition`
-| Canonical | Legacy |
+### Nhóm D · Hành trình ← `VesselPosition`
+
+| Chuẩn | Cũ |
 |---|---|
-| `destination` | `destination` (legacy chưa bao giờ ghi) |
-| `eta` | `eta` chuỗi → `Date \| null` |
-| `currentPort` / `currentPortArrivalAt` | ❌ không có nguồn |
-| `nextPort` / `nextPortEta` | ❌ không có nguồn |
-| `lastPort` / `lastPortDepartureAt` | ❌ không có nguồn |
+| `destination` | `destination` (bản cũ chưa bao giờ ghi) |
+| `eta` | `eta` dạng chuỗi, đổi thành `Date \| null` |
+| `currentPort` / `currentPortArrivalAt` | không có nguồn nào cấp |
+| `nextPort` / `nextPortEta` | không có nguồn nào cấp |
+| `lastPort` / `lastPortDepartureAt` | không có nguồn nào cấp |
 
-Nhóm rỗng nhất ở A1 — khai báo trước để nguồn sau đổ vào mà không phải sửa domain.
+Đây là nhóm rỗng nhất ở A1. Khai báo trước để khi có nguồn mới thì đổ dữ liệu vào mà không phải sửa domain.
 
 ### Chiều ngược lại
-`canonical → entity` **cố ý không viết**. A1 không đổi persistence nên không ai cần ghi ngược.
+
+Ánh xạ từ chuẩn về entity cũ **cố ý không viết**. A1 không đổi phần lưu trữ nên chưa ai cần ghi ngược.
 
 ---
 
-## 4. Đơn vị (canonical)
+## 4. Đơn vị đo (theo chuẩn)
 
-| Đại lượng | Đơn vị | Kiểu | Ràng buộc validator |
+| Đại lượng | Đơn vị | Kiểu | Ràng buộc |
 |---|---|---|---|
-| `lat` / `lng` | decimal degrees, WGS84 | `number` | `[-90,90]` / `[-180,180]`, hữu hạn |
-| `speed` | **knots** (SOG) | `number` | `[0, 102.2]` — 1023 = not available |
-| `course` | **degrees** (COG) | `number` | `[0, 360)` — 3600 = not available |
-| `heading` | **degrees** (true heading) | `number` | số nguyên `[0, 359]` — 511 = not available |
+| `lat` / `lng` | độ thập phân, WGS84 | `number` | `[-90,90]` / `[-180,180]`, phải hữu hạn |
+| `speed` | **knot** (tốc độ trên mặt đất, SOG) | `number` | `[0, 102.2]` — giá trị 1023 nghĩa là không có dữ liệu |
+| `course` | **độ** (hướng di chuyển, COG) | `number` | `[0, 360)` — giá trị 3600 nghĩa là không có dữ liệu |
+| `heading` | **độ** (hướng mũi tàu thật) | `number` | số nguyên `[0, 359]` — giá trị 511 nghĩa là không có dữ liệu |
 | `length` / `beam` / `draught` | **mét** | `number` | — |
 | `grossTonnage` | GT | `number` | — |
 | `deadweight` | tấn | `number` | — |
 | `builtYear` | năm | `number` | — |
-| `receivedAt`, `fetchedAt`, `sourceReceivedAt`, `eta`, `*ArrivalAt`, `*DepartureAt`, `*Eta` | **UTC `Date`** | `Date` | không nhận Invalid Date |
-| `destination`, `*Port` | chuỗi thô của nguồn | `string` | không chuẩn hoá ở domain (AIS destination do thuyền viên gõ tay) |
+| `receivedAt`, `fetchedAt`, `sourceReceivedAt`, `eta`, `*ArrivalAt`, `*DepartureAt`, `*Eta` | **`Date` theo UTC** | `Date` | không nhận Invalid Date |
+| `destination`, `*Port` | chuỗi thô của nguồn | `string` | không chuẩn hoá ở domain (ô destination trong AIS do thuyền viên gõ tay) |
 
-Ngưỡng speed/course/heading lấy theo AIS message 1/2/3 — đây là ranh giới của **dữ liệu**, không của một nguồn cụ thể, nên đặt ở domain là đúng chỗ.
+Các ngưỡng của speed/course/heading lấy theo bản tin AIS loại 1/2/3. Đây là ranh giới của **bản thân dữ liệu**, không phải của riêng nguồn nào, nên đặt ở tầng domain là đúng chỗ.
 
 ---
 
-## 5. Backward compatibility
+## 5. Tương thích ngược
 
 ### Đã sửa — đúng 1 file, 2 chỗ, hành vi KHÔNG đổi
-`src/domain/entities/VesselPosition.ts`:
 
-1. **`PositionSource` = alias của `VesselSource`** (mở rộng union).
-   - Tên type giữ nguyên → không import nào bị phá.
-   - Chỉ **nới rộng** tập giá trị hợp lệ → mọi phép gán `"vesselfinder"` / `"unknown"` đang có vẫn compile.
-   - `this.source = props.source ?? "unknown"` giữ nguyên — **không** chuẩn hoá giá trị đọc từ DB, nên `/positions` và popup FE (`render.js` in `p.source`) trả về y hệt trước.
-   - `MongoVesselRepository.toEntity()` giữ nguyên cast `as VesselPosition["source"]` — không đụng repository.
-2. **Bỏ `private static isValidLat/isValidLon`, gọi `validators/geo`.**
-   - Logic mới thêm `Number.isFinite`, nhưng `NaN`/`Infinity` vốn đã fail phép so sánh cũ → **kết quả y hệt** cho mọi input. BR-03 không đổi.
+Trong `src/domain/entities/VesselPosition.ts`:
 
-Có thêm `src/domain/entities/VesselPosition.test.ts` chốt cả hai điểm trên.
+1. **`PositionSource` trở thành alias của `VesselSource`** (nới rộng union).
+   - Tên type giữ nguyên nên không import nào bị vỡ.
+   - Chỉ **nới rộng** tập giá trị hợp lệ, nên mọi phép gán `"vesselfinder"` / `"unknown"` đang có vẫn biên dịch được.
+   - Dòng `this.source = props.source ?? "unknown"` giữ nguyên — **không** chuẩn hoá giá trị đọc từ DB, nên `/positions` và popup frontend (`render.js` in ra `p.source`) trả về y hệt như trước.
+   - `MongoVesselRepository.toEntity()` giữ nguyên phép ép kiểu `as VesselPosition["source"]` — không đụng vào repository.
+2. **Bỏ `private static isValidLat/isValidLon`, chuyển sang gọi `validators/geo`.**
+   - Logic mới thêm `Number.isFinite`, nhưng `NaN`/`Infinity` vốn đã trượt phép so sánh cũ, nên **kết quả y hệt** với mọi đầu vào. Luật BR-03 không đổi.
+
+Có thêm `src/domain/entities/VesselPosition.test.ts` để chốt cả hai điểm trên.
 
 ### Cố ý KHÔNG sửa
+
 | Thứ | Vì sao |
 |---|---|
-| `Vessel.ts` | Nối `isValidMmsi`/`isValidImo` vào constructor sẽ **ném lỗi trên dữ liệu đang có trong DB** (mmsi rơi về imo 7 số, mmsi bắt đầu bằng 0…). |
-| `GetVesselDetails` / `ManageWatchlist` regex `^\d{7,9}$` | Siết lại = đổi HTTP contract (request đang 200 sẽ thành 400). |
-| Mongoose schema, index, `latestpositions` | A1 không migrate DB. |
+| `Vessel.ts` | Nối `isValidMmsi`/`isValidImo` vào constructor sẽ **ném lỗi ngay trên dữ liệu đang có trong DB** (mmsi bị thay bằng imo 7 số, mmsi bắt đầu bằng số 0...). |
+| Regex `^\d{7,9}$` trong `GetVesselDetails` / `ManageWatchlist` | Siết chặt lại chính là đổi hợp đồng HTTP: request đang trả 200 sẽ thành 400. |
+| Schema Mongoose, index, `latestpositions` | A1 không migrate DB. |
 | `ScanArea`, `EnrichVesselTypes`, `CrawlFleetPositions` | Không đụng. |
-| `/positions`, `/vessel/:id` response | Không đổi field nào. |
-| FE `public/` | Không đụng. |
-| AISStream, nguồn mới, MyShipTracking | Không kết nối ở phase này. |
+| Response của `/positions`, `/vessel/:id` | Không đổi trường nào. |
+| Frontend trong `public/` | Không đụng. |
+| AISStream, nguồn mới, MyShipTracking | Chưa kết nối ở giai đoạn này. |
 
-### Validator CHƯA được nối vào đâu
-`isValidMmsi`, `isValidImo`, `isValidSpeed`, `isValidCourse`, `isValidHeading` hiện **không có caller production** — chỉ có test. Đây là chủ ý: nối vào ngay sẽ làm rơi dữ liệu đang chạy. Duy nhất `geo.ts` được nối (vì nó chính là logic cũ vừa tách ra).
+### Các validator CHƯA được nối vào đâu
 
-### `legacyMapping.ts` chưa có caller production
-Không use case / repository / route nào gọi. Nó tồn tại để (1) chứng minh canonical model biểu diễn đủ dữ liệu hiện có, (2) khoá bảng mapping §3 bằng test.
+`isValidMmsi`, `isValidImo`, `isValidSpeed`, `isValidCourse`, `isValidHeading` hiện **chưa có chỗ nào trong production gọi** — chỉ có test dùng. Đây là chủ ý: nối vào ngay sẽ làm rơi dữ liệu đang chạy. Riêng `geo.ts` thì đã được nối, vì nó chính là logic cũ vừa tách ra.
+
+### `legacyMapping.ts` cũng chưa có ai gọi
+
+Không use case, repository hay route nào gọi tới. Nó tồn tại để: (1) chứng minh model chuẩn biểu diễn được đủ dữ liệu hiện có, và (2) khoá bảng ánh xạ ở mục 3 bằng test.
 
 ---
 
-## 6. Persistence migration CHƯA thực hiện
+## 6. Phần migrate lưu trữ CHƯA làm
 
-Danh sách này là **nợ có chủ ý**, thuộc phase sau.
+Danh sách này là **nợ kỹ thuật có chủ ý**, thuộc các giai đoạn sau.
 
-| # | Chưa làm | Ảnh hưởng | Debt gốc |
+| # | Chưa làm | Ảnh hưởng | Nợ gốc |
 |---|---|---|---|
-| M-1 | `receivedAt` vẫn là **String ISO** trong Mongo, chưa đổi sang `Date` | không dùng được TTL index; so sánh vẫn theo chuỗi | D-13 |
-| M-2 | `latestpositions.mmsi` vẫn **unique** | 1 tàu vẫn chỉ giữ 1 vị trí, chưa phân biệt được nguồn | D-1 |
-| M-3 | Chưa có collection/field cho `SourceMetadata` | provenance mới chỉ tồn tại ở domain, chưa persist | D-2 |
-| M-4 | `savePositionLatest` vẫn `replaceOne` (last-write-wins) | ScanArea vẫn xoá `speed`/`course` mà Enrich vừa điền | D-1, §3 data-flow |
-| M-5 | Chưa tách 4 nhóm canonical thành 4 collection | `vessels`/`latestpositions` vẫn trộn Identity + Particulars | — |
-| M-6 | Chưa migrate `country` → `flag.name`, `flagCode` → `flag.code` | schema cũ giữ nguyên | — |
-| M-7 | Chưa xử lý `positionTime` (`"0 min ago"`) thành mốc thời gian thật | canonical cố ý bỏ field này | — |
-| M-8 | `MongoVesselRepository.toEntity()` vẫn cast `as` thay vì `parseVesselSource()` | giá trị source lạ trong DB vẫn lọt qua nguyên văn | D-3 |
-| M-9 | N+1 write trong `ScanArea.saveShips()` | chưa đụng theo yêu cầu A1 | D-8 |
+| M-1 | `receivedAt` trong Mongo vẫn là chuỗi ISO, chưa đổi sang `Date` | không dùng được TTL index; so sánh vẫn theo chuỗi | D-13 |
+| M-2 | `latestpositions.mmsi` vẫn unique | một tàu vẫn chỉ giữ được một vị trí, chưa phân biệt theo nguồn | D-1 |
+| M-3 | Chưa có collection hay trường nào cho `SourceMetadata` | thông tin nguồn gốc mới tồn tại ở domain, chưa được lưu | D-2 |
+| M-4 | `savePositionLatest` vẫn dùng `replaceOne` (ai ghi sau thì thắng) | ScanArea vẫn xoá mất `speed`/`course` mà Enrich vừa điền | D-1, mục 3 của tài liệu luồng dữ liệu |
+| M-5 | Chưa tách 4 nhóm chuẩn thành 4 collection | `vessels`/`latestpositions` vẫn trộn lẫn danh tính và thông số kỹ thuật | — |
+| M-6 | Chưa migrate `country` sang `flag.name`, `flagCode` sang `flag.code` | schema cũ giữ nguyên | — |
+| M-7 | Chưa xử lý `positionTime` (`"0 min ago"`) thành mốc thời gian thật | model chuẩn cố ý bỏ trường này | — |
+| M-8 | `MongoVesselRepository.toEntity()` vẫn ép kiểu bằng `as` thay vì gọi `parseVesselSource()` | giá trị source lạ trong DB vẫn lọt qua nguyên văn | D-3 |
+| M-9 | Còn lỗi N+1 khi ghi trong `ScanArea.saveShips()` | chưa đụng, đúng theo phạm vi A1 | D-8 |
 
 ---
 
@@ -229,9 +243,7 @@ Danh sách này là **nợ có chủ ý**, thuộc phase sau.
 
 ```
 npm run build   # tsc, không lỗi
-npm test        # 98 pass / 0 fail  (baseline trước A1: 56 pass)
+npm test        # 98 pass / 0 fail  (mức nền trước A1: 56 pass)
 ```
 
-Cập nhật sau A2: 127 pass / 0 fail. A2 **không sửa** file canonical nào — chỉ thêm
-`VesselField.ts` (từ vựng field) và tầng `src/application/capabilities/`.
-Xem [SOURCE_CAPABILITY_MATRIX.md](./SOURCE_CAPABILITY_MATRIX.md).
+Cập nhật sau A2: 127 pass / 0 fail. A2 **không sửa** file chuẩn nào — chỉ thêm `VesselField.ts` (từ vựng trường dữ liệu) và tầng `src/application/capabilities/`. Xem thêm [SOURCE_CAPABILITY_MATRIX.md](./SOURCE_CAPABILITY_MATRIX.md).

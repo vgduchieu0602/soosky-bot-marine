@@ -1,4 +1,4 @@
-# BOT_MARINE_INTEGRATION — phase INTEGRATION-1 (audit + contract)
+# Tích hợp Bot với Marine — giai đoạn INTEGRATION-1 (rà soát + hợp đồng)
 
 > Cách để **Soosky-marine-api** dùng dữ liệu canonical của **Soosky-bot-marine** mà không phải viết lại production.
 >
@@ -39,7 +39,7 @@
 | Detail | `/v2/vessel/details` → cache `v2vessels` **vĩnh viễn** (không kiểm tuổi) → nếu miss thì gọi MyShipTracking `extended` (3 credit) |
 | Status | `/v2/vessel/status` → cache vĩnh viễn → MyShipTracking `simple` (1 credit) |
 | AIS | relay WebSocket `/ais-stream`, **không lưu** |
-| Deps | express · mongoose · ws · dotenv |
+| Phụ thuộc | express · mongoose · ws · dotenv |
 
 ---
 
@@ -93,7 +93,7 @@ Nếu chung cluster thì hai tiến trình **đang** ghi đè nhau ngay bây gi�
 
 ---
 
-## 4. Contract matrix — MAP
+## 4. Bảng đối chiếu hợp đồng — phần BẢN ĐỒ
 
 ⚠️ **Không có endpoint map production nào để đối chiếu.** Bảng dưới đối chiếu với `VesselSimple` (DTO detail/status hiện có) vì đó là hình dạng vessel duy nhất mobile đang biết.
 
@@ -112,7 +112,7 @@ Nếu chung cluster thì hai tiến trình **đang** ghi đè nhau ngay bây gi�
 
 ⚠️ **`course`/`speed` → `0` là mất thông tin thật.** AIS dùng sentinel `360.0`/`102.3` cho "không có", và Bot map chúng thành `null` đúng nghĩa. Đổi thành `0` nói với mobile rằng "tàu đứng yên, hướng chính bắc" — sai. Đây là món nợ của contract cũ, cần hỏi FE có phân biệt được `0` với "không biết" không.
 
-### Cluster — DTO RIÊNG
+### Cụm tàu — DÙNG DTO RIÊNG
 
 | Bot `MapClusterItem` | |
 |---|---|
@@ -122,7 +122,7 @@ Nếu chung cluster thì hai tiến trình **đang** ghi đè nhau ngay bây gi�
 
 ---
 
-## 5. Contract matrix — DETAIL
+## 5. Bảng đối chiếu hợp đồng — phần CHI TIẾT
 
 | `VesselExtended` | Bot canonical | Trạng thái |
 |---|---|---|
@@ -147,7 +147,7 @@ Nếu chung cluster thì hai tiến trình **đang** ghi đè nhau ngay bây gi�
 
 ⛔ **Không** thêm field cảng rỗng vào canonical để đạt parity. Không nguồn free nào cấp; chỉ MyShipTracking `extended` (3 credit) có.
 
-### Quyết định cho từng field MISSING (§42)
+### Quyết định cho từng trường còn THIẾU (mục 42)
 
 | Nhóm | Quyết định đề xuất |
 |---|---|
@@ -201,7 +201,7 @@ Không xác minh được từ code. Cả hai đọc `process.env.MONGODB_URI`; 
 
 ## 8. Luồng — sau khi chốt boundary
 
-### Map (đọc)
+### Bản đồ (đọc)
 
 ```
 Mobile ──bbox+zoom──► Marine API ──2dsphere Polygon──► canonical_current_vessels
@@ -211,7 +211,7 @@ Mobile ──bbox+zoom──► Marine API ──2dsphere Polygon──► canon
 
 ⚠️ Endpoint này **mới**. Mobile phải gửi `minLat,minLon,maxLat,maxLon,zoom`. Client cũ không gửi → **không** được trả cả collection (§12); giữ đường AIS WebSocket cũ cho tới khi có version gate.
 
-### Detail (đọc + làm mới)
+### Chi tiết (đọc + làm mới)
 
 ```
 Mobile ──mmsi──► Marine API ──đọc canonical──► đủ tươi? ──► trả ngay
@@ -250,7 +250,7 @@ Bot **không** quyết ai được trả tiền. Marine **không** giữ khoá M
 
 ---
 
-## 10. Cờ tính năng + rollout
+## 10. Cờ tính năng và cách triển khai dần
 
 ```bash
 USE_CANONICAL_MAP_READ=false      # mặc định TẮT
@@ -261,7 +261,7 @@ BOT_INTERNAL_TOKEN=
 
 Mặc định tắt ⇒ bật là một quyết định, và tắt lại là rollback trong một biến môi trường. Không framework cờ.
 
-### Strangler, ba bước (§43)
+### Thay thế dần theo kiểu strangler, ba bước (mục 43)
 
 | Bước | Bật | Vẫn legacy |
 |---|---|---|

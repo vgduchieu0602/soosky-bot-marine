@@ -1,53 +1,53 @@
-# Standalone Bot scope audit (scope correction)
+# Rà soát phạm vi Bot chạy độc lập (điều chỉnh phạm vi)
 
-**Date:** 2026-08-18  
-**Repo:** Soosky-bot-marine only  
-**Rule:** Bot is a standalone FREE-source acquisition service. No Marine API integration work.
+**Ngày:** 2026-08-18
+**Kho mã:** chỉ Soosky-bot-marine
+**Nguyên tắc:** Bot là một dịch vụ độc lập chuyên thu thập từ **nguồn miễn phí**. Không làm phần tích hợp với Marine API.
 
-## Classification
+## Phân loại từng phần
 
-| Path / concern | Why it exists | Decision |
+| Đường dẫn / hạng mục | Vì sao tồn tại | Quyết định |
 |---|---|---|
-| `src/infrastructure/integrations/vesselfinder/**` | Free map/detail crawl | **KEEP** |
-| `src/infrastructure/integrations/shipfinder/**` | Free detail crawl | **KEEP** |
-| `src/infrastructure/integrations/shipinfo/**` | Free detail crawl | **KEEP** |
-| Observation / Resolver / Canonical Mongo | Core acquisition pipeline | **KEEP** |
-| `src/interfaces/cli/botDataProof.ts` + `bot:*` scripts | Standalone data proof | **KEEP** |
-| `src/config/databaseSafety.ts` | Isolated DB guard for proof | **KEEP** |
-| `src/application/contracts/VesselBasics.ts` etc. | **Target coverage definitions only** — not Marine HTTP | **KEEP** (as coverage targets) |
-| `src/infrastructure/integrations/marine-ais/**` | Optional WS client that would read **Marine API** AIS bridge | **FREEZE** — default off (`BOT_AIS_ENABLED=false`, empty `MARINE_AIS_WS_URL`). Not deleted this pass to avoid large refactor; **must not be used** for current work. |
-| `src/interfaces/cli/marineAis*.ts` + `marine-ais:*` npm scripts | PoC/sim for that bridge | **FREEZE** — do not run for free-motion proof |
-| `src/bootstrap/createProductionRuntime.ts` AIS branch | Wires Marine AIS only if explicitly enabled | **FREEZE** — stays dead unless flags set |
-| `src/interfaces/http/internalAcquireRoute.ts` | Bot-owned internal command HTTP (comments mention Marine as future consumer) | **FREEZE** — Bot does not call Marine; optional local command surface |
-| `docs/BOT_MARINE_INTEGRATION.md`, `docs/AIS_MARINE_WS_BRIDGE.md`, etc. | Historical integration design notes | **FREEZE** — reference only; not runtime |
-| Nested `marine-api/` directory | Foreign project nest | **REMOVE** if present (gitignored). **Not on disk** at audit time. |
-| `MarineApiClient` / `MarineSyncService` / etc. | — | **Not present** |
+| `src/infrastructure/integrations/vesselfinder/**` | Crawl bản đồ/chi tiết miễn phí | **GIỮ** |
+| `src/infrastructure/integrations/shipfinder/**` | Crawl chi tiết miễn phí | **GIỮ** |
+| `src/infrastructure/integrations/shipinfo/**` | Crawl chi tiết miễn phí | **GIỮ** |
+| Observation / Resolver / Mongo chuẩn | Lõi của pipeline thu thập | **GIỮ** |
+| `src/interfaces/cli/botDataProof.ts` + các script `bot:*` | Chứng minh dữ liệu ở chế độ độc lập | **GIỮ** |
+| `src/config/databaseSafety.ts` | Chốt chặn để proof chạy trên DB tách riêng | **GIỮ** |
+| `src/application/contracts/VesselBasics.ts` v.v. | **Chỉ là định nghĩa mục tiêu độ phủ trường dữ liệu** — không phải HTTP của Marine | **GIỮ** (với vai trò mục tiêu độ phủ) |
+| `src/infrastructure/integrations/marine-ais/**` | Client WebSocket tuỳ chọn, dùng để đọc cầu AIS của **Marine API** | **ĐÓNG BĂNG** — mặc định tắt (`BOT_AIS_ENABLED=false`, `MARINE_AIS_WS_URL` để rỗng). Lần này chưa xoá để tránh refactor lớn, nhưng **không được dùng** cho công việc hiện tại. |
+| `src/interfaces/cli/marineAis*.ts` + script npm `marine-ais:*` | PoC/mô phỏng cho cầu AIS đó | **ĐÓNG BĂNG** — không chạy khi làm proof chuyển động miễn phí |
+| Nhánh AIS trong `src/bootstrap/createProductionRuntime.ts` | Chỉ nối Marine AIS khi bật rõ ràng | **ĐÓNG BĂNG** — nằm im trừ khi cờ được bật |
+| `src/interfaces/http/internalAcquireRoute.ts` | Kênh HTTP nội bộ do Bot sở hữu (comment có nhắc Marine như bên dùng trong tương lai) | **ĐÓNG BĂNG** — Bot không gọi sang Marine; đây chỉ là bề mặt lệnh cục bộ, tuỳ chọn |
+| `docs/BOT_MARINE_INTEGRATION.md`, `docs/AIS_MARINE_WS_BRIDGE.md`, v.v. | Ghi chép thiết kế tích hợp thời trước | **ĐÓNG BĂNG** — chỉ để tham khảo, không mô tả runtime hiện tại |
+| Thư mục lồng `marine-api/` | Dự án lạ nằm lồng vào | **XOÁ** nếu có (đã gitignore). Tại thời điểm rà soát **không có trên đĩa**. |
+| `MarineApiClient` / `MarineSyncService` v.v. | — | **Không tồn tại** |
 
-## Cross-project dependency check
+## Kiểm tra phụ thuộc chéo dự án
 
-- No `import`/`require` of Soosky-marine-api or nested `marine-api` packages: **NONE**
-- Default runtime: `botAisEnabled=false`, `marineAisWsUrl=""`, `paidFallbackEnabled=false`
+- Không có `import`/`require` nào tới Soosky-marine-api hay package `marine-api` lồng bên trong: **KHÔNG CÓ**
+- Cấu hình runtime mặc định: `botAisEnabled=false`, `marineAisWsUrl=""`, `paidFallbackEnabled=false`
 
-## Files actually removed this pass
+## Những gì thực sự đã xoá lần này
 
-- Nested `marine-api/`: **absent** (nothing to delete)
-- No Marine client classes found to delete
-- No package dependency on Marine repo
+- Thư mục lồng `marine-api/`: **không có** (không có gì để xoá)
+- Không tìm thấy class client nào của Marine để xoá
+- Không có phụ thuộc package nào tới kho Marine
 
-## Standalone confirmation
+## Xác nhận Bot chạy độc lập
 
-Bot responsibility remains:
+Trách nhiệm của Bot vẫn là:
 
 ```
 VesselFinder / ShipFinder / ShipInfo
-  → crawl → normalize → Observation → Resolver → Canonical → Bot MongoDB
+  → crawl → chuẩn hoá → Observation → Resolver → Canonical → MongoDB của Bot
 ```
 
-VesselBasics / VesselDetails = **desired field coverage targets**, not Marine API surface.
+`VesselBasics` / `VesselDetails` = **mục tiêu độ phủ trường dữ liệu mong muốn**, không phải bề mặt API của Marine.
 
-## Do not do next (this correction)
+## Những việc KHÔNG được làm tiếp (theo đợt điều chỉnh này)
 
-- Do not enable Marine AIS bridge
-- Do not call Marine HTTP
-- Do not start architecture refactor of frozen AIS folder
-- Free-motion proof (if resumed) stays under `scripts/data-proof` / CLI proof only
+- Không bật cầu Marine AIS
+- Không gọi HTTP sang Marine
+- Không bắt đầu refactor kiến trúc thư mục AIS đang đóng băng
+- Nếu làm lại proof chuyển động miễn phí thì chỉ chạy trong phạm vi `scripts/data-proof` hoặc CLI proof

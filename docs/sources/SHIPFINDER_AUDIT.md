@@ -1,4 +1,4 @@
-# SHIPFINDER_AUDIT — Phase 7.1 (reconnaissance)
+# Rà soát nguồn ShipFinder — giai đoạn 7.1 (khảo sát)
 
 > **Site:** `https://www.shipfinder.com` — vận hành bởi **Shipxy**. Xác định bằng probe, không đoán theo tên.
 > **Ngày audit:** 2026-08-14, khoảng 15:43–15:52 UTC.
@@ -16,9 +16,9 @@ Tàu dùng để audit — cố ý **trùng** với ShipInfo để so trực ti�
 
 ---
 
-## Executive summary
+## Tóm tắt cho người ra quyết định
 
-# ✅ GO WITH LIMITATIONS
+# ✅ DÙNG ĐƯỢC, NHƯNG CÓ GIỚI HẠN
 
 ShipFinder giải quyết **đúng** vấn đề mà P7 sinh ra để giải quyết.
 
@@ -45,7 +45,7 @@ Ba giới hạn (nên là "WITH LIMITATIONS", không phải GO thuần):
 
 ---
 
-## Source identity
+## Xác định danh tính nguồn
 
 | | |
 |---|---|
@@ -86,7 +86,7 @@ Nút *"Unlock Live AIS Position"* có trên trang, **nhưng** vị trí hiển t
 
 ---
 
-## Lookup matrix
+## Bảng cách tra cứu
 
 | Operation | Supported | Mechanism | Evidence |
 |---|---|---|---|
@@ -108,7 +108,7 @@ Giống hệt bài học ShipInfo: **status code vô dụng để phát hiện k
 
 ---
 
-## Transport
+## Cách truyền dữ liệu
 
 | Mechanism | Used? | Notes |
 |---|---|---|
@@ -142,11 +142,11 @@ kèm `Content/js/lib/elane.md5.min.js` → cơ chế ký MD5 phía client.
 
 ---
 
-## Field capability evidence
+## Bằng chứng về các trường lấy được
 
 Tất cả từ HTML server-render của `/ship/detail/mmsi/{mmsi}`, khối `Ship Info`.
 
-| Canonical field | Available | Source location | Evidence |
+| Trường chuẩn | Có không | Nằm ở đâu trong nguồn | Bằng chứng |
 |---|---|---|---|
 | `identity.mmsi` | ✅ 3/3 | nhãn `MMSI` | `636018086` |
 | `identity.imo` | ✅ 3/3 | nhãn `IMO` | `9467976`. **Có** trong dữ liệu nhưng **không tra** được bằng nó |
@@ -175,7 +175,7 @@ Tất cả từ HTML server-render của `/ship/detail/mmsi/{mmsi}`, khối `Shi
 
 ---
 
-## Position freshness
+## Độ tươi của vị trí
 
 Đây là lý do P7 tồn tại.
 
@@ -201,11 +201,11 @@ Vị trí công khai **không** bị khoá sau paywall: nút *"Unlock Live AIS P
 
 ---
 
-## ShipInfo comparison
+## So sánh với ShipInfo
 
 Đo **cùng ngày, cách nhau ~2 phút**, cùng 3 tàu. ShipInfo đo bằng chính `ShipInfoProvider` của dự án (`getPosition`), lấy `sourceReceivedAt` thật.
 
-| Vessel | ShipInfo age | ShipFinder age | Better source |
+| Tàu | Tuổi dữ liệu ShipInfo | Tuổi dữ liệu ShipFinder | Nguồn tốt hơn |
 |---|---|---|---|
 | AGIA DOXA `636018086` | **14.49 h** | **≈ 1.9 phút** | 🏆 ShipFinder (~460×) |
 | QI XIAN LING `414708000` | **14.02 h** | **≈ 31 giây** | 🏆 ShipFinder (~1600×) |
@@ -241,7 +241,7 @@ Dữ liệu thô ShipInfo (đo lúc `2026-08-14T15:49:50Z`):
 
 ---
 
-## Timestamp semantics
+## Ý nghĩa của mốc thời gian
 
 | Trường | Định dạng | Múi giờ |
 |---|---|---|
@@ -267,7 +267,7 @@ Việc P7.2 cần làm trước khi tin mốc thời gian: kiểm cookie `cultur
 
 ---
 
-## Data quality anomalies
+## Những bất thường về chất lượng dữ liệu
 
 1. **Toạ độ ở dạng DDM, không phải decimal degrees.**
    `33-44.980 N` = 33° 44.980′ = `33.749667`. `118-12.537 W` = `-118.208950`.
@@ -301,7 +301,7 @@ Việc P7.2 cần làm trước khi tin mốc thời gian: kiểm cookie `cultur
 
 ---
 
-## Anti-bot / rate-limit
+## Cơ chế chặn bot và giới hạn tần suất
 
 Chỉ ghi nhận. **Không dò ngưỡng** — dò ngưỡng chính là hành vi lạm dụng mà crawl runtime P4 sinh ra để tránh.
 
@@ -322,7 +322,7 @@ Chỉ ghi nhận. **Không dò ngưỡng** — dò ngưỡng chính là hành vi
 
 ---
 
-## Stability assessment
+## Đánh giá độ ổn định
 
 | Mechanism | Đánh giá | Lý do |
 |---|---|---|
@@ -337,7 +337,7 @@ So với ShipInfo: ShipInfo có JSON nhúng (parse **sạch hơn**) nhưng dữ 
 
 ---
 
-## Proposed minimal implementation
+## Đề xuất bản hiện thực tối giản
 
 Chỉ đề xuất. **Không implement ở P7.1.** Khuôn y hệt ShipInfo, tái dùng P3/P4/P5, không framework mới:
 
@@ -366,9 +366,9 @@ Config runtime P4 đề xuất (bảo thủ, trang 59 KB nhẹ hơn ShipInfo nhi
 
 ---
 
-## Final recommendation
+## Khuyến nghị cuối cùng
 
-# GO WITH LIMITATIONS
+# DÙNG ĐƯỢC, NHƯNG CÓ GIỚI HẠN
 
 ### P7.2 nên implement `getPosition` TRƯỚC
 

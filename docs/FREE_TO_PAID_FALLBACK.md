@@ -1,203 +1,169 @@
-# FREE-FIRST → PAID FALLBACK
+# Miễn phí trước, trả phí sau
 
-Bot-side contract for `LOCAL → FREE CRAWL → PAID API`.
+Đây là hợp đồng phía Bot cho chuỗi `LOCAL → CRAWL MIỄN PHÍ → API TRẢ PHÍ`.
 
-Owner: Soosky-bot-marine. Consumer: Soosky-marine-api.
+Bên sở hữu: Soosky-bot-marine. Bên sử dụng: Soosky-marine-api.
 
-Status: orchestration implemented and wired for **LOCAL + FREE**. The paid lane
-is deliberately **not wired into the composition root** — see §9. Both switches
-are off: `PAID_FALLBACK_ENABLED=false`, `INTERNAL_ACQUIRE_TOKEN=` (empty).
+Trạng thái: phần điều phối đã lập trình và đã nối dây cho **LOCAL + MIỄN PHÍ**. Nhánh trả phí **cố ý chưa nối vào nơi lắp ráp** — xem mục 9. Cả hai công tắc đang tắt: `PAID_FALLBACK_ENABLED=false`, `INTERNAL_ACQUIRE_TOKEN=` (rỗng).
 
 ---
 
-## 1. Why the fallback is not a `catch`
+## 1. Vì sao việc dự phòng không được viết bằng `catch`
 
-The shape this replaces:
+Đây là kiểu code mà tài liệu này thay thế:
 
 ```ts
-// ⛔ never
+// ⛔ tuyệt đối không
 try { await crawl(mmsi) } catch { await myShipTracking(mmsi) }
 ```
 
-It fails for reasons that have nothing to do with style:
+Nó sai vì những lý do chẳng liên quan gì tới thẩm mỹ code:
 
-| Problem | Consequence |
+| Vấn đề | Hậu quả |
 |---|---|
-| `catch` cannot tell "vessel does not exist" from "source returned 503" | a 404 spends a credit |
-| A parser break throws | one HTML change turns every request into a paid request |
-| The rule lives in a controller | nobody can answer "when do we spend money?" without reading route code |
-| No cooldown, no capability check | 20 taps on one vessel = 20 credits |
+| `catch` không phân biệt được "tàu không tồn tại" với "nguồn trả 503" | một lỗi 404 cũng tiêu mất một credit |
+| Parser vỡ thì ném exception | một lần đổi HTML biến **mọi** request thành request trả phí |
+| Luật nằm trong controller | không ai trả lời được câu "khi nào thì hệ thống tiêu tiền?" nếu chưa đọc code route |
+| Không có cooldown, không kiểm tra năng lực nguồn | bấm 20 lần vào một con tàu = 20 credit |
 
-So the decision lives in one Application-layer file,
-[GetVesselWithFallback.ts](../src/application/use-cases/vessel/GetVesselWithFallback.ts),
-where it is readable and testable, and the HTTP boundary only translates.
+Vì thế quyết định được gom vào đúng một file ở tầng application, [GetVesselWithFallback.ts](../src/application/use-cases/vessel/GetVesselWithFallback.ts) — chỗ có thể đọc và test được. Ranh giới HTTP chỉ làm việc dịch qua lại.
 
 ---
 
-## 2. Lanes
+## 2. Ba nhánh
 
-Three components, each unchanged by this phase:
+Ba thành phần, giai đoạn này không sửa cái nào:
 
-| Lane | Use case | Cost | Never does |
+| Nhánh | Use case | Chi phí | Tuyệt đối không làm |
 |---|---|---|---|
-| LOCAL | [GetCanonicalVesselDetail](../src/application/use-cases/vessel/GetCanonicalVesselDetail.ts) | 0 | leave the process |
-| FREE | [GetOrRefreshVesselDetail](../src/application/use-cases/vessel/GetOrRefreshVesselDetail.ts) | 0 | touch MyShipTracking — permanent rule |
-| PAID | [TrackVesselCurrentPosition](../src/application/use-cases/tracking/TrackVesselCurrentPosition.ts) | 1 credit / success | act as an automatic free substitute without the gate |
+| LOCAL | [GetCanonicalVesselDetail](../src/application/use-cases/vessel/GetCanonicalVesselDetail.ts) | 0 | đi ra khỏi tiến trình |
+| MIỄN PHÍ | [GetOrRefreshVesselDetail](../src/application/use-cases/vessel/GetOrRefreshVesselDetail.ts) | 0 | đụng vào MyShipTracking — luật vĩnh viễn |
+| TRẢ PHÍ | [TrackVesselCurrentPosition](../src/application/use-cases/tracking/TrackVesselCurrentPosition.ts) | 1 credit mỗi lần thành công | tự động thay thế nhánh miễn phí khi chưa qua cổng kiểm tra |
 
-`GetVesselWithFallback` **orchestrates only**. It contains no crawler, no HTTP
-client, no source list. Two structural tests assert the lanes stay separate:
-the free lane must not import anything paid, the paid lane must not import the
-free lane.
+`GetVesselWithFallback` **chỉ điều phối**. Nó không chứa crawler, không chứa HTTP client, không giữ danh sách nguồn. Có hai test cấu trúc chốt việc các nhánh không dính vào nhau: nhánh miễn phí không được import gì thuộc phần trả phí, và nhánh trả phí không được import nhánh miễn phí.
 
 ---
 
-## 3. Flow
+## 3. Luồng chạy
 
 ```
 { mmsi? | imo?, need, allowPaidFallback? }
    │
-   ├─ outer single-flight key = `${mmsi}/${imo}|${need}`   ← 10 taps = 1 workflow
+   ├─ khoá chống gọi trùng vòng ngoài = `${mmsi}/${imo}|${need}`   ← bấm 10 lần = 1 lượt xử lý
    │
    ▼
-LOCAL read (canonical, dynamic freshness recomputed)
-   │  need satisfied? ──► LOCAL_HIT           0 external requests
-   ▼ no
-FREE lane (own source selector, 2-source ceiling, own budget, own cooldown)
-   │  need satisfied? ──► FREE_UPDATED        0 paid requests
-   ▼ no
-paid gate: allowed? → capability? → cooldown? → time budget?
-   │  any gate closed ──► PARTIAL / NOT_FOUND, with `paidSkipReason`
-   ▼ all open
-PAID lane (1 credit, own 9-gate check + own single-flight)
+ĐỌC LOCAL (dữ liệu chuẩn, độ tươi được tính lại ngay lúc đọc)
+   │  đủ nhu cầu chưa? ──► LOCAL_HIT           0 request ra ngoài
+   ▼ chưa
+NHÁNH MIỄN PHÍ (có bộ chọn nguồn riêng, trần 2 nguồn, ngân sách riêng, cooldown riêng)
+   │  đủ nhu cầu chưa? ──► FREE_UPDATED        0 request trả phí
+   ▼ chưa
+cổng trả phí: được phép? → nguồn có năng lực? → hết cooldown? → còn thời gian?
+   │  bất kỳ cổng nào đóng ──► PARTIAL / NOT_FOUND, kèm `paidSkipReason`
+   ▼ mở hết
+NHÁNH TRẢ PHÍ (1 credit, có 9 cổng kiểm tra riêng + chống gọi trùng riêng)
    │
    ▼
-re-read canonical  ← paid data goes through Observation + Resolver first
+đọc lại dữ liệu chuẩn  ← dữ liệu trả phí phải đi qua Observation + Resolver trước
    │
    ▼
 PAID_UPDATED | PARTIAL | NOT_FOUND
 ```
 
-There is **no free → paid → free loop**. After the paid lane fails, the flow
-returns whatever data exists. A retry loop across lanes is the reliable way to
-produce both a hung request and a growing invoice.
+**Không có vòng lặp miễn phí → trả phí → miễn phí.** Sau khi nhánh trả phí thất bại, luồng trả về đúng những gì đang có. Cho các nhánh thử lại vòng quanh là cách chắc chắn nhất để vừa treo request vừa phình hoá đơn.
 
-### `need`
+### Trường `need`
 
-Two values, because "is this enough?" has two different answers:
+Chỉ hai giá trị, vì câu hỏi "thế này đã đủ chưa?" có hai câu trả lời khác nhau:
 
-| `need` | Satisfied when |
+| `need` | Được coi là đủ khi |
 |---|---|
-| `POSITION` | POSITION group is `AVAILABLE` (freshness recomputed at read time) |
-| `DETAIL` | no group is `MISSING` or `STALE` (`needsRefresh === false`) |
+| `POSITION` | nhóm POSITION ở trạng thái `AVAILABLE` (độ tươi tính lại lúc đọc) |
+| `DETAIL` | không nhóm nào ở trạng thái `MISSING` hay `STALE` (`needsRefresh === false`) |
 
-A vessel with a fresh position but no particulars is a `LOCAL_HIT` for
-`POSITION` and a miss for `DETAIL`. Merging the two would either crawl for map
-pins or return half a detail page.
+Một con tàu có vị trí mới nhưng chưa có thông số kỹ thuật thì là `LOCAL_HIT` với `POSITION`, nhưng chưa đủ với `DETAIL`. Gộp hai thứ này lại thì hoặc là đi crawl chỉ để vẽ một cái chấm trên bản đồ, hoặc là trả về trang chi tiết mới có một nửa.
 
 ---
 
-## 4. The four paid gates
+## 4. Bốn cổng chặn của nhánh trả phí
 
-Checked in cheapest-first order — never ask "how much time is left?" before
-"are we allowed at all?".
+Kiểm tra theo thứ tự rẻ trước, đắt sau — không bao giờ hỏi "còn bao nhiêu thời gian?" trước khi hỏi "có được phép không?".
 
-| Order | Gate | `paidSkipReason` | Rule |
+| Thứ tự | Cổng | `paidSkipReason` | Luật |
 |---|---|---|---|
-| 1 | caller flag | `NOT_ALLOWED` | `allowPaidFallback !== true`. `undefined` is refusal. |
-| 2 | group capability | `NO_PAID_CAPABILITY` | outstanding groups ∩ `{POSITION, IDENTITY}` = ∅ |
-| 3 | per-vessel cooldown | `COOLDOWN` | `DetailRefreshGate` under key `paid:<mmsi>/<imo>` |
-| 4 | total time budget | `BUDGET_EXHAUSTED` | remaining < `minPaidSliceMs` (2 s) |
+| 1 | cờ của bên gọi | `NOT_ALLOWED` | `allowPaidFallback !== true`. Để `undefined` cũng là từ chối. |
+| 2 | năng lực của nguồn | `NO_PAID_CAPABILITY` | các nhóm còn thiếu giao với `{POSITION, IDENTITY}` bằng rỗng |
+| 3 | cooldown theo từng tàu | `COOLDOWN` | `DetailRefreshGate` với khoá `paid:<mmsi>/<imo>` |
+| 4 | ngân sách thời gian tổng | `BUDGET_EXHAUSTED` | thời gian còn lại nhỏ hơn `minPaidSliceMs` (2 giây) |
 
-Plus `NEED_SATISFIED` when local or free already answered, and
-`LANE_UNAVAILABLE` when no paid lane is wired into this deployment at all —
-which is the state today. `LANE_UNAVAILABLE` is kept distinct from
-`NOT_ALLOWED` on purpose: one means "there is a road but the config says no",
-the other means "there is no road". Merged, a forgotten adapter would look
-exactly like an operational decision.
+Ngoài ra còn `NEED_SATISFIED` khi local hoặc miễn phí đã trả lời được rồi, và `LANE_UNAVAILABLE` khi bản triển khai này chưa nối nhánh trả phí nào — chính là tình trạng hiện tại.
 
-### Gate 2 in detail — the most important cost barrier
+`LANE_UNAVAILABLE` được tách riêng khỏi `NOT_ALLOWED` có chủ đích: một cái nghĩa là "có đường nhưng cấu hình nói không", cái kia nghĩa là "không có đường". Gộp lại thì một adapter bị quên nối trông y hệt một quyết định vận hành.
 
-MyShipTracking `response=simple` returns exactly ten fields: `vessel_name`,
-`mmsi`, `imo`, `vtype`, `lat`, `lng`, `course`, `speed`, `nav_status`,
-`received`.
+### Cổng 2 nói rõ hơn — rào cản chi phí quan trọng nhất
 
-That covers **POSITION** and the basic part of **IDENTITY**. It contains no
-`length`/`beam`/`draught`/`gt`/`dwt`/`built` (PARTICULARS) and no
-`destination`/`eta`/port fields (VOYAGE). Those exist only on `extended`
-(3 credits), which TRACK-1 deliberately does not call.
+MyShipTracking với `response=simple` trả về đúng mười trường: `vessel_name`, `mmsi`, `imo`, `vtype`, `lat`, `lng`, `course`, `speed`, `nav_status`, `received`.
 
-So: **PARTICULARS missing + every free source failing ⇒ return partial data.**
-Calling a position endpoint and reporting "particulars refreshed" would be both
-a wasted credit and a lie about the data. Enforced by
-`PAID_CAPABLE_GROUPS = [POSITION, IDENTITY]` and by a test that fails if anyone
-adds a group to that list.
+Chừng đó phủ được **POSITION** và phần cơ bản của **IDENTITY**. Nó không có `length`/`beam`/`draught`/`gt`/`dwt`/`built` (nhóm PARTICULARS), cũng không có `destination`/`eta` hay các trường cảng (nhóm VOYAGE). Những thứ đó chỉ có ở mức `extended` (3 credit), và TRACK-1 cố ý không gọi mức đó.
 
-### Gate 4 — one budget for the whole flow
+Vậy nên: **thiếu PARTICULARS mà mọi nguồn miễn phí đều hỏng thì trả về dữ liệu một phần.** Gọi một endpoint vị trí rồi báo "đã làm mới thông số kỹ thuật" vừa là tiêu credit vô ích, vừa là nói dối về dữ liệu. Điều này được chốt bằng `PAID_CAPABLE_GROUPS = [POSITION, IDENTITY]` và bằng một test sẽ đỏ nếu ai đó thêm nhóm vào danh sách này.
 
-`FREE_FALLBACK_TOTAL_TIMEOUT_MS` (15 s) covers local + free + paid together,
-not per leg. Per-leg timeouts (10 s free + 10 s paid + …) turn one tap into 30 s
-of waiting. The free lane already has its own 10 s ceiling; the remainder is
-room for exactly one paid request. Starting a paid request that is certain to be
-cut off is the worst available outcome: a credit spent and nobody receives the
-result.
+### Cổng 4 — một ngân sách cho cả luồng
+
+`FREE_FALLBACK_TOTAL_TIMEOUT_MS` (15 giây) tính cho cả local + miễn phí + trả phí cộng lại, không phải cho từng chặng.
+
+Nếu đặt timeout theo từng chặng (10 giây miễn phí + 10 giây trả phí + ...) thì một cú bấm của người dùng biến thành 30 giây chờ. Nhánh miễn phí vốn đã có trần 10 giây của riêng nó; phần còn lại vừa đủ chỗ cho đúng một request trả phí.
+
+Khởi động một request trả phí mà biết chắc sẽ bị cắt giữa chừng là kết cục tệ nhất có thể: mất tiền mà không ai nhận được kết quả.
 
 ---
 
-## 5. Result contract
+## 5. Hợp đồng kết quả trả về
 
 ```ts
 {
   status: LOCAL_HIT | FREE_UPDATED | PAID_UPDATED | PARTIAL | NOT_FOUND | UNAVAILABLE,
   sourceUsed: LOCAL | FREE | PAID | NONE,
   need, detail,
-  externalAttempted: boolean,   // did anything leave the process?
-  dataUpdated: boolean,         // did we actually gain data?
-  fallbackUsed: boolean,        // did we reach the paid lane?
+  externalAttempted: boolean,   // có gì đi ra khỏi tiến trình không?
+  dataUpdated: boolean,         // có thực sự thu thêm được dữ liệu không?
+  fallbackUsed: boolean,        // có chạm tới nhánh trả phí không?
   freeAttempts: [{ source, status, durationMs }],
   paidAttempt?: { status, creditCharged? },
-  paidSkipReason?: ...,         // absent when the paid lane ran
+  paidSkipReason?: ...,         // vắng mặt khi nhánh trả phí đã chạy
   remainingMissingGroups, remainingStaleGroups, durationMs
 }
 ```
 
-The three booleans are **deliberately separate**. A single `refreshed` flag
-collapsed all three, so `refreshed: true` could mean "we spent a credit and
-gained nothing" and nobody could tell. The interesting combination is
-`externalAttempted: true, dataUpdated: false, fallbackUsed: true` — money spent,
-no data gained — and it now has a name.
+Ba giá trị boolean được tách riêng **có chủ đích**. Trước đây một cờ `refreshed` duy nhất gộp cả ba, nên `refreshed: true` có thể có nghĩa là "đã tiêu một credit và không thu được gì" mà không ai nhận ra.
 
-`creditCharged` comes from the `x-credit-charged` response header when the
-source sends it; absent means the source did not say, never means zero.
+Tổ hợp đáng chú ý nhất là `externalAttempted: true, dataUpdated: false, fallbackUsed: true` — mất tiền, không được dữ liệu — và giờ nó đã có tên gọi rõ ràng.
 
-`detail` is always the **re-read canonical** projection, never a source
-response. A paid position that arrives older than the last AIS frame loses to
-AIS in the resolver: paying does not buy the right to overwrite newer data.
+`creditCharged` lấy từ header `x-credit-charged` khi nguồn có gửi. Vắng mặt nghĩa là nguồn không nói, **không bao giờ** có nghĩa là bằng 0.
 
-Never in the result: raw HTML, source error text, stack traces, API keys.
-Asserted by a test.
+`detail` luôn là bản chiếu **đọc lại từ kho chuẩn**, không bao giờ là phản hồi thô của nguồn. Một vị trí trả phí về mà lại cũ hơn khung AIS gần nhất thì vẫn thua AIS ở bước resolver: trả tiền không mua được quyền ghi đè lên dữ liệu mới hơn.
+
+Những thứ **không bao giờ** xuất hiện trong kết quả: HTML thô, chuỗi lỗi của nguồn, stack trace, khoá API. Có test chốt điều này.
 
 ---
 
-## 6. Configuration
+## 6. Cấu hình
 
-| Variable | Default | Meaning |
+| Biến | Mặc định | Ý nghĩa |
 |---|---|---|
-| `PAID_FALLBACK_ENABLED` | `false` | server master switch; only the literal `"true"` enables it |
-| `FREE_FALLBACK_TOTAL_TIMEOUT_MS` | `15000` | budget for the whole flow |
-| `PAID_FALLBACK_COOLDOWN_MS` | `600000` | rest period after a paid call for one vessel |
-| `INTERNAL_ACQUIRE_TOKEN` | *(empty)* | secret for the internal command channel; empty = channel refuses everything |
-| `MYSHIPTRACKING_API_KEY` | *(empty)* | paid credential; server-side only, never returned, never logged |
+| `PAID_FALLBACK_ENABLED` | `false` | công tắc tổng phía server; chỉ đúng chuỗi `"true"` mới bật |
+| `FREE_FALLBACK_TOTAL_TIMEOUT_MS` | `15000` | ngân sách thời gian cho cả luồng |
+| `PAID_FALLBACK_COOLDOWN_MS` | `600000` | thời gian nghỉ sau một lần gọi trả phí cho cùng một tàu |
+| `INTERNAL_ACQUIRE_TOKEN` | *(rỗng)* | mã bí mật của kênh lệnh nội bộ; để rỗng thì kênh từ chối tất cả |
+| `MYSHIPTRACKING_API_KEY` | *(rỗng)* | khoá trả phí; chỉ nằm phía server, không bao giờ trả ra, không bao giờ ghi log |
 
-The parse is `=== "true"`, not `!== "false"`. Every typo — `"1"`, `"yes"`,
-`"TRUE!"`, empty — must land on OFF. Enabling by typo is an invoice, not a bug.
+Cách đọc cấu hình là `=== "true"`, **không phải** `!== "false"`. Mọi kiểu gõ sai — `"1"`, `"yes"`, `"TRUE!"`, để trống — đều phải rơi về TẮT. Bật nhầm do gõ sai thì đó là hoá đơn, không phải bug.
 
-Two switches must both be on for a paid request: the server's
-`PAID_FALLBACK_ENABLED` **and** the caller's `allowPaidFallback`. One
-misconfigured line in Marine cannot become Bot's invoice.
+Muốn một request trả phí chạy được thì **cả hai** công tắc phải bật: `PAID_FALLBACK_ENABLED` phía server **và** `allowPaidFallback` từ bên gọi. Một dòng cấu hình sai bên Marine không được phép biến thành hoá đơn của Bot.
 
 ---
 
-## 7. Internal command channel
+## 7. Kênh lệnh nội bộ
 
 ```
 POST /internal/vessels/:id/acquire
@@ -205,108 +171,83 @@ X-Internal-Token: <INTERNAL_ACQUIRE_TOKEN>
 { "need": "POSITION" | "DETAIL", "allowPaidFallback": false }
 ```
 
-| Property | Behaviour |
+| Tính chất | Hành vi |
 |---|---|
-| Mounting | only when `internalAcquire` deps are supplied; otherwise 404 |
-| Auth | `X-Internal-Token`, constant-time compare. **Not** `API_KEY` — this channel spends money and must be revocable on its own. Empty configured token rejects everything. |
-| Bind | loopback (`HTTP_HOST=127.0.0.1`) or a private network. Never public. |
-| Identifier | validated at the edge with the domain validators; junk gets 400 before any lane runs |
-| Body | `need` + `allowPaidFallback` only. `source`/`sources`/`provider`/`useMyShipTracking` ⇒ 400 |
-| `allowPaidFallback` | must be a boolean; the string `"true"` is a 400, not a yes |
-| Rate limit | 3/min per identifier, 120/min for the route, fixed window, bounded key table |
-| Timeout | the use case's total budget; the route adds no second timeout |
-| Response | the result contract above, plus `paidRequestedButDisabled` |
+| Điều kiện gắn route | chỉ gắn khi có đủ phụ thuộc `internalAcquire`; không thì trả 404 |
+| Xác thực | qua `X-Internal-Token`, so sánh theo thời gian hằng số. **Không dùng** `API_KEY` — kênh này tiêu tiền nên phải thu hồi được độc lập. Token cấu hình rỗng thì từ chối mọi thứ. |
+| Nơi lắng nghe | loopback (`HTTP_HOST=127.0.0.1`) hoặc mạng nội bộ. Không bao giờ mở ra ngoài. |
+| Định danh tàu | kiểm tra ngay ở biên bằng validator của domain; giá trị rác bị trả 400 trước khi bất kỳ nhánh nào chạy |
+| Body | chỉ nhận `need` và `allowPaidFallback`. Gửi kèm `source`/`sources`/`provider`/`useMyShipTracking` thì trả 400 |
+| `allowPaidFallback` | phải là kiểu boolean; gửi chuỗi `"true"` sẽ bị 400, không được hiểu là đồng ý |
+| Giới hạn tần suất | 3 lần/phút cho mỗi định danh, 120 lần/phút cho cả route, theo cửa sổ cố định, bảng khoá có giới hạn |
+| Timeout | dùng chính ngân sách tổng của use case; route không thêm timeout thứ hai |
+| Phản hồi | theo hợp đồng kết quả ở trên, cộng thêm `paidRequestedButDisabled` |
 
-**Marine never names a source.** If it could, Bot's source list becomes a public
-API and swapping a crawler becomes a breaking change for mobile.
+**Marine không bao giờ được chỉ định nguồn.** Nếu được phép, danh sách nguồn của Bot trở thành API công khai, và việc đổi một crawler sẽ thành thay đổi phá vỡ tương thích với mobile.
 
-**Bot never decides whether a user paid.** Auth, subscription and payment belong
-to Marine. Bot only answers "am I allowed to spend a credit on this call?".
+**Bot không bao giờ quyết định người dùng đã trả tiền hay chưa.** Xác thực, gói cước và thanh toán là việc của Marine. Bot chỉ trả lời đúng một câu: "lệnh gọi này có được phép tiêu một credit không?".
 
 ---
 
-## 8. Cost measurement
+## 8. Đo chi phí
 
-`npm run fallback:cost` runs the real orchestrator with counting doubles for
-both lanes and prints the paid calls actually made. It measures the code's
-behaviour; the local-miss and free-failure ratios are **inputs**, not findings.
+`npm run fallback:cost` chạy đúng bộ điều phối thật với hai nhánh được thay bằng bản giả có đếm, rồi in ra số lần gọi trả phí thực sự xảy ra.
 
-Measured on 2026-08-17, 100 distinct vessels, seed 20260817, simulated clock
-advancing 1 s per request:
+Nó đo **hành vi của code**. Còn tỉ lệ trượt ở local và tỉ lệ hỏng của nguồn miễn phí là **đầu vào do ta đưa**, không phải kết quả đo được.
 
-| Scenario | 100 req | 1 000 req | 10 000 req | credit/req |
+Đo ngày 2026-08-17, 100 tàu khác nhau, seed 20260817, đồng hồ mô phỏng tiến 1 giây mỗi request:
+
+| Kịch bản | 100 req | 1.000 req | 10.000 req | credit/req |
 |---|---|---|---|---|
-| POSITION, 20 % miss, 10 % free failure, **paid OFF** | 0 | 0 | 0 | 0 |
-| POSITION, 20 % miss, 10 % free failure, paid ON | 3 | 25 | 197 | ~0.020 |
-| POSITION, 20 % miss, **free lane dead**, paid ON | 26 | 186 | 1 764 | ~0.176 |
-| DETAIL, only PARTICULARS missing, free dead, paid ON | 0 | 0 | 0 | 0 |
+| POSITION, 20% trượt local, 10% miễn phí hỏng, **trả phí TẮT** | 0 | 0 | 0 | 0 |
+| POSITION, 20% trượt local, 10% miễn phí hỏng, trả phí BẬT | 3 | 25 | 197 | ~0,020 |
+| POSITION, 20% trượt local, **nhánh miễn phí chết hẳn**, trả phí BẬT | 26 | 186 | 1.764 | ~0,176 |
+| DETAIL, chỉ thiếu PARTICULARS, miễn phí chết, trả phí BẬT | 0 | 0 | 0 | 0 |
 
-Reading it:
+Đọc bảng này thế nào:
 
-- Row 1 is production today. The switch is off, so the bill is zero regardless
-  of traffic. This is the only row that holds without further measurement.
-- Row 3 is the worst realistic case: even with every free source dead, the
-  per-vessel cooldown keeps paid calls sublinear — 968 of 2 732 free-exhausted
-  requests were blocked by cooldown at 10 000 requests.
-- Row 4 is gate 2 doing its job: 9 660 requests, 0 credits, because a position
-  endpoint has no particulars.
+- Dòng 1 chính là production hiện nay. Công tắc tắt nên hoá đơn bằng 0 bất kể lưu lượng. Đây là dòng duy nhất đúng mà không cần đo thêm gì.
+- Dòng 3 là trường hợp xấu nhất còn thực tế: kể cả khi mọi nguồn miễn phí chết, cooldown theo từng tàu vẫn giữ số lần gọi trả phí tăng chậm hơn tuyến tính — ở mốc 10.000 request, có 968 trong số 2.732 request đã cạn nguồn miễn phí bị cooldown chặn lại.
+- Dòng 4 là cổng 2 đang làm đúng việc: 9.660 request, 0 credit, vì một endpoint vị trí không hề có thông số kỹ thuật.
 
-**Not measured yet: the real free-miss ratio.** Getting it requires running the
-free lane against live sources and reading `freeExhausted / requests` from
-`GetVesselWithFallback.getStats()`. Until that number exists, no
-`PAID_FALLBACK_ENABLED=true` in production.
+**Thứ chưa đo được: tỉ lệ trượt thật của nhánh miễn phí.** Muốn có con số đó thì phải chạy nhánh miễn phí với nguồn thật rồi đọc `freeExhausted / requests` từ `GetVesselWithFallback.getStats()`. Chừng nào chưa có con số đó thì **không được** đặt `PAID_FALLBACK_ENABLED=true` trên production.
 
 ---
 
-## 9. What is wired, and what is not
+## 9. Cái gì đã nối dây, cái gì chưa
 
-[createVesselAcquisitionDependencies.ts](../src/bootstrap/createVesselAcquisitionDependencies.ts)
-builds `GetCanonicalVesselDetail`, `GetOrRefreshVesselDetail` and
-`GetVesselWithFallback`, exposed through `buildContainer()`. Construction is
-inert: no crawl, no request, no credit.
+[createVesselAcquisitionDependencies.ts](../src/bootstrap/createVesselAcquisitionDependencies.ts) dựng `GetCanonicalVesselDetail`, `GetOrRefreshVesselDetail` và `GetVesselWithFallback`, rồi đưa ra ngoài qua `buildContainer()`. Việc dựng này hoàn toàn im lặng: không crawl, không request, không tốn credit.
 
-`server.ts` mounts the internal channel **only** when `INTERNAL_ACQUIRE_TOKEN`
-is non-empty. Empty token ⇒ the route does not exist.
+`server.ts` **chỉ** gắn kênh nội bộ khi `INTERNAL_ACQUIRE_TOKEN` khác rỗng. Token rỗng thì route đó không tồn tại.
 
-The **paid lane is not constructed**, because `TrackVesselCurrentPosition` needs
-two things this repo does not have yet:
+**Nhánh trả phí chưa được dựng**, vì `TrackVesselCurrentPosition` cần hai thứ mà kho mã này chưa có:
 
-1. an adapter implementing `PaidPositionSource` on top of `MyShipTrackingClient`;
-2. a credit ledger for `PaidBudgetSnapshot`. The gate treats
-   `remainingCalls: null` as a refusal, so a stub ledger would either lie about
-   the balance or refuse everything while pretending the lane exists.
+1. một adapter hiện thực `PaidPositionSource` dựa trên `MyShipTrackingClient`;
+2. một sổ credit cho `PaidBudgetSnapshot`. Cổng kiểm tra coi `remainingCalls: null` là từ chối, nên một sổ giả tạm sẽ hoặc là nói dối về số dư, hoặc là từ chối tất cả trong khi vẫn giả vờ rằng nhánh này tồn tại.
 
-Until both exist, the orchestrator answers `paidSkipReason: LANE_UNAVAILABLE`
-and serves LOCAL + FREE. That is the honest state, and it is also the safe one.
+Chừng nào chưa có cả hai, bộ điều phối trả về `paidSkipReason: LANE_UNAVAILABLE` và phục vụ bằng LOCAL + MIỄN PHÍ. Đó là trạng thái trung thực, và cũng là trạng thái an toàn.
 
-Gate instances: the free lane and the paid cooldown use **separate**
-`DetailRefreshGate` instances, and the orchestrator additionally prefixes its
-keys with `paid:`. A free-crawl cooldown must never silence a paid call, and the
-reverse. The paid gate uses the same cooldown for failure and success —
-retrying quickly after a failed charge is how one broken vessel record becomes
-repeat charges.
+Về các cổng cooldown: nhánh miễn phí và cooldown trả phí dùng **hai instance `DetailRefreshGate` riêng biệt**, và bộ điều phối còn thêm tiền tố `paid:` vào khoá của nó. Cooldown của crawl miễn phí không bao giờ được phép làm im một lệnh gọi trả phí, và ngược lại.
 
-## 10. Rollout
-
-1. Keep `PAID_FALLBACK_ENABLED=false` and `INTERNAL_ACQUIRE_TOKEN` empty.
-2. Set `INTERNAL_ACQUIRE_TOKEN` in a staging environment only; measure
-   `freeExhausted / requests` from `getStats()` over a real traffic sample.
-3. Re-run `npm run fallback:cost` with the measured ratio; decide a monthly
-   credit ceiling from that table.
-4. Enable Marine's `USE_BOT_VESSEL_ACQUISITION` for a small subset — see
-   [BOT_ACQUISITION_FALLBACK.md](../../soosky-marine-api-clone/docs/BOT_ACQUISITION_FALLBACK.md).
-5. Build the paid adapter + credit ledger (§9), then consider
-   `PAID_FALLBACK_ENABLED=true`, still per-request.
-
-Not done, deliberately: no production cutover, no scheduler, no bulk or history
-MyShipTracking endpoints, no removal of Marine's existing MyShipTracking
-adapter.
+Cổng trả phí dùng **cùng một** thời gian cooldown cho cả lần thất bại lẫn lần thành công — thử lại ngay sau một lần bị tính tiền hỏng chính là cách một bản ghi tàu lỗi biến thành chuỗi lần tính tiền lặp lại.
 
 ---
 
-## 11. Related
+## 10. Kế hoạch triển khai từng bước
 
-- [BOT_MARINE_INTEGRATION.md](BOT_MARINE_INTEGRATION.md) — field-level contract matrices
-- [GetVesselWithFallback.test.ts](../src/application/use-cases/vessel/GetVesselWithFallback.test.ts) — 23 tests, cost gates included
-- [internalAcquireRoute.test.ts](../src/interfaces/http/internalAcquireRoute.test.ts) — 14 tests on the boundary
-- [fallbackCostSim.ts](../src/interfaces/cli/fallbackCostSim.ts) — `npm run fallback:cost`
+1. Giữ `PAID_FALLBACK_ENABLED=false` và `INTERNAL_ACQUIRE_TOKEN` rỗng.
+2. Chỉ đặt `INTERNAL_ACQUIRE_TOKEN` trên môi trường staging; đo `freeExhausted / requests` từ `getStats()` trên một mẫu lưu lượng thật.
+3. Chạy lại `npm run fallback:cost` với tỉ lệ vừa đo được; từ bảng kết quả mà chốt trần credit mỗi tháng.
+4. Bật `USE_BOT_VESSEL_ACQUISITION` bên Marine cho một nhóm nhỏ người dùng — xem [BOT_ACQUISITION_FALLBACK.md](../../soosky-marine-api-clone/docs/BOT_ACQUISITION_FALLBACK.md).
+5. Xây adapter trả phí và sổ credit (mục 9), rồi mới cân nhắc `PAID_FALLBACK_ENABLED=true`, và vẫn phải xin phép theo từng request.
+
+Cố ý chưa làm: không chuyển đổi trên production, không scheduler, không dùng các endpoint hàng loạt hay lịch sử của MyShipTracking, không gỡ adapter MyShipTracking sẵn có của Marine.
+
+---
+
+## 11. Tài liệu liên quan
+
+- [BOT_MARINE_INTEGRATION.md](BOT_MARINE_INTEGRATION.md) — bảng đối chiếu hợp đồng tới từng trường dữ liệu
+- [GetVesselWithFallback.test.ts](../src/application/use-cases/vessel/GetVesselWithFallback.test.ts) — 23 test, gồm cả các cổng chặn chi phí
+- [internalAcquireRoute.test.ts](../src/interfaces/http/internalAcquireRoute.test.ts) — 14 test cho phần ranh giới
+- [fallbackCostSim.ts](../src/interfaces/cli/fallbackCostSim.ts) — lệnh `npm run fallback:cost`

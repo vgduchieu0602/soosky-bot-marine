@@ -1,4 +1,4 @@
-# CRAWL_RUNTIME — Phase A4 / P4
+# Runtime cho crawler — giai đoạn A4 / P4
 
 > Runtime dùng chung cho crawler đa nguồn: concurrency, nhịp nghỉ, timeout, retry, backoff, cooldown, health — **theo từng nguồn**.
 > P4 **không** implement crawler mới, **không** gọi nguồn nào, **không** đổi một dòng hành vi production.
@@ -39,7 +39,7 @@ Hai nguồn **không** đi qua crawl runtime (`usesCrawlRuntime()` trả `false`
 
 **MYSHIPTRACKING** thì dùng runtime nhưng override `minDelayMs: 0, maxDelayMs: 0`: đó là API **trả tiền**, giới hạn của nó là hạn mức gọi chứ không phải rủi ro bị chặn — áp nhịp nghỉ chống-ban lên nó chỉ làm chậm mà không mua được gì.
 
-## 3. Retry policy
+## 3. Chính sách thử lại
 
 Nguyên tắc: **chỉ thử lại khi lần sau có cơ hội khác lần trước.**
 
@@ -66,7 +66,7 @@ initial=1000, max=4000 -> 1000, 2000, 4000, 4000, 4000...
 
 Không có thuật toán thích nghi, không học theo thời gian. Nhân đôi + trần.
 
-## 4. Cooldown policy
+## 4. Chính sách nghỉ sau lỗi
 
 - `consecutiveFailures >= consecutiveFailuresBeforeCooldown` → `COOLDOWN`, `cooldownUntil = now + cooldownMs`
 - Đang cooldown: request mới **fail fast** bằng `SourceUnavailableError { code: "SOURCE_COOLDOWN", retryAt }` — **chưa chạm mạng**
@@ -76,7 +76,7 @@ Không có thuật toán thích nghi, không học theo thời gian. Nhân đôi
 
 **Không có background timer.** Cooldown hết hạn được phát hiện **lúc có người hỏi** (`getState()`), không phải bằng `setInterval` chạy nền. Tiến trình không bị giữ sống vô cớ, và test không phải chờ 5 phút — chỉ cần đẩy đồng hồ giả.
 
-## 5. Health states
+## 5. Các trạng thái sức khoẻ nguồn
 
 ```
 HEALTHY ──hỏng (chưa đủ ngưỡng)──> DEGRADED ──đủ ngưỡng──> COOLDOWN
@@ -98,7 +98,7 @@ DISABLED  ←── disable() thủ công ──  (mọi state)
 
 **Giữ trong RAM.** P4 không ghi MongoDB — persist hay không là quyết định của phase sau. Health mất khi restart, và với mục đích hiện tại (chặn nguồn đang hỏng) thì đúng: khởi động lại nên bắt đầu bằng một lần thử sạch.
 
-## 6. Error classification
+## 6. Phân loại lỗi
 
 | Nguồn tín hiệu | → Category |
 |---|---|
@@ -127,7 +127,7 @@ Thứ tự ưu tiên khi phân loại (độ tin cậy giảm dần):
 
 `NOT_FOUND` **không bao giờ** làm nguồn unhealthy: `recordNotFound()` chỉ tăng `notFoundCount`, không đụng `consecutiveFailures`. Tra 500 MMSI lạ không được phép khoá một nguồn đang khoẻ.
 
-## 7. SourceRequestExecutor flow
+## 7. Luồng chạy của `SourceRequestExecutor`
 
 ```ts
 await executor.execute((signal) => httpClient.getText(url), { operation: "getDetails" })
@@ -178,7 +178,7 @@ Runtime **không** làm: merge policy · chọn nguồn tốt nhất · fallback
 
 Cũng **không** dùng thư viện ngoài (Bottleneck, p-queue): một hàng đợi + một bộ đếm là đủ; thêm dependency chỉ để làm việc này là không đáng.
 
-## 9. Legacy VesselFinder — CHƯA migrate
+## 9. VesselFinder đời cũ — CHƯA chuyển sang runtime
 
 `ScanArea`, `EnrichVesselTypes`, `CrawlFleetPositions`, `GetVesselDetails` **chạy nguyên như cũ**: vẫn `sleep`/`jitter`/cooldown tự viết, vẫn so `"E-2001"` bằng chuỗi, vẫn dùng `HttpClient` với timeout 10s hardcode. P4 **không xoá** một dòng nào trong số đó.
 

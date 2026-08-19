@@ -1,14 +1,14 @@
-# MARINETRAFFIC.LIVE AUDIT — `https://marinetraffic.live/`
+# Rà soát nguồn MarineTraffic.live — `https://marinetraffic.live/`
 
-**Audited:** 2026-08-18 · **Phase:** 4 (all map sources VesselBasics proof)
-**Status:** `NOT_USABLE` — Cloudflare interactive challenge on the document root
-**Provider code written:** none (§11 forbids implementing an unusable source)
+**Ngày rà soát:** 2026-08-18 · **Giai đoạn:** 4 (chứng minh VesselBasics trên toàn bộ nguồn bản đồ)
+**Kết luận:** `NOT_USABLE` — Cloudflare bắt vượt thử thách tương tác ngay ở trang gốc
+**Đã viết provider chưa:** chưa (mục 11 cấm hiện thực một nguồn không dùng được)
 
 ---
 
-## 1. Live probe result
+## 1. Kết quả thử thật
 
-Ordinary `GET` with a browser-like User-Agent and `Accept: text/html`:
+Một `GET` bình thường với User-Agent giống trình duyệt và `Accept: text/html`:
 
 ```
 status  : 403
@@ -18,7 +18,7 @@ bytes   : 5537
 latency : 138 ms
 ```
 
-Response body is the Cloudflare interstitial:
+Nội dung trả về là trang chặn của Cloudflare:
 
 ```html
 <title>Just a moment...</title>
@@ -27,54 +27,44 @@ Response body is the Cloudflare interstitial:
                frame-src 'self' https://challenges.cloudflare.com blob:; …">
 ```
 
-Markers present in the body: `cloudflare`, `challenge`, `Just a moment`.
+Các dấu hiệu xuất hiện trong nội dung: `cloudflare`, `challenge`, `Just a moment`.
 
-The host is reachable and fast — this is an **anti-bot challenge**, not an
-outage and not a network block.
+Máy chủ vẫn phản hồi nhanh và bình thường — đây là **rào chặn bot**, không phải sự cố dịch vụ, cũng không phải bị chặn ở tầng mạng.
 
-## 2. Why the audit stopped here
+## 2. Vì sao dừng rà soát ở đây
 
-Getting past this page requires executing the Cloudflare challenge in a browser
-runtime (or replaying a solved clearance cookie). Phase 4 §4 forbids:
+Muốn qua được trang này thì phải chạy thử thách của Cloudflare trong một môi trường trình duyệt thật, hoặc dùng lại cookie đã giải xong. Mục 4 của giai đoạn 4 cấm:
 
-- browser stealth
-- captcha bypass
-- signature reverse-engineering
-- private authenticated endpoints
+- dùng trình duyệt nguỵ trang
+- phá captcha
+- dịch ngược chữ ký request
+- chạm vào endpoint riêng tư có bảo vệ
 
-Solving or evading the challenge falls squarely inside those prohibitions, so no
-further requests were made. In particular **no attempt** was made to enumerate
-map/XHR endpoints behind the challenge, because reaching them requires the
-prohibited step first.
+Giải hoặc né thử thách rơi đúng vào những điều cấm đó, nên không gửi thêm request nào nữa. Cụ thể là **không có nỗ lực nào** nhằm dò các endpoint bản đồ/XHR nằm sau thử thách, vì muốn tới được chúng thì trước hết phải làm điều bị cấm.
 
-Per §10, the fact that the public UI visibly shows vessel data was **not**
-treated as evidence that an unauthenticated area-scan endpoint is reusable. It
-was not proven, therefore it is not claimed.
+Theo mục 10: việc giao diện công khai của họ hiển thị dữ liệu tàu **không** được coi là bằng chứng rằng có một endpoint quét vùng không cần xác thực dùng lại được. Chưa chứng minh thì không khẳng định.
 
-## 3. Classification
+## 3. Phân loại
 
-| question | answer |
+| câu hỏi | trả lời |
 |---|---|
-| Area/bbox scan available? | **not determinable** — challenge blocks the document |
-| MMSI lookup available? | **not determinable** |
-| VesselBasics fields obtainable? | **none** |
-| Position freshness | not measurable |
-| Request cost | not measurable |
-| Requires authentication? | not reached; challenge precedes any auth question |
-| Operationally usable now? | **no** |
+| Quét được theo vùng/khung nhìn không? | **không xác định được** — thử thách chặn ngay từ trang gốc |
+| Tra cứu theo MMSI được không? | **không xác định được** |
+| Lấy được trường nào của VesselBasics? | **không trường nào** |
+| Độ tươi vị trí | không đo được |
+| Chi phí mỗi request | không đo được |
+| Có cần xác thực không? | chưa tới được bước đó; thử thách đứng trước cả câu hỏi xác thực |
+| Hiện tại dùng được trong vận hành không? | **không** |
 
-**Source status (§5): `NOT_USABLE`**
+**Trạng thái nguồn (mục 5): `NOT_USABLE`**
 
-Note this is a *different* failure mode from VesselFinder's. VesselFinder is
-dropped at TCP from this egress (packet-level). MarineTraffic.live answers
-instantly at HTTP level and then demands an interactive challenge.
+Lưu ý đây là kiểu hỏng **khác** với VesselFinder. VesselFinder bị chặn ngay ở tầng TCP từ đường ra mạng này (tức là ở mức gói tin). Còn MarineTraffic.live vẫn trả lời tức thì ở tầng HTTP rồi mới đòi vượt thử thách tương tác.
 
-## 4. If this source is wanted later
+## 4. Nếu sau này vẫn muốn dùng nguồn này
 
-Options that stay inside the rules:
+Các hướng còn nằm trong khuôn khổ cho phép:
 
-1. Ask the operator for documented API access or a crawl allowance.
-2. Check whether a published/licensed feed exists.
+1. Liên hệ đơn vị vận hành để xin quyền truy cập API có tài liệu, hoặc xin hạn mức crawl.
+2. Kiểm tra xem họ có nguồn dữ liệu công bố hoặc bán bản quyền hay không.
 
-An automated challenge-solving path is **not** a legitimate option and is not
-recommended.
+Còn hướng tự động giải thử thách thì **không** phải lựa chọn hợp lệ, và không được khuyến nghị.

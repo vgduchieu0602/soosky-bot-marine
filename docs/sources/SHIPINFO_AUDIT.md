@@ -1,4 +1,4 @@
-# SHIPINFO_AUDIT — Phase 6.1 (reconnaissance)
+# Rà soát nguồn ShipInfo — giai đoạn 6.1 (khảo sát)
 
 > **Site:** `https://shipinfo.net` — xác định bằng probe DNS/HTTP; repo trước đó không lưu URL nào cho `VesselSource.SHIPINFO`.
 > **Ngày audit:** 2026-08-14, khoảng 08:42–08:55 UTC.
@@ -18,7 +18,7 @@ Tàu dùng để audit:
 
 ---
 
-## 1. Executive summary
+## 1. Tóm tắt cho người ra quyết định
 
 **Có đáng tiếp tục POC — nhưng KHÔNG phải như một nguồn vị trí.**
 
@@ -41,7 +41,7 @@ Ba điều quyết định:
 
 ---
 
-## 2. Lookup mechanisms
+## 2. Các cách tra cứu
 
 URL trang tàu: `https://shipinfo.net/find_vessel_{Name}_IMO-{imo}_MMSI-{mmsi}`
 
@@ -77,7 +77,7 @@ Ngoài ra IMO "vô lý" chưa chắc là không tồn tại: `IMO-1000019` → *
 
 ---
 
-## 3. Data transport
+## 3. Cách truyền dữ liệu
 
 **Server-rendered HTML + embedded JSON state.** Không XHR cho dữ liệu chính, không WebSocket, không cần thực thi JavaScript.
 
@@ -132,11 +132,11 @@ Trích xuất đề xuất: `/var IMOs = (\{[\s\S]*?\});[\r\n]/` rồi `JSON.par
 
 ---
 
-## 4. Field capability evidence
+## 4. Bằng chứng về các trường lấy được
 
 Tổng hợp trên 5 tàu, **1073 track point** đã kiểm.
 
-| Canonical field | Available | Source location | Evidence / Notes |
+| Trường chuẩn | Có không | Nằm ở đâu trong nguồn | Bằng chứng / Ghi chú |
 |---|---|---|---|
 | `identity.mmsi` | ✅ 5/5 | `IMOs[k].mmsi` | ⚠️ Có thể khác MMSI trong URL (JAHAN BROTHERS I: URL 257654000, thực tế 405000420) |
 | `identity.imo` | ✅ 5/5 | `IMOs[k].imo` | Khoá định tuyến chính |
@@ -183,7 +183,7 @@ Suy ra "cái lớn hơn là chiều dài" là **đoán**, không phải dữ li�
 
 ---
 
-## 5. Timestamp semantics
+## 5. Ý nghĩa của mốc thời gian
 
 Trên trang có **ba** mốc thời gian, và chỉ hai trong số đó là của nguồn:
 
@@ -226,7 +226,7 @@ fresh_position_time = 2026-08-14 09:37:57      fresh_age_minutes = 65
 
 ---
 
-## 6. Anti-bot / rate-limit observations
+## 6. Quan sát về chặn bot và giới hạn tần suất
 
 Chỉ ghi nhận. Không thử vượt qua bất kỳ hạn chế nào.
 
@@ -265,7 +265,7 @@ Disallow: /vessel_position_ru*  /vessel_location_full_ru.php  /request.php  /tot
 
 ---
 
-## 7. Proposed minimal implementation
+## 7. Đề xuất bản hiện thực tối giản
 
 Chưa implement gì ở P6.1. Đề xuất hình dạng nhỏ nhất, khớp kiến trúc P3/P4/P5 đã có:
 
@@ -297,7 +297,7 @@ Config runtime (P4) đề xuất — bảo thủ hơn mặc định vì trang n�
 
 ---
 
-## 8. Recommendation
+## 8. Khuyến nghị
 
 ### Nên implement trước ở P6.2/P6.3
 

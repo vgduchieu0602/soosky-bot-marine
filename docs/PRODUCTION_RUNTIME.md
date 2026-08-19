@@ -1,55 +1,104 @@
-# Production runtime
+# Runtime production
 
-## Context
+## Bối cảnh
 
-RUNTIME-1 runs one Node.js bot process on one VPS. It owns AIS ingestion, the existing watchlist crawl, and maintenance; optional enrichment remains a separate process.
+RUNTIME-1 chạy **một** tiến trình Node.js trên **một** VPS. Tiến trình đó lo: nạp AIS, chạy crawl theo watchlist sẵn có, và việc dọn dẹp định kỳ. Phần làm giàu dữ liệu (enrich) vẫn là tiến trình riêng, tuỳ chọn.
 
-## Problem
+## Vấn đề
 
-Unowned intervals, reconnect timers, and unbounded backlogs can duplicate work or prevent a clean PM2 restart.
+Những cái timer không ai chịu trách nhiệm — interval, hẹn giờ kết nối lại, hàng đợi không giới hạn — sẽ khiến công việc bị làm trùng, hoặc khiến PM2 không restart sạch được.
 
-## Key Learning
+## Điều rút ra
 
-The bot has two intended process forms:
+Bot có đúng hai dạng tiến trình:
 
-- `marine-bot`: `npm run build` then `npm run start:bot`; one forked PM2 process owns Mongo, AIS (when configured), crawl and cleanup.
-- `npm run enrich`: optional standalone enrichment worker. It is not started by the bot.
+- `marine-bot`: chạy `npm run build` rồi `npm run start:bot`. Một tiến trình PM2 kiểu fork sở hữu Mongo, AIS (khi có cấu hình), crawl và dọn dẹp.
+- `npm run enrich`: worker làm giàu dữ liệu chạy riêng, tuỳ chọn. Bot **không** tự khởi động nó.
 
-`ProductionRuntime` is the lifecycle owner. Start order is Mongo connection, dependency construction, AIS coordinator, then recurring schedulers. Shutdown reverses work generation: stop schedulers, stop AIS/reconnect and drain its bounded final batches, then close Mongo. `SIGTERM`, `SIGINT`, uncaught exceptions, and unhandled rejections use one guarded shutdown path. Shutdown is bounded by `RUNTIME_SHUTDOWN_TIMEOUT_MS` (15s default).
+### Vòng đời
 
-AIS reconnect starts at 1s, doubles to 30s maximum, adds 20% jitter in the production bootstrap, resets after a successful connection, and cancels a pending reconnect on stop. No protocol ping is invented: the internal Marine WebSocket does not advertise one. Optional stale detection remains disabled unless an operator supplies a proven timeout.
+`ProductionRuntime` là bên sở hữu vòng đời.
 
-## Decision
+Thứ tự khởi động: kết nối Mongo → dựng các phụ thuộc → coordinator AIS → các scheduler định kỳ.
 
-- AIS input is coalesced by MMSI. `AisCoalescingBuffer` retains the latest position and latest identity per vessel, not raw frames. It is LRU-bounded by `AIS_MAX_BUFFERED_VESSELS` (50,000 default); when full it evicts the least-recently-touched vessel and counts dirty evictions. The pending set is a subset of the same bounded map.
-- Each flush drains at most 500 vessels (`AIS_FLUSH_BATCH_SIZE`); the coordinator processes at most 20 batches per cycle and is single-flight. Slow/failed Mongo persistence requeues only the latest state, never an unbounded message queue. A failure is visible through persistence counters and degraded health.
-- `IngestAisBatch` uses one `saveMany` per coalesced batch and resolves affected vessels with a fixed concurrency of 10. Incoming frames, observation inserts, and canonical resolves are deliberately different rates.
-- `IntervalScheduler` is idempotent and skips overlapping ticks instead of queuing them. Its `skippedOverlaps` counter makes overload visible.
-- PM2 must use `instances: 1` and `exec_mode: fork`; cluster mode would duplicate AIS connections and crawls without distributed coordination.
+Thứ tự tắt đi ngược lại theo chiều "ngừng sinh việc mới": dừng scheduler → dừng AIS và việc kết nối lại, rút nốt các lô cuối (có giới hạn) → đóng Mongo.
 
-Long-lived process-local structures:
+`SIGTERM`, `SIGINT`, exception chưa bắt và promise reject chưa xử lý đều đi chung **một** đường tắt máy có bảo vệ. Toàn bộ quá trình tắt bị chặn thời gian bởi `RUNTIME_SHUTDOWN_TIMEOUT_MS` (mặc định 15 giây).
 
-| Structure | Bound / cleanup |
+### Kết nối lại AIS
+
+Bắt đầu chờ 1 giây, mỗi lần thất bại thì gấp đôi, tối đa 30 giây. Ở bootstrap production có cộng thêm 20% nhiễu ngẫu nhiên (jitter) để tránh nhiều tiến trình cùng gõ cửa một lúc. Kết nối thành công thì reset về đầu; khi dừng thì huỷ luôn lần hẹn đang chờ.
+
+Không tự chế ping giao thức: WebSocket nội bộ của Marine không công bố cơ chế ping nào. Phần phát hiện kết nối "chết mà không báo" vẫn để tắt, trừ khi người vận hành đưa ra một ngưỡng timeout đã kiểm chứng.
+
+## Quyết định
+
+- **Gộp AIS theo MMSI.** `AisCoalescingBuffer` chỉ giữ vị trí mới nhất và danh tính mới nhất của từng tàu, không giữ khung dữ liệu thô. Nó bị chặn theo kiểu LRU bởi `AIS_MAX_BUFFERED_VESSELS` (mặc định 50.000); khi đầy thì đẩy ra con tàu lâu chưa đụng tới nhất và đếm số lần đẩy ra khi dữ liệu chưa kịp ghi. Tập chờ xử lý là một tập con của chính map có giới hạn đó.
+- **Mỗi lần rút tối đa 500 tàu** (`AIS_FLUSH_BATCH_SIZE`); mỗi chu kỳ coordinator xử lý tối đa 20 lô, và tại một thời điểm chỉ có một lượt chạy. Khi Mongo chậm hoặc lỗi, hệ thống chỉ đẩy lại trạng thái mới nhất, chứ không tích một hàng đợi tin nhắn vô hạn. Lỗi hiện ra qua bộ đếm ghi dữ liệu và qua trạng thái sức khoẻ bị hạ cấp.
+- `IngestAisBatch` gọi **một** `saveMany` cho mỗi lô đã gộp, rồi giải các tàu bị ảnh hưởng với mức song song cố định là 10. Ba nhịp — khung dữ liệu vào, ghi bản quan sát, và giải bản chuẩn — cố ý khác nhau.
+- `IntervalScheduler` chạy an toàn khi gọi lặp, và **bỏ qua** nhịp bị chồng lấn thay vì xếp hàng chờ. Bộ đếm `skippedOverlaps` giúp nhìn ra tình trạng quá tải.
+- PM2 bắt buộc dùng `instances: 1` và `exec_mode: fork`. Chạy cluster sẽ nhân đôi kết nối AIS và việc crawl trong khi không có cơ chế điều phối phân tán.
+
+### Các cấu trúc sống lâu trong tiến trình
+
+| Cấu trúc | Giới hạn / cách dọn |
 | --- | --- |
-| AIS entries + pending MMSI | 50,000 LRU maximum; pending is a subset; batches drain it |
-| AIS rejection reasons / log suppression | finite enum-derived keys |
-| AIS reconnect/stale timers | one each; cleared on stop |
-| Detail refresh gate | existing 20,000-entry LRU cap and TTL |
-| Detail and paid single-flight maps | entry removed in `finally`, including failures |
-| Scheduler timer | one timer, cleared by `stop()` |
+| Mục AIS + MMSI đang chờ | tối đa 50.000 theo LRU; tập chờ là tập con; các lô rút dần cho hết |
+| Lý do loại bỏ AIS / chống spam log | số khoá hữu hạn, sinh từ enum |
+| Timer kết nối lại / phát hiện chết của AIS | mỗi loại một cái; bị xoá khi dừng |
+| Cổng chặn làm mới chi tiết | vẫn giữ trần LRU 20.000 mục và TTL sẵn có |
+| Map chống gọi trùng của chi tiết và của nhánh trả phí | mục bị xoá trong `finally`, kể cả khi lỗi |
+| Timer của scheduler | một cái duy nhất, xoá bởi `stop()` |
 
-Health is an in-process snapshot, not a public endpoint: `{ status, mongo, ais: { enabled, connected, pending }, workers, memory }`. A connected Mongo plus reconnecting AIS is `DEGRADED`; missing Mongo never becomes `READY`.
+### Sức khoẻ tiến trình
 
-## Action Items
+Đây là ảnh chụp trong tiến trình, **không phải** endpoint công khai:
 
-Run `npm run runtime:load-poc -- --vessels=10000 --events=60000` (or with `node --expose-gc`) before selecting a VPS. The harness is deterministic and uses in-memory repositories only; it reports frames, coalesced entries, observations, canonical resolves, repository reads/writes, RSS/heap, and max buffered vessels. It does not claim production Mongo throughput.
+```
+{ status, mongo, ais: { enabled, connected, pending }, workers, memory }
+```
 
-Local in-memory baseline (1,000 vessels, drain every 1,000 frames) was 1,000/5,000/10,000 synthetic frames, representing 10 seconds at 100/500/1000 msg/s: 203ms/1.57s/4.69s elapsed; 1.00/0.98/0.98 observation writes per frame; 2/10/20 `saveMany` calls; 4 repository reads per resolved vessel; max pending 1,000 and no evictions. Heap end was 183.7/153.6/182.7 MiB in the already-loaded test process, so these figures are regression signals only, not VPS capacity promises. A separate 60,000-unique-vessel buffer stress with the 50,000 cap retained exactly 50,000 entries, evicted 10,000 dirty oldest entries, then drained to zero; its buffer delta was about 17.3 MiB (about 362 bytes per retained vessel in that run).
+Mongo đã kết nối nhưng AIS đang kết nối lại thì trạng thái là `DEGRADED`. Thiếu Mongo thì không bao giờ được coi là `READY`.
 
-At 100/500/1000 incoming messages per second, input volume is 8.64M/43.2M/86.4M frames per day. The observation and canonical write rates depend on unique MMSIs per coalesce window, not that incoming rate. A single vessel at the default 60s window has at most 1,440 retained position observations/day; actual global storage must be measured with the synthetic sample/BSON indexes before capacity is promised.
+## Việc cần làm
 
-Start with 2 vCPU / 2GB RAM and external Mongo for an initial small deployment. A 1GB VPS is not recommended without a measured low-water RSS plus Mongo being external. Mongo on the same VPS competes for RAM, CPU, and disk IOPS; global AIS ingestion needs external Mongo or a larger host. The PM2 700M restart cap is a conservative guardrail, not a capacity claim.
+Chạy bài đo tải trước khi chọn cấu hình VPS:
 
-## Related Notes
+```bash
+npm run runtime:load-poc -- --vessels=10000 --events=60000
+# hoặc chạy kèm node --expose-gc
+```
+
+Bài đo này chạy tất định và chỉ dùng repository trong bộ nhớ. Nó báo cáo: số khung dữ liệu, số mục đã gộp, số bản quan sát, số lần giải bản chuẩn, số lần đọc/ghi repository, RSS/heap, và số tàu tối đa nằm trong bộ đệm. Nó **không** khẳng định gì về throughput của Mongo trên production.
+
+### Số liệu nền chạy local (bộ nhớ)
+
+Với 1.000 tàu, rút bộ đệm mỗi 1.000 khung, chạy 1.000/5.000/10.000 khung tổng hợp — tương ứng 10 giây ở nhịp 100/500/1000 tin/giây:
+
+- Thời gian: 203ms / 1,57s / 4,69s
+- Số bản quan sát ghi trên mỗi khung: 1,00 / 0,98 / 0,98
+- Số lần gọi `saveMany`: 2 / 10 / 20
+- Số lần đọc repository cho mỗi tàu đã giải: 4
+- Tối đa chờ xử lý: 1.000, không có lần nào bị đẩy ra
+
+Heap lúc kết thúc là 183,7 / 153,6 / 182,7 MiB, nhưng đo trong tiến trình test vốn đã nạp sẵn nhiều thứ — nên các con số này chỉ dùng để phát hiện hồi quy, **không phải** lời hứa về sức chứa của VPS.
+
+Một bài ép riêng với 60.000 tàu khác nhau và trần 50.000: giữ đúng 50.000 mục, đẩy ra 10.000 mục cũ nhất còn dữ liệu chưa ghi, rồi rút sạch về 0. Phần bộ nhớ tăng thêm của bộ đệm khoảng 17,3 MiB (khoảng 362 byte cho mỗi tàu được giữ, trong lần chạy đó).
+
+### Ước lượng khối lượng
+
+Ở nhịp 100/500/1000 tin mỗi giây, lượng dữ liệu vào là 8,64 triệu / 43,2 triệu / 86,4 triệu khung mỗi ngày.
+
+Nhưng nhịp ghi bản quan sát và ghi bản chuẩn **không** phụ thuộc vào nhịp đó — nó phụ thuộc vào số MMSI khác nhau trong mỗi cửa sổ gộp. Một con tàu với cửa sổ mặc định 60 giây thì tối đa có 1.440 bản quan sát vị trí mỗi ngày. Muốn hứa về sức chứa lưu trữ toàn cầu thì phải đo thật bằng mẫu tổng hợp cộng với index BSON trước đã.
+
+### Khuyến nghị hạ tầng
+
+Khởi đầu nên dùng 2 vCPU / 2GB RAM và Mongo đặt bên ngoài, cho một lần triển khai nhỏ.
+
+VPS 1GB thì không khuyến nghị, trừ khi đã đo được mức RSS thấp ổn định **và** Mongo nằm ngoài. Mongo chạy chung VPS sẽ tranh RAM, CPU và IOPS đĩa; nạp AIS toàn cầu thì bắt buộc Mongo ngoài hoặc máy to hơn.
+
+Ngưỡng restart 700M của PM2 là hàng rào an toàn thận trọng, không phải tuyên bố về sức chứa.
+
+## Ghi chú liên quan
 
 [[AIS_COALESCING_BUFFER]] [[AIS_BULK_PERSISTENCE]] [[CRAWL_RUNTIME]]

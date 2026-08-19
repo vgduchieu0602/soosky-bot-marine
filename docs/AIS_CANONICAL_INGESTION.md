@@ -1,8 +1,8 @@
-# AIS_CANONICAL_INGESTION — phase AIS-1
+# Nạp AIS vào mô hình chuẩn — giai đoạn AIS-1
 
 > Bot hiểu **chính xác** message mà Soosky-marine-api production đang broadcast, và chuẩn hoá nó về canonical đi được vào đường ống Observation → Resolver **đang có**.
 >
-> Phase này **CHỈ** map. Không WebSocket, không Mongo, không scheduler.
+> Giai đoạn này **CHỈ** làm phần ánh xạ. Không WebSocket, không Mongo, không scheduler.
 
 ---
 
@@ -11,13 +11,13 @@
 | # | Điểm | |
 |---|---|---|
 | 1 | Nguồn canonical là **`AISSTREAM`**. Marine API chỉ là **transport** | 🟢 |
-| 2 | Bot **không** mở connection tới `wss://stream.aisstream.io` — và phase này còn chưa nối cả WS nội bộ | 🟢 |
+| 2 | Bot **không** mở connection tới `wss://stream.aisstream.io` — và giai đoạn này còn chưa nối cả WS nội bộ | 🟢 |
 | 3 | `PositionReport` và `ShipStaticData` **độc lập hoàn toàn** | 🟢 |
 | 4 | `sourceReceivedAt` ≠ `fetchedAt`, không bao giờ mượn nhau | 🟢 |
 | 5 | **Không suy `heading` từ `course`** — Marine API không chuyển tiếp heading | 🟢 |
 | 6 | `timestamp` production **khai là `number` nhưng chạy là `string`** | 🔴 rủi ro |
 | 7 | Capability của AISSTREAM tụt từ **17 → 10** CONFIRMED, đúng theo payload thật | 🟡 |
-| 8 | **Không persist** message nào trong phase này | 🟢 chủ ý |
+| 8 | **Không persist** message nào trong giai đoạn này | 🟢 chủ ý |
 
 ---
 
@@ -44,11 +44,11 @@ canonical_current_vessels
 - `VesselSource.AISSTREAM` là source của mọi bản ghi sinh ra từ đây.
 - **Không** tạo `VesselSource.MARINE_API` / `MARINE_WS`. Thêm một giá trị source cho mỗi chặng đường truyền sẽ khiến resolver phải phân xử giữa hai cái tên của cùng một nguồn.
 
-Phase AIS-1 **chưa** mở kết nối nào cả — kể cả WS nội bộ. Mapper là hàm thuần, người gọi nó chưa tồn tại.
+Giai đoạn AIS-1 **chưa** mở kết nối nào cả — kể cả WS nội bộ. Mapper là hàm thuần, người gọi nó chưa tồn tại.
 
 ---
 
-## 2. Contract production — bằng chứng từ CODE
+## 2. Hợp đồng dữ liệu của production — bằng chứng lấy từ mã nguồn
 
 Đọc trực tiếp:
 
@@ -99,7 +99,7 @@ name: data.MetaData.ShipName
 
 ⚠️ `default: throw new Error("Unknown AIS message type")` — production **chỉ** phát hai loại này. Message 18/19/24 (class B, static data report) hiện **không** tới được bot.
 
-### Bot-side DTO
+### DTO phía Bot
 
 `src/infrastructure/integrations/marine-ais/MarineAisTypes.ts` sao chép **hình dạng**, không import code. Hai repository biên dịch độc lập; đổi lại, lệch contract phải bắt bằng audit + test chứ compiler không bắt hộ. `MarineAisMessageMapper.test.ts` giữ đúng vai đó.
 
@@ -118,11 +118,11 @@ name: data.MetaData.ShipName
 | `Destination` (msg 5) | ❌ |
 | `Eta` (msg 5) | ❌ |
 
-**Hệ quả cho capability matrix:** những field này là **CANDIDATE**, không phải CONFIRMED. "Đặc tả AIS có" không phải bằng chứng — thứ chạy trong production mới là. Xem §7.
+**Hệ quả cho bảng năng lực nguồn:** những field này là **CANDIDATE**, không phải CONFIRMED. "Đặc tả AIS có" không phải bằng chứng — thứ chạy trong production mới là. Xem §7.
 
 ---
 
-## 4. Mapping
+## 4. Ánh xạ dữ liệu
 
 ### 4.1 PositionReport → `VesselPositionReport` (nhóm B)
 
@@ -220,7 +220,7 @@ FE muốn vẽ mũi tàu bằng course thì đó là quyết định của tần
 
 ---
 
-## 7. Validation — dùng lại, không viết mới
+## 7. Kiểm tra dữ liệu — dùng lại, không viết mới
 
 Không một dòng logic kiểm tra nào được viết mới. Mapper gọi thẳng validator P1:
 
@@ -239,17 +239,17 @@ Khi một field phụ hỏng, vị trí **vẫn giữ** — chỉ field đó th�
 
 ---
 
-## 8. Vì sao CHƯA persist
+## 8. Vì sao CHƯA lưu xuống cơ sở dữ liệu
 
 Global AIS là **hàng nghìn message/giây**. `insert` từng `PositionReport` sẽ giết Mongo, và phần lớn bản ghi là tàu đang neo lặp lại đúng một toạ độ.
 
-Phase sau mới làm: coalescing theo MMSI · throttle · gộp mẻ · `bulkWrite` · bộ nhớ có trần.
+Giai đoạn sau mới làm: coalescing theo MMSI · throttle · gộp mẻ · `bulkWrite` · bộ nhớ có trần.
 
 Vì mapper **thuần** (không DB, không mạng, không `Date.now()`, không state), ghép mấy thứ đó vào sẽ **không phải sửa một dòng nào** trong mapper.
 
 ---
 
-## 9. Tương thích Observation & Resolver
+## 9. Tương thích với Observation và Resolver
 
 Mapper trả `ProviderDetailsResult` — **chính** kiểu mà 3 provider pull đang dùng. Không có `AISRepository` / `AISCanonicalService` / `AISResolver` nào được tạo.
 
@@ -264,7 +264,7 @@ AIS observation lưu **chung** `vessel_observations` với ShipFinder/ShipInfo/V
 
 ### Resolver — AIS **không** được hardcode thắng
 
-Bậc độ tươi hiện tại giữ nguyên: `LIVE ≤ 30 phút < RECENT ≤ 6 giờ < STALE ≤ 24 giờ`. **Không** thêm bậc `REALTIME` ở phase này — tuổi chính xác luôn tính được từ `sourceReceivedAt`.
+Bậc độ tươi hiện tại giữ nguyên: `LIVE ≤ 30 phút < RECENT ≤ 6 giờ < STALE ≤ 24 giờ`. **Không** thêm bậc `REALTIME` ở giai đoạn này — tuổi chính xác luôn tính được từ `sourceReceivedAt`.
 
 Ba ca có test khoá (`marineAisPipeline.test.ts`):
 
@@ -280,7 +280,7 @@ Ca thứ ba là ca đáng giá nhất: nó chứng minh AIS **không** có đặ
 
 ---
 
-## 10. Capability matrix — thay đổi
+## 10. Bảng năng lực nguồn — những gì thay đổi
 
 | | Trước | Sau |
 |---|---|---|
@@ -314,7 +314,7 @@ AIS là **PUSH source**. Không ép nó vào `VesselDataProvider.fetch(identifie
 
 ---
 
-## 11. File
+## 11. Danh sách file
 
 | File | Vai trò |
 |---|---|
@@ -334,11 +334,11 @@ AIS là **PUSH source**. Không ép nó vào `VesselDataProvider.fetch(identifie
 | 2 | Chưa xác minh được `time_utc` trên frame THẬT của production (audit đọc code, chưa bắt gói) | 🟡 |
 | 3 | Marine API `_dataTransform` **ném lỗi** với message type lạ — `_handleWsMessage` bắt và bỏ qua. Bot vì thế vĩnh viễn không thấy message 18/19/24 (class B, static data report) | 🟡 |
 | 4 | Bot chưa nối WS nội bộ → chưa có số đo throughput thật để thiết kế coalescing | 🟡 |
-| 5 | Xung đột collection `vessels` giữa hai project vẫn chưa giải (MARINE_API_INTEGRATION_AUDIT §E.2) | 🔴 chặn phase sau |
+| 5 | Xung đột collection `vessels` giữa hai project vẫn chưa giải (MARINE_API_INTEGRATION_AUDIT §E.2) | 🔴 chặn giai đoạn sau |
 
 ---
 
-## 13. Phase này KHÔNG làm
+## 13. Giai đoạn này KHÔNG làm
 
 WebSocket ngoài · WebSocket nội bộ · Mongo ingestion · per-frame insert · scheduler · Redis · Kafka · GeoJSON · MyShipTracking · bậc freshness `REALTIME` · field cảng · sửa production.
 

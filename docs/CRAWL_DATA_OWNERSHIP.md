@@ -1,25 +1,31 @@
-# Crawl data ownership
+# Ai sở hữu dữ liệu crawl
 
-## Context
+## Bối cảnh
 
-The crawl bot discovers vessels, collects free crawl data, normalizes it into observations, resolves canonical state, and stores that state in `canonical_current_vessels`.
+Bot crawl làm chuỗi việc này: tìm ra tàu, thu dữ liệu từ các nguồn miễn phí, chuẩn hoá thành bản quan sát, giải ra trạng thái chuẩn, rồi lưu trạng thái đó vào `canonical_current_vessels`.
 
-## Problem
+## Vấn đề
 
-Two independent upstream AISStream connections would duplicate paid traffic and create competing realtime ownership.
+Nếu để hai hệ thống cùng mở kết nối AISStream riêng thì vừa tốn tiền gấp đôi, vừa sinh ra hai bên tranh nhau làm chủ dữ liệu realtime — không biết tin bên nào.
 
-## Key Learning
+## Điều rút ra
 
-`CrawlMapVessel` is a crawl-only read projection: unknown values stay `null`. Mobile compatibility placeholders are not canonical data. Map position freshness is an operational concern independent from detail/voyage freshness.
+`CrawlMapVessel` chỉ là một bản chiếu để đọc, phục vụ riêng cho crawl: giá trị nào chưa biết thì để `null`, không bịa. Các giá trị đặt tạm cho mobile khỏi vỡ giao diện **không phải** dữ liệu chuẩn.
 
-## Decision
+Độ tươi của vị trí trên bản đồ là chuyện vận hành riêng, tách khỏi độ tươi của thông tin chi tiết hay hành trình.
 
-Soosky-marine-api is the sole production upstream AISStream owner. The Bot's existing AIS client remains available for explicit test/staging ingestion, but `BOT_AIS_ENABLED=false` by default prevents its runtime from opening any connection. Production consumes canonical crawl state and merges it with its own in-memory AIS snapshot.
+## Quyết định
 
-## Action Items
+Soosky-marine-api là bên **duy nhất** giữ kết nối AISStream trên production.
 
-Keep scan/watchlist cadence under review: the current six-hour crawl schedules are slower than the initial 30-minute map freshness window, so wide-area map freshness must be measured before relying on crawl-only coverage.
+Client AIS sẵn có của Bot vẫn giữ lại để dùng cho test/staging khi cần bật rõ ràng, nhưng mặc định `BOT_AIS_ENABLED=false` để runtime của nó không tự mở kết nối nào.
 
-## Related Notes
+Production đọc trạng thái crawl chuẩn rồi trộn với ảnh chụp AIS trong bộ nhớ của chính nó.
+
+## Việc cần theo dõi
+
+Phải xem lại nhịp quét và nhịp watchlist. Lịch crawl 6 tiếng/lần hiện tại chậm hơn nhiều so với mốc "bản đồ tươi trong 30 phút" đặt ra ban đầu. Trước khi tin vào việc chỉ dùng crawl để phủ bản đồ diện rộng thì phải đo độ tươi thực tế trước.
+
+## Ghi chú liên quan
 
 [[AIS_CANONICAL_INGESTION]] · [[CRAWL_AIS_MAP_WRAPPER]]

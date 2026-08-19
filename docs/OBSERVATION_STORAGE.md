@@ -1,4 +1,4 @@
-# OBSERVATION_STORAGE — Phase A5 / P5
+# Kho lưu bản quan sát — giai đoạn A5 / P5
 
 > Kho lời khai của các nguồn. Nguồn nói gì thì lưu nguyên như thế, **không hợp nhất, không phân xử, không ai đè ai**.
 > P5 **không** implement crawler mới, **không** gọi nguồn nào, **không** đổi một dòng hành vi production.
@@ -26,7 +26,7 @@ ShipInfo bảo `speed = 12`, VesselFinder bảo `speed = 13`. P5 **lưu cả hai
 
 Việc phân xử là của resolver — **chưa tồn tại** (§11).
 
-## 2. Tại sao không ghi thẳng vào latestpositions
+## 2. Vì sao không ghi thẳng vào `latestpositions`
 
 Vì `latestpositions` **về mặt cấu trúc** không chứa nổi hai câu trả lời.
 
@@ -44,7 +44,7 @@ Ba câu hỏi mà kiến trúc hiện tại **không trả lời được** ([CU
 | Hai nguồn bất đồng thì sao? | Ai ghi sau thắng | Cả hai còn nguyên, chờ resolver |
 | Nguồn đang xuống cấp? | Không metric nào | `validationStatus` + `parserVersion` + đếm được theo nguồn |
 
-## 3. Observation khác Canonical Current Data thế nào
+## 3. Bản quan sát khác dữ liệu chuẩn hiện tại thế nào
 
 | | Observation | Canonical current (chưa có) |
 |---|---|---|
@@ -80,7 +80,7 @@ Một `ProviderDetailsResult` sinh **tối đa 4** observation — đúng bằng
 
 `source` / `fetchedAt` / `sourceReceivedAt` lấy từ `metadata` của **chính nhóm đó** (canonical A1 đã mang sẵn) — mapper không bịa gì.
 
-## 5. Raw payload policy
+## 5. Chính sách lưu dữ liệu thô
 
 | Policy | Khi nào giữ |
 |---|---|
@@ -94,7 +94,7 @@ Lý do `ON_ERROR` là mặc định: bản ghi sạch thì payload thô chẳng 
 
 **Giới hạn kích thước**: `DEFAULT_MAX_RAW_PAYLOAD_BYTES = 64 KiB`. Vượt → giữ phần đầu và bật `rawPayloadTruncated = true`. Mất dữ liệu im lặng còn tệ hơn mất dữ liệu có ghi chú. Không nén, không lưu ra ngoài.
 
-## 6. Validation
+## 6. Kiểm tra tính hợp lệ
 
 Ba mức, ranh giới là điều quan trọng nhất:
 
@@ -122,7 +122,7 @@ Quy tắc theo nhóm:
 
 Validator **không ném lỗi**. Luôn trả kết quả, để bản ghi hỏng vẫn lưu được làm bằng chứng.
 
-## 7. Fingerprint & deduplication
+## 7. Vân tay bản ghi và khử trùng lặp
 
 Crawler chạy 4 vòng trong 4 phút, tàu đang neo, nguồn trả y hệt → 4 bản ghi không thêm một chút thông tin nào.
 
@@ -158,7 +158,7 @@ Trong cửa sổ, vân tay trùng → **bỏ qua**. Chọn theo tốc độ dữ
 
 `saveMany` chạy **tuần tự có chủ ý**: hai observation trùng nhau trong **cùng một mẻ** phải ăn dedupe của nhau. Ghi song song thì cái thứ hai không thấy cái thứ nhất.
 
-## 8. Mongo collection
+## 8. Collection trong Mongo
 
 `vessel_observations` — **collection riêng**, tách hẳn `vessels` / `latestpositions` / `vesselpositions`. Ba cái kia là **trạng thái hiện tại** (ghi đè theo mmsi); đây là **nhật ký** (append-only, nhiều nguồn cùng tồn tại).
 
@@ -180,7 +180,7 @@ createdAt
 
 `timestamps: { createdAt: true, updatedAt: false }` — **không có `updatedAt`**, vì observation bất biến.
 
-## 9. Indexes
+## 9. Các index
 
 Bốn cái, mỗi cái phục vụ một truy vấn có thật:
 
@@ -193,7 +193,7 @@ Bốn cái, mỗi cái phục vụ một truy vấn có thật:
 
 Không wildcard, không text, không geospatial. Truy vấn theo vùng là việc của `latestpositions` (đã có index `2d`), không phải của nhật ký.
 
-## 10. Legacy compatibility
+## 10. Tương thích với code cũ
 
 **Không migrate, không backfill, không đổi đường ghi production.**
 
@@ -246,7 +246,7 @@ Cái đã sẵn cho resolver:
 
 **P5 không có**: merge field, chọn nguồn tốt nhất, chấm điểm nguồn, fallback, collection canonical current.
 
-## 12. Retention — đề xuất, CHƯA làm
+## 12. Giữ dữ liệu bao lâu — đề xuất, CHƯA làm
 
 P5 **không tự xoá dữ liệu production**. Không TTL index, không job dọn. Thêm cơ chế xoá khi chưa có yêu cầu nghiệp vụ về thời gian lưu là tự tạo ra mất mát dữ liệu.
 

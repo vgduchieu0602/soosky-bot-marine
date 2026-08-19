@@ -1,4 +1,4 @@
-# MARINE_API_INTEGRATION_AUDIT — Bước 1 (audit, KHÔNG code)
+# Rà soát tích hợp với Marine API — bước 1 (rà soát, KHÔNG lập trình)
 
 > Đối chiếu **Bot Marine** (repo này) với **Soosky-marine-api** production để xác định Bot cần đổi gì nhằm trở thành lớp ingestion/enrichment/canonical.
 >
@@ -67,7 +67,7 @@ if (existingVessel) { return existingVessel.basicInfo; }   // ← không kiểm 
 
 Tàu đã tra một lần thì `lat/lon/speed/received` đóng băng mãi mãi. Đây là bug production độc lập với Bot, nhưng nó **sẽ tự khỏi** khi API đọc canonical của Bot thay vì tự cache.
 
-### A.3 Model production
+### A.3 Model của production
 
 `V2VesselModel` → collection **`v2vessels`**, schema **chính là `VesselExtended`** — tức DTO của MyShipTracking, mọi field `required: true`.
 
@@ -127,7 +127,7 @@ Clean Architecture 4 tầng, composition root ở `src/container.ts`. **756 test
 | **ShipInfo** | `builtYear` · `deadweight` · identity · vị trí **trễ ~14 giờ** | tra được **cả MMSI lẫn IMO** |
 | **VesselFinder** | legacy production, `length`/`beam`, quét vùng qua mp2 | mp2 = API nội bộ, đã đánh dấu **LEGACY** |
 
-### B.4 AISStream trong Bot
+### B.4 AISStream bên trong Bot
 
 | | |
 |---|---|

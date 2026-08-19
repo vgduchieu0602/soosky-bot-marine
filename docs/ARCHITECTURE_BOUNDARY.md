@@ -1,41 +1,45 @@
-# Bot / Marine Ownership Boundary
+# Ranh giới trách nhiệm Bot / Marine
 
-Bot is the acquisition and write owner: crawler execution, source arbitration,
-paid provider integration, canonical vessel/observation writes, and the
-token-protected internal acquisition route. Marine can request a capability
-(`POSITION` or `DETAIL`) but cannot select a provider.
+Tài liệu này trả lời một câu hỏi duy nhất: việc nào của Bot, việc nào của Marine.
 
-Marine is the public/read and realtime owner: public APIs, mobile compatibility,
-Mongo/AIS reads, subscriptions/entitlement decisions, and its AISStream
-production connection. Map endpoints read Mongo plus Marine AIS state only;
-they never call Bot or a paid provider in the request path.
+## Bot — bên thu thập và ghi dữ liệu
 
-The normal paid design is `Marine -> Bot -> local/free -> paid when explicitly
-permitted`. The current Bot composition intentionally leaves its paid adapter
-unwired because a credit ledger/production adapter has not been validated.
-Therefore `PAID_UPDATED` must not be treated as production-ready today.
+Bot chịu trách nhiệm: chạy crawler, quyết định dùng nguồn nào, tích hợp nhà cung cấp trả phí, ghi dữ liệu tàu và bản quan sát vào kho chuẩn, và giữ route nội bộ (được bảo vệ bằng token) để nhận lệnh thu thập.
 
-Bot accepts an optional `acquisitionRequestId` on its internal route and keeps a
-bounded, in-memory TTL registry. Repeated IDs reuse the original command,
-including an ambiguous failure, so a retry cannot duplicate a paid attempt.
-This is process-local only; multi-instance production needs a shared idempotency
-store before enabling paid acquisition.
+Marine chỉ được yêu cầu **loại năng lực** cần lấy — `POSITION` hoặc `DETAIL` — chứ không được chỉ định lấy từ nguồn nào.
 
-## Diagram
+## Marine — bên đọc, phục vụ công khai và realtime
+
+Marine chịu trách nhiệm: API công khai, tương thích với mobile, đọc từ Mongo và AIS, quyết định gói cước/quyền dùng, và giữ kết nối AISStream trên production.
+
+Các endpoint bản đồ chỉ đọc từ Mongo cộng với trạng thái AIS của Marine. Chúng **không bao giờ** gọi sang Bot hay gọi nhà cung cấp trả phí ngay trong lúc xử lý request.
+
+## Đường đi của nhánh trả phí
+
+Thiết kế chuẩn: `Marine -> Bot -> nguồn local/miễn phí -> trả phí (chỉ khi được cho phép rõ ràng)`.
+
+Hiện tại Bot **cố ý chưa nối** adapter trả phí, vì sổ ghi credit và adapter production chưa được kiểm chứng. Do đó **không được coi `PAID_UPDATED` là sẵn sàng cho production ở thời điểm này.**
+
+## Chống trùng lệnh (idempotency)
+
+Route nội bộ của Bot nhận thêm `acquisitionRequestId` (tuỳ chọn) và giữ một sổ tạm trong bộ nhớ, có giới hạn dung lượng và tự hết hạn theo TTL. ID lặp lại sẽ dùng lại kết quả của lệnh gốc — kể cả khi kết quả đó là một lỗi không rõ ràng — nên việc gọi lại không thể tạo ra hai lần tính phí.
+
+Lưu ý quan trọng: sổ này chỉ nằm trong một tiến trình. Nếu production chạy nhiều instance thì phải có kho idempotency dùng chung **trước khi** bật nhánh trả phí.
+
+## Sơ đồ
 
 ```
-FREE SOURCES
+NGUỒN MIỄN PHÍ
     |
     v
-BOT (acquisition/write)
+BOT (thu thập / ghi)
     |
     v
-CANONICAL MONGO ----> MARINE (read/public/realtime) ----> MOBILE
-                         ^
-                         |
-                      AISSTREAM (Marine only)
+MONGO CHUẨN ----> MARINE (đọc / công khai / realtime) ----> MOBILE
+                     ^
+                     |
+                  AISSTREAM (chỉ Marine giữ)
 
-PAID NORMAL:     MARINE -> BOT -> MYSHIPTRACKING
-PAID EMERGENCY:  MARINE -> MYSHIPTRACKING   (only BOT_UNAVAILABLE + explicit paid)
+TRẢ PHÍ ĐƯỜNG THƯỜNG:  MARINE -> BOT -> MYSHIPTRACKING
+TRẢ PHÍ KHẨN CẤP:      MARINE -> MYSHIPTRACKING   (chỉ khi BOT_UNAVAILABLE + có cho phép trả phí rõ ràng)
 ```
-

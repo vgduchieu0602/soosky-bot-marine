@@ -1,4 +1,4 @@
-# CURRENT_ARCHITECTURE — Crawl-Marine-Bot
+# Kiến trúc hiện tại — Crawl-Marine-Bot
 
 > Audit trạng thái **hiện tại** trước khi refactor crawler multi-source.
 > Mọi mục dưới đây bám theo code thật tại commit `937d664` (branch `master`).
@@ -11,7 +11,7 @@
 
 ---
 
-## 1. Project entry points
+## 1. Các cửa vào của dự án
 
 ### 1.1 App khởi động từ đâu
 
@@ -64,18 +64,18 @@ Bằng chứng gián tiếp về cách deploy (chỉ là comment/doc, không ph�
 
 ---
 
-## 2. Current crawler architecture
+## 2. Kiến trúc crawler hiện tại
 
 ### 2.1 Có ĐÚNG 2 nguồn crawl, cả hai đều là VesselFinder
 
-| Adapter | File | Port implement | Endpoint | Response |
+| Adapter | File | Port hiện thực | Endpoint | Phản hồi |
 |---|---|---|---|---|
 | `VesselFinderHtmlSource` | [infrastructure/datasources/VesselFinderHtmlSource.ts](../src/infrastructure/datasources/VesselFinderHtmlSource.ts) | `IVesselDetailsSource` | `https://www.vesselfinder.com/vessels/details/{id}` | HTML |
 | `VesselFinderMapSource` | [infrastructure/datasources/VesselFinderMapSource.ts](../src/infrastructure/datasources/VesselFinderMapSource.ts) | `IAreaScanner` | `https://www.vesselfinder.com/api/pub/mp2?bbox=..&zoom=..&mcbe=1` | **binary** |
 
 Cả hai domain đều hardcode dưới dạng `private readonly BASE` trong class — không qua config.
 
-### 2.2 VesselFinder được gọi ở đâu (call graph)
+### 2.2 VesselFinder được gọi ở đâu (sơ đồ lời gọi)
 
 `VesselFinderHtmlSource.getDetails()` được gọi từ 3 chỗ:
 - `GetVesselDetails.execute()` → [GetVesselDetails.ts:46](../src/application/use-cases/vessel/GetVesselDetails.ts#L46) (chỉ khi cache miss)
@@ -87,7 +87,7 @@ Cả hai domain đều hardcode dưới dạng `private readonly BASE` trong cla
 
 Ngoài luồng use case, `HttpClient` còn được dựng trực tiếp trong CLI drift: [detectHtmlDrift.ts:47](../src/interfaces/cli/detectHtmlDrift.ts#L47).
 
-### 2.3 Request flow
+### 2.3 Luồng của một request
 
 Một `HttpClient` DUY NHẤT ([infrastructure/http/HttpClient.ts](../src/infrastructure/http/HttpClient.ts)), khởi tạo 1 lần ở [container.ts:45](../src/container.ts#L45) với `timeoutMs: 10000` (**hardcode, không qua config**), inject vào cả 2 datasource.
 
@@ -123,7 +123,7 @@ Map HTTP status → error nghiệp vụ ([HttpClient.ts:52-54](../src/infrastruc
 
 3. **Drift checker** (không phải parser dữ liệu): [infrastructure/datasources/htmlDrift.ts](../src/infrastructure/datasources/htmlDrift.ts) — `CHECKS[]` + `LABELS[]` + `analyzeHtml()`, pure, không mạng. Đây là bản sao thủ công các selector của mapper → **phải sửa 2 nơi khi VF đổi HTML**.
 
-### 2.5 Retry logic ở đâu
+### 2.5 Logic thử lại nằm ở đâu
 
 **KHÔNG CÓ retry ở bất kỳ tầng nào.** Không có backoff theo lần thử, không có exponential backoff, không có max-attempts. Chỉ có **cooldown khi bị chặn**, và ở 2 chỗ khác nhau, giá trị khác nhau:
 
@@ -137,7 +137,7 @@ Map HTTP status → error nghiệp vụ ([HttpClient.ts:52-54](../src/infrastruc
 
 Chỉ mỗi `ioredis` có retry thật: `maxRetriesPerRequest: 3` ([RedisCache.ts:29](../src/infrastructure/cache/RedisCache.ts#L29)).
 
-### 2.6 Timeout logic ở đâu
+### 2.6 Logic timeout nằm ở đâu
 
 Chỉ 1 nơi: `AbortSignal.timeout(this.timeoutMs)` trong `HttpClient.doFetch()`. Giá trị `10000ms` hardcode 2 chỗ (`container.ts:45`, `detectHtmlDrift.ts:47`). **Không có env var timeout**, không có timeout riêng cho mp2 (binary, nặng hơn) so với trang HTML.
 
@@ -145,7 +145,7 @@ Mongoose dùng timeout mặc định của driver — không cấu hình ([conne
 
 ---
 
-## 3. Current persistence
+## 3. Cách lưu trữ hiện tại
 
 ### 3.1 Lựa chọn backend — quyết định ở container
 
@@ -158,11 +158,11 @@ config.mongoUri  ? connectMongo() + MongoVesselRepository + MongoWatchlistReposi
 
 Sau đó **seed watchlist từ `.env`** nếu DB rỗng ([container.ts:73-77](../src/container.ts#L73-L77)).
 
-### 3.2 MongoDB connection
+### 3.2 Kết nối MongoDB
 
 [infrastructure/persistence/mongoose/connection.ts](../src/infrastructure/persistence/mongoose/connection.ts): `mongoose.connect(uri)` trần, không option; lỗi → bọc thành `E-2002 SOURCE_ERROR`. Có `disconnectMongo()` nhưng **không ai gọi** (CLI thoát bằng `process.exit`).
 
-### 3.3 Collections / models
+### 3.3 Các collection và model
 
 [infrastructure/persistence/mongoose/models.ts](../src/infrastructure/persistence/mongoose/models.ts) — 4 model:
 
@@ -192,13 +192,13 @@ Sau đó **seed watchlist từ `.env`** nếu DB rỗng ([container.ts:73-77](..
 - `VesselPosition` validate lat/lon phạm vi trái đất (BR-03), default `navStatusText = "Unknown"`, `receivedAt = now()` nếu tạo mới
 - `PositionSource = "vesselfinder" | "unknown"` — **union hardcode trong domain**
 
-### 3.5 Fallback JSON file
+### 3.5 Phương án dự phòng bằng file JSON
 
 [JsonFileVesselRepository.ts](../src/infrastructure/persistence/JsonFileVesselRepository.ts): 3 file trong `<root>/data`: `vessels.json` (map theo mmsi), `positions.json` (array), `latest_positions.json` (array). Đọc/ghi **toàn bộ file** mỗi thao tác (`readFileSync`/`writeFileSync`) → không dùng được ở quy mô lớn. Có `migrateLegacyLatestPositions()` chạy trong constructor.
 
 [JsonWatchlistRepository.ts](../src/infrastructure/persistence/JsonWatchlistRepository.ts) — tương tự cho watchlist.
 
-### 3.6 Redis / RAM cache
+### 3.6 Cache Redis và cache trong bộ nhớ
 
 Port: [application/ports/ICache.ts](../src/application/ports/ICache.ts) — chỉ `get<T>` / `set<T>(key, value, ttlMs)`. **Không có `del`, không có invalidate.**
 
@@ -213,7 +213,7 @@ Chọn bằng `config.redisUrl` ([container.ts:50-56](../src/container.ts#L50-L5
 
 ---
 
-## 4. Current workers / schedulers
+## 4. Các worker và bộ hẹn giờ hiện tại
 
 ### 4.1 Ba worker, ba cơ chế lặp KHÁC NHAU
 
@@ -250,7 +250,7 @@ Config mặc định (constructor) vs `.env`:
 
 ⚠️ **Comment mô tả không khớp code** — xem §6.
 
-### 4.3 `EnrichVesselTypes` — bổ sung metadata
+### 4.3 `EnrichVesselTypes` — bổ sung thông tin mô tả
 
 [src/application/use-cases/EnrichVesselTypes.ts](../src/application/use-cases/EnrichVesselTypes.ts)
 
@@ -287,9 +287,9 @@ Cùng ngưỡng đó cũng được HTTP `/positions` dùng để lọc lúc đ�
 
 ---
 
-## 5. Component có thể reuse
+## 5. Thành phần có thể dùng lại
 
-### KEEP — dùng lại nguyên trạng cho crawler multi-source
+### GIỮ — dùng lại nguyên trạng cho crawler đa nguồn
 
 | Component | File | Lý do |
 |---|---|---|
@@ -306,7 +306,7 @@ Cùng ngưỡng đó cũng được HTTP `/positions` dùng để lọc lúc đ�
 | `createApp` | `interfaces/http/createApp.ts` | App thuần, testable, tách khỏi `listen`. |
 | `htmlDrift.ts` | `infrastructure/datasources/` | Pure, có test, phát hiện HTML đổi form. |
 
-### REFACTOR LATER — giữ ý tưởng, đổi hình dạng
+### SỬA SAU — giữ ý tưởng, đổi hình dạng
 
 | Component | File | Vấn đề cần xử lý khi refactor |
 |---|---|---|
@@ -320,7 +320,7 @@ Cùng ngưỡng đó cũng được HTTP `/positions` dùng để lọc lúc đ�
 | `htmlDrift.CHECKS/LABELS` | `datasources/htmlDrift.ts` | Bản sao thủ công selector của mapper → nên sinh từ 1 nguồn sự thật. |
 | `JsonFileVesselRepository` | `persistence/` | Đọc/ghi cả file mỗi thao tác. Giữ cho dev/test, không dùng production. |
 
-### DEPRECATE LATER — code chết hoặc trùng vai trò
+### BỎ SAU — code chết hoặc trùng vai trò
 
 | Component | File | Bằng chứng |
 |---|---|---|
@@ -335,7 +335,7 @@ Cùng ngưỡng đó cũng được HTTP `/positions` dùng để lọc lúc đ�
 
 ---
 
-## 6. Technical debt ảnh hưởng TRỰC TIẾP tới crawler multi-source
+## 6. Nợ kỹ thuật ảnh hưởng TRỰC TIẾP tới crawler đa nguồn
 
 Xếp theo mức chặn.
 
@@ -343,19 +343,19 @@ Xếp theo mức chặn.
 [models.ts:60](../src/infrastructure/persistence/mongoose/models.ts#L60) `mmsi: { unique: true }` + [MongoVesselRepository.savePositionLatest()](../src/infrastructure/persistence/MongoVesselRepository.ts#L36-L45) dùng `replaceOne(..., {upsert:true})`.
 → **Last-write-wins tuyệt đối**. Nguồn B ghi đè nguồn A không điều kiện, kể cả khi dữ liệu A mới hơn/chính xác hơn. Không có cách truy vết nguồn nào đã ghi field nào.
 
-### D-2 · Không có tầng arbitration / merge policy
+### D-2 · Không có tầng phân xử / chính sách hợp nhất
 Logic merge duy nhất tồn tại là 4 dòng trong `EnrichVesselTypes` ([:70-83](../src/application/use-cases/EnrichVesselTypes.ts#L70-L83)) — "lat/lon giữ của mp2, course/speed lấy của HTML" — viết cứng trong use case. Không có khái niệm độ tin cậy nguồn, độ tươi, hay ưu tiên theo field.
 
 ### D-3 · `PositionSource` là union đóng trong domain
 [VesselPosition.ts:7](../src/domain/entities/VesselPosition.ts#L7). Thêm nguồn = sửa entity = sửa lõi. `MongoVesselRepository.toEntity()` còn phải `doc.source as VesselPosition["source"]` ([:174](../src/infrastructure/persistence/MongoVesselRepository.ts#L174)) — ép kiểu, không validate.
 
-### D-4 · `HttpClient` không có retry / rate-limit / policy theo nguồn
+### D-4 · `HttpClient` không có thử lại / giới hạn tần suất / chính sách riêng theo nguồn
 Một instance dùng chung cho mọi nguồn ([container.ts:45](../src/container.ts#L45)): cùng UA, cùng timeout 10s, không retry, không giới hạn concurrency theo host. Multi-source đồng nghĩa nhiều host, nhiều giới hạn tốc độ khác nhau → hiện không mô hình hoá được.
 
-### D-5 · Rate-limit nằm rải trong use case, không tập trung
+### D-5 · Giới hạn tần suất nằm rải trong use case, không tập trung
 `sleep`/`jitter` được viết lại **riêng** trong `ScanArea` ([:63](../src/application/use-cases/ScanArea.ts#L63)), `EnrichVesselTypes` ([:126,130](../src/application/use-cases/EnrichVesselTypes.ts#L126)), `CrawlFleetPositions` ([:62](../src/application/use-cases/CrawlFleetPositions.ts#L62)), `detectHtmlDrift` ([:24](../src/interfaces/cli/detectHtmlDrift.ts#L24)). 4 bản copy. Thêm nguồn thứ 3 = bản copy thứ 5.
 
-### D-6 · Coupling qua magic string mã lỗi
+### D-6 · Các phần dính vào nhau qua chuỗi mã lỗi viết cứng
 `ScanArea` và `EnrichVesselTypes` so `e.code === "E-2001"` bằng chuỗi thô. Nguồn mới phải nhớ ném đúng chuỗi này thì backoff mới hoạt động.
 
 ### D-7 · Comment mô tả hành vi KHÔNG khớp code trong `ScanArea`
@@ -369,13 +369,13 @@ Ai đọc code để thiết kế multi-source sẽ giả định sai về hành
 ### D-8 · `ScanArea.saveShips()` ghi từng tàu một (N+1)
 [:68-84](../src/application/use-cases/ScanArea.ts#L68-L84): mỗi tàu = 1 `findVesselByMmsi` + (0-1) `saveVessel` + 1 `savePositionLatest`. Một ô 400 tàu = ~800-1200 round-trip. Nhân với số nguồn → không scale.
 
-### D-9 · `ScanArea` không ghi history
+### D-9 · `ScanArea` không ghi lịch sử
 Chỉ gọi `savePositionLatest`. `vesselpositions` chỉ nhận dữ liệu từ `CrawlFleetPositions` và `GetVesselDetails` (đường watchlist/HTTP). Nếu multi-source cần so sánh chéo theo thời gian thì hiện không có dữ liệu.
 
 ### D-10 · Parser binary nuốt lỗi im lặng
 [VesselFinderMapSource.ts:104-106](../src/infrastructure/datasources/VesselFinderMapSource.ts#L104-L106) `catch {}`. Desync chỉ `console.warn` một dòng, không đếm metric, không ném lên. Nguồn hỏng format sẽ trả **ít tàu hơn** một cách âm thầm — nhìn từ ngoài không phân biệt được với "vùng ít tàu".
 
-### D-11 · Không có observability
+### D-11 · Không có khả năng quan sát hệ thống
 Toàn bộ là `console.log` tiếng Việt kèm emoji. Không có logger có level, không có metric (số request/nguồn, tỉ lệ 403, tỉ lệ parse fail, số tàu/vòng). Multi-source không so sánh được chất lượng giữa các nguồn.
 
 ### D-12 · Hai định nghĩa watchlist song song
@@ -384,7 +384,7 @@ Toàn bộ là `console.log` tiếng Việt kèm emoji. Không có logger có le
 ### D-13 · `receivedAt` là String, không phải Date
 Toàn hệ thống so sánh ISO string. Đúng về mặt lexicographic nhưng khoá index kém, không dùng được TTL index của Mongo, dễ hỏng nếu một nguồn ghi timestamp khác định dạng/khác timezone.
 
-### D-14 · Config có cặp min/max nhưng map về cùng 1 env
+### D-14 · Cấu hình có cặp min/max nhưng lại trỏ về cùng một biến môi trường
 `scanMinMs`/`scanMaxMs` ← `SCAN_INTERVAL_MS`; `scanTileDelayMinMs`/`MaxMs` ← `SCAN_TILE_DELAY_MS` ([config/index.ts:124-128](../src/config/index.ts#L124-L128)). Cấu trúc gợi ý có randomization nhưng thực tế min == max luôn.
 
 ### D-15 · Không có deploy/process config trong repo
@@ -392,7 +392,7 @@ Toàn hệ thống so sánh ISO string. Đúng về mặt lexicographic nhưng k
 
 ---
 
-## 7. Current flow (Mermaid)
+## 7. Luồng hiện tại (sơ đồ Mermaid)
 
 ### 7.1 Kiến trúc tổng thể
 
@@ -535,7 +535,7 @@ flowchart TD
 
 ---
 
-## 8. Đề xuất folder structure tương lai (CHỈ tài liệu — chưa refactor)
+## 8. Đề xuất cấu trúc thư mục tương lai (CHỈ là tài liệu — chưa sửa code)
 
 > Không đổi tầng, không đổi Clean Architecture hiện tại. Chỉ mở rộng chỗ đang chật: **nhiều nguồn**.
 > Nguyên tắc: mỗi nguồn là 1 thư mục tự chứa (client + mapper + test), lộ ra ngoài đúng qua port đã có.
@@ -608,12 +608,12 @@ Ghi chú về việc **chưa** làm:
 **Không có test nào cho**: `ScanArea`, `EnrichVesselTypes`, `CrawlFleetPositions`, `VesselFinderMapSource.decode()`, `VesselFinderHtmlMapper`, `HttpClient`, `MongoVesselRepository`.
 Đây là rủi ro trực tiếp khi refactor crawler — 4 file quan trọng nhất của luồng crawl đều không có lưới an toàn.
 
-## Audit Conclusions / Constraints for Phase A
+## Kết luận rà soát và ràng buộc cho giai đoạn A
 
-1. Current VesselFinder pipeline must remain operational during migration.
-2. Do not change FE/API contracts during Phase A.
-3. Do not introduce a second AISStream connection in bot during Phase A.
-4. Current latestpositions model is not suitable as multi-source raw storage.
-5. Existing Vessel/VesselPosition entities may be reused but extended through a canonical model.
-6. Multi-source ingestion must preserve source provenance before any merge.
-7. Paid API integration is explicitly out of scope until fallback phase.
+1. Pipeline VesselFinder hiện tại phải chạy được liên tục trong suốt quá trình chuyển đổi.
+2. Không đổi hợp đồng frontend/API trong giai đoạn A.
+3. Không mở thêm kết nối AISStream thứ hai trong bot ở giai đoạn A.
+4. Model `latestpositions` hiện tại không phù hợp để làm kho dữ liệu thô đa nguồn.
+5. Có thể dùng lại entity `Vessel`/`VesselPosition` đang có, nhưng phải mở rộng thông qua model chuẩn.
+6. Việc nạp dữ liệu đa nguồn phải giữ được thông tin nguồn gốc trước khi hợp nhất bất cứ thứ gì.
+7. Tích hợp API trả phí nằm ngoài phạm vi cho tới giai đoạn làm nhánh dự phòng.

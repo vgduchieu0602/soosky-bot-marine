@@ -1,4 +1,4 @@
-# RESOLVER_POLICY — Phase 8.1 (thiết kế, KHÔNG implement)
+# Chính sách hợp nhất dữ liệu (resolver) — giai đoạn 8.1 (thiết kế, KHÔNG lập trình)
 
 > **Câu hỏi duy nhất:** khi nhiều observation của cùng một tàu nói khác nhau, hệ thống dựa vào đâu để quyết định giá trị canonical hiện tại?
 >
@@ -7,9 +7,9 @@
 
 ---
 
-## A. Goals / Non-goals
+## A. Mục tiêu và những gì nằm ngoài phạm vi
 
-### Goals
+### Mục tiêu
 
 1. Từ `VesselObservation[]` của **một** tàu → một `ResolvedCurrentVessel` có **provenance từng field**.
 2. Quy tắc **tất định** và **giải thích được**, không phải điểm số mờ.
@@ -30,7 +30,7 @@
 
 ---
 
-## B. Resolver input
+## B. Đầu vào của resolver
 
 ```mermaid
 flowchart LR
@@ -50,7 +50,7 @@ Hàm thuần: cùng đầu vào → cùng đầu ra. Không I/O, không đồng 
 
 ---
 
-## C. Output concept
+## C. Hình dung đầu ra
 
 ```ts
 interface ResolvedField<T> {
@@ -81,7 +81,7 @@ interface ResolvedCurrentVessel {
 
 ---
 
-## D. POSITION policy
+## D. Chính sách cho nhóm POSITION
 
 ### D.0 Quyết định: NGUYÊN KHỐI (atomic), không trộn field
 
@@ -174,7 +174,7 @@ Chỉ là tiêu chí thứ ba, đếm số field không null trong `{speed, cour
 
 ---
 
-## E. IDENTITY policy — theo FIELD
+## E. Chính sách cho nhóm IDENTITY — xét theo từng TRƯỜNG
 
 Identity ít nhạy thời gian, nhưng **không bất biến**: tàu bị **đổi tên**, đổi cờ, đổi chủ.
 
@@ -359,7 +359,7 @@ Chi tiết từng field:
 
 ---
 
-## I. Provenance
+## I. Nguồn gốc dữ liệu
 
 Bắt buộc, không phải tuỳ chọn. Canonical **không được** chứa `length = 179` trần.
 
@@ -409,7 +409,7 @@ POSITION → shipfinder
 
 ---
 
-## K. Tie-break
+## K. Xử lý khi hoà điểm
 
 Chỉ chạy khi **mọi** tiêu chí trước đó hoà. Thứ tự: `defaultPriority` nhỏ hơn → nếu vẫn bằng, `source` sắp chữ cái (để kết quả tất định, không phụ thuộc thứ tự đọc từ DB).
 
@@ -606,7 +606,7 @@ POSITION ứng viên: shipfinder@2026-08-14T16:39:41Z | shipinfo@2026-08-13T20:1
 
 ---
 
-## Q · Ghi chú implementation P8.3 (Identity + Particulars)
+## Q · Ghi chú lập trình P8.3 (Identity + Particulars)
 
 Hiện thực thêm **bước 2, 7, 8** của §O. Còn lại: Voyage (bước 9).
 
@@ -678,7 +678,7 @@ Bộ particulars này **không nguồn nào tự mình cho được** — đúng
 
 ---
 
-## R · Ghi chú implementation P8.4 (Voyage + read model ghép)
+## R · Ghi chú lập trình P8.4 (Voyage + mô hình đọc đã ghép)
 
 Hiện thực **bước 9** của §O. §O **đã xong toàn bộ**.
 

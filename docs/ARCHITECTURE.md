@@ -1,14 +1,16 @@
-# Architecture
+# Kiến trúc hệ thống
 
-This is the authoritative current architecture document. Earlier phase documents are historical or detailed references and do not override this structure.
+Đây là tài liệu kiến trúc **có hiệu lực**. Các tài liệu theo giai đoạn trước đó chỉ mang tính lịch sử hoặc tham khảo chi tiết, không được phép ghi đè cấu trúc mô tả ở đây.
 
-## System responsibility
+## Hệ thống này làm gì
 
-`Soosky-bot-marine` consumes the Marine AIS WebSocket, crawls and enriches free vessel sources, normalizes source observations, resolves multi-source data, and maintains the canonical current vessel. Paid tracking ingestion is reserved for a future phase.
+`Soosky-bot-marine` nhận dữ liệu từ WebSocket AIS của Marine, crawl và làm giàu dữ liệu từ các nguồn tàu miễn phí, chuẩn hoá dữ liệu thô thành bản quan sát, hợp nhất dữ liệu nhiều nguồn, và duy trì bản ghi tàu chuẩn hiện tại. Phần nạp dữ liệu theo dõi trả phí để dành cho giai đoạn sau.
 
-`Soosky-marine-api` remains responsible for the upstream AISStream connection, its mobile-facing public API and WebSocket. This refactor does not change that production service.
+`Soosky-marine-api` vẫn giữ nguyên trách nhiệm: kết nối AISStream đầu nguồn, API công khai và WebSocket phục vụ mobile. Đợt refactor này không đụng gì tới dịch vụ production đó.
 
-## Layers and dependency rule
+## Các tầng và luật phụ thuộc
+
+Mũi tên đọc là "được phép biết tới":
 
 ```text
 domain
@@ -20,54 +22,56 @@ infrastructure / interfaces
 bootstrap
 ```
 
-- `domain/` holds pure marine concepts: entities, value objects, enums, validators, and domain errors. It does not know transport, persistence, external providers, or other layers.
-- `application/` contains complete use cases, reusable services and contracts. Application code may import domain code and application contracts, but must not import infrastructure.
-- `infrastructure/` implements external integrations, persistence, generic HTTP and cache adapters.
-- `interfaces/` contains HTTP and CLI entry points that call configured application objects.
-- `bootstrap/` is the composition root. It creates concrete adapters and wires them into application objects; it contains no business policy.
+- `domain/` chứa các khái niệm hàng hải thuần: entity, value object, enum, validator và lỗi domain. Nó **không biết** gì về giao vận, lưu trữ, nhà cung cấp bên ngoài, hay bất kỳ tầng nào khác.
+- `application/` chứa các luồng nghiệp vụ hoàn chỉnh, service dùng lại được, và các contract. Code ở đây được import domain và contract của chính application, nhưng **không được** import infrastructure.
+- `infrastructure/` hiện thực phần tích hợp bên ngoài, lưu trữ, cùng các adapter HTTP và cache dùng chung.
+- `interfaces/` là các cửa vào HTTP và CLI, gọi tới những object application đã được cấu hình sẵn.
+- `bootstrap/` là nơi lắp ráp. Nó tạo adapter cụ thể rồi nối vào object application; nó **không chứa** luật nghiệp vụ nào.
 
-## Main data flows
+## Các luồng dữ liệu chính
 
-### AIS
+### Luồng AIS
 
 ```text
-Marine production WebSocket
+WebSocket production của Marine
   → MarineAisWebSocketClient
   → MarineAisMessageMapper
-  → AisCoalescingBuffer (application ingestion service)
-  → observation / resolver pipeline
-  → canonical current vessel
+  → AisCoalescingBuffer (service nạp dữ liệu, thuộc application)
+  → pipeline observation / resolver
+  → bản ghi tàu chuẩn hiện tại
 ```
 
-`AisCoalescingBuffer` accepts the small application-owned `AisIngestionEvent` shape. The Marine adapter event is structurally compatible, so the buffer has no dependency on the WebSocket client or Marine transport DTOs.
+`AisCoalescingBuffer` chỉ nhận `AisIngestionEvent` — một khuôn dữ liệu nhỏ do chính application sở hữu. Sự kiện từ adapter Marine tương thích về mặt cấu trúc, nên bộ đệm **không** phụ thuộc vào WebSocket client hay các DTO giao vận của Marine.
 
-### Free-source crawling
+### Luồng crawl nguồn miễn phí
 
 ```text
 ShipFinder / ShipInfo / VesselFinder
   → provider adapter
   → observation
   → resolver
-  → canonical current vessel
+  → bản ghi tàu chuẩn hiện tại
 ```
 
-Each external source keeps its client, parser, mapper, types, fixtures and provider in its own `infrastructure/integrations/<source>/` boundary.
+Mỗi nguồn bên ngoài giữ client, parser, mapper, kiểu dữ liệu, fixture và provider của riêng nó trong đúng thư mục `infrastructure/integrations/<tên-nguồn>/`.
 
-## Persistence
+## Lưu trữ
 
-Persistence implementations are grouped by technology:
+Các hiện thực lưu trữ được nhóm theo công nghệ:
 
 - `infrastructure/persistence/mongo/`
 - `infrastructure/persistence/memory/`
 - `infrastructure/persistence/file/`
 
-Mongo schema and Mongoose model remain together in each model module. A domain entity is not a Mongoose model: domain objects never import Mongoose, while Mongo repositories implement application repository contracts and bridge application objects to Mongo documents.
+Schema Mongo và model Mongoose nằm cùng nhau trong từng module model.
 
-## Use cases, services and contracts
+Một điểm cần nhớ: **entity domain không phải model Mongoose**. Object domain không bao giờ import Mongoose; ngược lại, repository Mongo hiện thực contract repository của application và làm cầu nối giữa object application với document Mongo.
 
-A use case represents a complete application workflow, such as acquiring vessel data or resolving and storing a current vessel. A service supports one or more workflows with policy or orchestration logic.
+## Use case, service và contract
 
-Use cases are grouped by responsibility:
+**Use case** là một luồng nghiệp vụ hoàn chỉnh — ví dụ "thu thập dữ liệu tàu" hay "giải và lưu trạng thái tàu hiện tại". **Service** hỗ trợ cho một hoặc nhiều luồng, chứa logic chính sách hoặc điều phối.
+
+Use case nhóm theo trách nhiệm:
 
 - `application/use-cases/acquisition/`
 - `application/use-cases/observation/`
@@ -75,25 +79,27 @@ Use cases are grouped by responsibility:
 - `application/use-cases/vessel/`
 - `application/use-cases/watchlist/`
 
-No AIS ingestion use case exists yet; AIS-4 is the phase that may introduce one.
+Hiện chưa có use case nào cho việc nạp AIS; giai đoạn AIS-4 mới là lúc có thể thêm.
 
-Examples:
+Ví dụ để phân biệt:
 
-- `AisCoalescingBuffer` is an application ingestion service.
-- `PositionResolver` is an application resolution service.
-- `MarineAisWebSocketClient` is an infrastructure adapter.
+- `AisCoalescingBuffer` là service nạp dữ liệu ở tầng application.
+- `PositionResolver` là service giải dữ liệu ở tầng application.
+- `MarineAisWebSocketClient` là adapter ở tầng infrastructure.
 
-Contracts live next to their responsibility: repositories in `application/contracts/repositories/`, provider contracts in `application/contracts/providers/`, cache contracts in `application/contracts/cache/`, and geographic scanning primitives in `application/contracts/geo/`. Concrete adapters implement those contracts from infrastructure.
+Contract nằm cạnh đúng trách nhiệm của nó: repository ở `application/contracts/repositories/`, contract nhà cung cấp ở `application/contracts/providers/`, contract cache ở `application/contracts/cache/`, và các nguyên thuỷ quét theo vùng địa lý ở `application/contracts/geo/`. Adapter cụ thể ở infrastructure sẽ hiện thực những contract này.
 
 ## Bootstrap
 
-`bootstrap/container.ts` remains the composition root. It makes the two compatibility boundaries explicit:
+`bootstrap/container.ts` là nơi lắp ráp trung tâm. Nó tách rõ hai ranh giới tương thích:
 
-- `createLegacyDependencies.ts` wires the retained VesselFinder-oriented HTTP/CLI compatibility path.
-- `createCanonicalDependencies.ts` wires multi-source providers, observations, resolvers, and canonical current-vessel dependencies.
+- `createLegacyDependencies.ts` nối đường HTTP/CLI cũ theo mô hình VesselFinder, giữ lại cho tương thích.
+- `createCanonicalDependencies.ts` nối các provider đa nguồn, observation, resolver và phần phụ thuộc của bản ghi tàu chuẩn.
 
-Both factories only compose dependencies. They do not start a crawler, scheduler, or AIS client.
+Cả hai factory **chỉ** lắp ráp phụ thuộc. Chúng không khởi động crawler, scheduler hay AIS client.
 
-## Legacy code
+## Code cũ (legacy)
 
-`src/legacy/` retains the prior VesselFinder-oriented model, mapping and scan workflows for compatibility. It is intentionally isolated and must not be copied as the architectural pattern for new functionality. The small number of legacy imports are confined to legacy-oriented paths and adapters; canonical domain and application services do not depend on legacy code.
+`src/legacy/` giữ lại model, mapping và luồng quét theo kiểu VesselFinder đời trước để không làm vỡ phần đang chạy. Nó được cô lập có chủ đích và **không được lấy làm khuôn mẫu kiến trúc** cho tính năng mới.
+
+Số ít chỗ import legacy đều nằm gọn trong các đường dẫn và adapter thuộc về legacy; domain và service application chuẩn không phụ thuộc vào code legacy.

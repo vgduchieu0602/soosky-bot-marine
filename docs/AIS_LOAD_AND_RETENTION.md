@@ -1,8 +1,8 @@
-# AIS_LOAD_AND_RETENTION — phase AIS-5
+# Đo tải AIS và chính sách giữ dữ liệu — giai đoạn AIS-5
 
 > Đo tải ingestion AIS và **chặn** tăng trưởng kho observation, trước khi làm Map/GeoJSON.
 >
-> Phase này **không** làm map, **không** đổi kiến trúc, **không** đụng production.
+> Giai đoạn này **không** làm map, **không** đổi kiến trúc, **không** đụng production.
 >
 > Tiếp nối [AIS_COALESCING_BUFFER.md](./AIS_COALESCING_BUFFER.md) (AIS-3) và bước ghi mẻ của AIS-4.
 
@@ -24,7 +24,7 @@
 
 ---
 
-## 1. Dedupe ≠ Retention
+## 1. Khử trùng lặp khác với giữ dữ liệu
 
 Hai khái niệm bị lẫn rất dễ, và ở đây chúng nằm ở hai file khác nhau có chủ ý:
 
@@ -47,7 +47,7 @@ Ngược lại, IDENTITY của AIS có `sourceReceivedAt = null` và payload ổ
 
 ---
 
-## 2. Bảng retention
+## 2. Bảng thời gian giữ dữ liệu
 
 | Nguồn | Nhóm | Giữ | Vì sao |
 |---|---|---|---|
@@ -70,7 +70,7 @@ Ngắn hơn thì TTL xoá mất chính ứng viên resolver đang hỏi, và lư
 
 ---
 
-## 3. TTL — cách hiện thực
+## 3. TTL — cách làm
 
 Retention là **một khoảng thời gian** do application quyết; `expiresAt` là **một mốc** do persistence tính:
 
@@ -93,7 +93,7 @@ observationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 
 **Không backfill.** Document thiếu `expiresAt` (mọi bản ghi trước AIS-5, và mọi nhóm cấu hình `null`) **không bao giờ** bị TTL monitor đụng tới — đó là ngữ nghĩa sẵn có của TTL index, không phải mẹo.
 
-Nếu sau này muốn dọn dữ liệu cũ: chạy một script **riêng, có trần, gọi tay**, không nhét vào đường khởi động. Chưa làm ở phase này.
+Nếu sau này muốn dọn dữ liệu cũ: chạy một script **riêng, có trần, gọi tay**, không nhét vào đường khởi động. Chưa làm ở giai đoạn này.
 
 ---
 
@@ -223,7 +223,7 @@ Các nhóm khác không đáng kể:
 
 ---
 
-## 10. Công cụ
+## 10. Công cụ đo
 
 ```bash
 # Mô phỏng toàn đường ống, không mạng, không Mongo
@@ -238,7 +238,7 @@ Hai lớp chặn của `mongo-load-poc`: bắt buộc `--confirm`, **và** từ 
 
 ---
 
-## 11. File
+## 11. Danh sách file
 
 | File | |
 |---|---|
@@ -251,7 +251,7 @@ Hai lớp chặn của `mongo-load-poc`: bắt buộc `--confirm`, **và** từ 
 
 ---
 
-## 12. Sẵn sàng cho phase Map chưa?
+## 12. Đã sẵn sàng cho giai đoạn Map chưa?
 
 Câu trả lời của AIS-5 là "chưa, còn phải chốt cửa sổ gộp và đo trên Mongo thật".
 **AIS-5.1 đã làm cả hai** — xem §13.
@@ -419,7 +419,7 @@ Lập kế hoạch theo con số **881 MiB**, không theo 247 MiB.
 **≥ 2 GB RAM cho riêng tiến trình bot**, và Mongo tính riêng. Đây là suy ra từ
 số đo trên máy dev — **đo lại trên chính VPS** trước khi chốt kích thước máy.
 
-Theo dõi tối thiểu (không cần Grafana/Prometheus ở phase này):
+Theo dõi tối thiểu (không cần Grafana/Prometheus ở giai đoạn này):
 
 | Chỉ số | Vì sao |
 |---|---|

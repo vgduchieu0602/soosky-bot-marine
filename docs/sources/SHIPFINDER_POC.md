@@ -1,4 +1,4 @@
-# SHIPFINDER_POC — Phase 7 (P7.1 → P7.4)
+# Bản chạy thử ShipFinder — giai đoạn 7 (P7.1 → P7.4)
 
 > Kết quả **triển khai**. Bằng chứng khảo sát nằm riêng ở [SHIPFINDER_AUDIT.md](./SHIPFINDER_AUDIT.md) — hai thứ cố ý không trộn nhau.
 > ShipFinder là **nguồn thứ ba** có implementation thật, sau VesselFinder và ShipInfo.
@@ -37,7 +37,7 @@ graph LR
 
 `CollectVesselObservations` **không sửa một dòng nào** cho ShipFinder — use case chung nhận `source` rồi tra registry. Không có `if (source === SHIPFINDER)` ở đâu cả.
 
-## 3. Runtime config
+## 3. Cấu hình lúc chạy
 
 ```ts
 [VesselSource.SHIPFINDER]: {
@@ -87,7 +87,7 @@ Ba căn cứ của P7.1 cho +8 (ghi trong code, không phải trong đầu ai):
 
 **Không bao giờ** lấy `fetchedAt` làm `receivedAt`.
 
-## 5. Error mapping
+## 5. Ánh xạ lỗi
 
 | Tình huống | Category P4 | Retry? | Health |
 |---|---|---|---|
@@ -104,7 +104,7 @@ Mắt xích thêm ở P7.4: **`ShipFinderProvider` dịch `ShipFinderParseError`
 
 `PARSE_ERROR` **không bao giờ** thành `NOT_FOUND`.
 
-## 6. Health
+## 6. Sức khoẻ nguồn
 
 Dùng nguyên 4 state của P4. Đã kiểm bằng test: NOT_FOUND không tăng chuỗi hỏng · parser drift → DEGRADED · ShipFinder cooldown **không** chặn ShipInfo/VesselFinder (ba bộ runtime tách rời).
 
@@ -162,7 +162,7 @@ IDENTITY: `{ name: "AMERICAN WEST", callsign: "WDF4506", vesselType: "Passenger 
 
 ShipFinder **không ghi một byte nào** vào đó. Crawler VesselFinder cũ chạy y nguyên.
 
-## 9. Capability Matrix
+## 9. Bảng năng lực nguồn
 
 **17 field CONFIRMED** — nhiều nhất trong các nguồn crawl:
 `mmsi` `imo` `name` `callsign` `flag` `vesselType` `lat` `lng` `speed` `course` **`heading`** **`navStatus`** `positionReceivedAt` `length` `beam` **`draught`** `destination`

@@ -1,8 +1,8 @@
-# AIS_COALESCING_BUFFER — phase AIS-3
+# Bộ đệm gộp AIS — giai đoạn AIS-3
 
 > Hãm vòi rồng AIS **trước** khi nó đụng MongoDB: nhiều cập nhật của cùng một tàu trong một cửa sổ chỉ còn lại trạng thái **mới nhất**.
 >
-> Phase này **chưa** ghi gì cả. Không Mongo, không observation, không resolver.
+> Giai đoạn này **chưa** ghi gì cả. Không Mongo, không observation, không resolver.
 >
 > Tiếp nối [AIS_CANONICAL_INGESTION.md](./AIS_CANONICAL_INGESTION.md) (AIS-1 · mapping) và [AIS_MARINE_WS_BRIDGE.md](./AIS_MARINE_WS_BRIDGE.md) (AIS-2 · transport).
 
@@ -39,7 +39,7 @@ Nếu mỗi frame là một lệnh ghi:
 - Mongo chết vì khối lượng, không phải vì kích thước.
 - 2/3 bản ghi kia **không ai đọc** — thứ map cần là vị trí mới nhất.
 
-Hai luật cứng của phase này:
+Hai luật cứng của giai đoạn này:
 
 - ⛔ **Không** `messages.push(...)` vô hạn.
 - ⛔ **Không** 1 frame = 1 lệnh ghi.
@@ -197,7 +197,7 @@ buffer.drainAll(maxBatches) // nhiều mẻ, có trần số mẻ
 
 ---
 
-## 8. Backpressure
+## 8. Chống nghẽn ngược (backpressure)
 
 Đây là điểm quan trọng nhất của cả phase.
 
@@ -289,7 +289,7 @@ Toàn bộ logic gộp nằm ở buffer (thuần, **không timer**) → test buf
 
 ---
 
-## 13. Hot path — những thứ tuyệt đối không được có
+## 13. Đường chạy nóng — những thứ tuyệt đối không được có
 
 `normalizedData` → `Map.get/set` → `return`. Chỉ vậy.
 
@@ -301,7 +301,7 @@ Node đơn luồng và `accept()`/`drainBatch()` đều đồng bộ → **khôn
 
 ---
 
-## 14. File
+## 14. Danh sách file
 
 | File | |
 |---|---|

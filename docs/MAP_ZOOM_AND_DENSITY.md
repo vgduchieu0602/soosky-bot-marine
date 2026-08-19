@@ -1,4 +1,4 @@
-# MAP_ZOOM_AND_DENSITY — phase MAP-3
+# Mức zoom và mật độ tàu trên bản đồ — giai đoạn MAP-3
 
 > Zoom thấp trả **mật độ theo cụm**, zoom cao trả **từng con tàu**.
 >
@@ -128,7 +128,7 @@ Mốc khởi điểm là `+3` (mỗi ô hiển thị chia 8×8). Đo trên 10.00
 
 ---
 
-## 6. Pipeline Mongo
+## 6. Pipeline tổng hợp của Mongo
 
 ```
 $match    location $geoWithin $geometry Polygon   ← STAGE ĐẦU TIÊN, giữ index
@@ -154,7 +154,7 @@ Kiểm chứng chéo bắt buộc: POC so khoá cụm do pipeline sinh ra với 
 
 ---
 
-## 7. Benchmark
+## 7. Số đo hiệu năng
 
 `npm run map:cluster-poc -- --seed=10000`, MongoDB local dev, viewport toàn cầu ở mọi mức zoom (kịch bản xấu nhất — thực tế client zoom cao không xem cả thế giới):
 
@@ -203,7 +203,7 @@ chế độ CLUSTERS :    160 ×  91 B  =  14,2 KiB   (đại diện ĐỦ 8.000
 
 ---
 
-## 9. File
+## 9. Danh sách file
 
 | File | |
 |---|---|

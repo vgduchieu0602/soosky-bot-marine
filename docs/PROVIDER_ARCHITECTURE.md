@@ -1,4 +1,4 @@
-# PROVIDER_ARCHITECTURE — Phase A3 / P3
+# Kiến trúc provider nguồn dữ liệu — giai đoạn A3 / P3
 
 > Abstraction chung cho mọi nguồn dữ liệu tàu. P3 **chưa** implement crawler mới, **chưa** có resolver, **chưa** đổi một dòng code path production nào.
 > Tiền đề: [CURRENT_ARCHITECTURE.md](./CURRENT_ARCHITECTURE.md) · [CURRENT_DATA_FLOW.md](./CURRENT_DATA_FLOW.md) · [CANONICAL_VESSEL_MODEL.md](./CANONICAL_VESSEL_MODEL.md) · [SOURCE_CAPABILITY_MATRIX.md](./SOURCE_CAPABILITY_MATRIX.md)
@@ -56,7 +56,7 @@ Không có biến thể `NAME`: tìm theo tên là **operation riêng** (`search
 
 ⚠️ Validator siết hơn API hiện tại (`^\d{7,9}$` cho cả hai trục). Đó là lý do value object này **chỉ dùng ở tầng provider mới** — `GetVesselDetails` không đổi. Xem §6.
 
-## 2. Capability ≠ Implementation ≠ Runtime eligibility
+## 2. Ba khái niệm khác nhau: năng lực, đã lập trình, và đủ điều kiện chạy
 
 Ba khái niệm khác nhau, **không được dùng thay cho nhau**:
 
@@ -111,7 +111,7 @@ Tất cả thuộc **resolver**, chưa tồn tại. Registry là một `Map`, kh
 
 Cũng **không** dùng: NestJS DI, Inversify, tsyringe, decorator, plugin framework, dynamic module loader, service discovery, reflection, event bus.
 
-## 5. VesselFinder legacy adapter
+## 5. Adapter VesselFinder đời cũ
 
 Phần quan trọng nhất của P3. **Không viết lại** `VesselFinderHtmlSource` / `VesselFinderMapSource` — `VesselFinderProvider` dùng **composition**:
 
@@ -138,7 +138,7 @@ Nhận vào **port**, không phải class cụ thể: container tiêm đúng 2 i
 4. **`name === String(mmsi)` → `null`.** Decoder mp2 đặt tên = mmsi khi bản ghi không có tên; đó là chỗ giữ chỗ, không phải tên tàu.
 5. **`E-1001` → `null`; lỗi khác → ném tiếp.** "Không có tàu này" khác "nguồn hỏng". Nuốt `E-2001` (bị chặn) thành `null` sẽ khiến resolver tưởng nguồn trả lời hợp lệ.
 
-## 6. Đường legacy hiện tại — KHÔNG đổi
+## 6. Đường chạy cũ hiện tại — KHÔNG đổi
 
 ```
 GetVesselDetails / CrawlFleetPositions / EnrichVesselTypes
@@ -159,7 +159,7 @@ providerRegistry.register(new VesselFinderProvider({ detailsSource, areaScanner:
 
 Chỉ đăng ký provider **có thật**. Không có fake provider cho ShipInfo/ShipFinder/BoatNerd/… — capability tồn tại không có nghĩa là có implementation (§2).
 
-## 7. Đường multi-source tương lai
+## 7. Đường đa nguồn trong tương lai
 
 ```
 Resolver (CHƯA CÓ)
@@ -172,7 +172,7 @@ Resolver (CHƯA CÓ)
 
 Resolver sẽ cần cả 3 nguồn thông tin: `SOURCE_CAPABILITY_MATRIX` (nguồn nào *nên* hỏi), `ProviderRegistry` (nguồn nào *hỏi được*), và policy riêng của nó (lúc này *có nên* hỏi không).
 
-## 8. Migration strategy
+## 8. Chiến lược chuyển đổi
 
 Hai đường **tồn tại song song** suốt Phase A. Thứ tự dự kiến, mỗi bước độc lập:
 
@@ -186,7 +186,7 @@ Hai đường **tồn tại song song** suốt Phase A. Thứ tự dự kiến, 
 
 Điều kiện tiên quyết chưa xong (audit A0): khoá `latestpositions` theo `mmsi` unique (D-1), N+1 trong `ScanArea.saveShips` (D-8), retry/rate limit theo nguồn (D-4/D-5).
 
-## 9. Diagram
+## 9. Sơ đồ
 
 ```mermaid
 graph TD

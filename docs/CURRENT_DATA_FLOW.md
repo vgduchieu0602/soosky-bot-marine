@@ -1,4 +1,4 @@
-# CURRENT_DATA_FLOW — Crawl-Marine-Bot
+# Luồng dữ liệu hiện tại — Crawl-Marine-Bot
 
 > **Dữ liệu đi từ đâu tới đâu, field nào do ai ghi, ai ghi đè ai.**
 > Bổ trợ cho [CURRENT_ARCHITECTURE.md](./CURRENT_ARCHITECTURE.md).
@@ -47,7 +47,7 @@ flowchart LR
 
 ---
 
-## 1. Bốn đường ghi dữ liệu (legacy)
+## 1. Bốn đường ghi dữ liệu (đường cũ)
 
 ```mermaid
 flowchart TD
@@ -100,7 +100,7 @@ Hệ quả thật: **chạy Mongo thì tàu trong watchlist (W3/W4) không hiệ
 
 ---
 
-## 2. Field nào đến từ nguồn nào
+## 2. Trường nào đến từ nguồn nào
 
 ```mermaid
 flowchart LR
@@ -121,7 +121,7 @@ flowchart LR
 `mmsi`, `name`, `lat`, `lon` ([IAreaScanner.ts:9-14](../src/application/ports/IAreaScanner.ts#L9-L14)).
 Decoder đọc thêm 1 int16 cờ và 1 int8 status nhưng **bỏ qua cả hai**. `name` rỗng → fallback `String(mmsi)`. Toạ độ `int32 / 600000`, **chính xác** → `latLonApproximate: false`.
 
-### 2.2 HTML details
+### 2.2 Trang HTML chi tiết
 
 | Field domain | Nguồn trong HTML |
 |---|---|
@@ -138,7 +138,7 @@ Decoder đọc thêm 1 int16 cờ và 1 int8 status nhưng **bỏ qua cả hai**
 
 Không có cả `imo` lẫn `mmsi` → mapper **throw** → bọc thành `E-2002`.
 
-### 2.3 Field CÓ trong schema nhưng KHÔNG nguồn nào ghi
+### 2.3 Trường CÓ trong schema nhưng KHÔNG nguồn nào ghi
 
 `flagCode`, `yearBuilt`, `grossTonnage`, `deadweight`, `photoUrl` (vessels);
 `headingDeg`, `navStatusCode`, `destination`, `eta` (positions).
@@ -245,7 +245,7 @@ stateDiagram-v2
 
 ---
 
-## 6. Cache flow — chỉ 1 đường duy nhất
+## 6. Luồng cache — chỉ một đường duy nhất
 
 ```mermaid
 flowchart TD
@@ -270,7 +270,7 @@ flowchart TD
 
 ---
 
-## 7. Nguồn sự thật của từng field (legacy)
+## 7. Nguồn sự thật của từng trường (đường cũ)
 
 | Field | Nguồn ghi cuối thường gặp | Ghi đè bởi | Ổn định? |
 |---|---|---|---|
@@ -287,7 +287,7 @@ flowchart TD
 
 ---
 
-## 8. Ba câu hỏi luồng legacy KHÔNG trả lời được
+## 8. Ba câu hỏi mà luồng cũ KHÔNG trả lời được
 
 ```mermaid
 flowchart TD
@@ -307,7 +307,7 @@ Chi tiết technical debt: [CURRENT_ARCHITECTURE.md §6](./CURRENT_ARCHITECTURE.
 
 ---
 
-## 9. Cập nhật sau Phase 6/7 — đường observation
+## 9. Cập nhật sau giai đoạn 6/7 — đường observation
 
 > §1–§8 vẫn **đúng nguyên** cho đường legacy. Phần này mô tả đường **song song** đã thêm.
 
@@ -339,7 +339,7 @@ flowchart TD
   style RES fill:#3a1e1e,stroke:#ef4444,color:#dbe7f2
 ```
 
-### 9.2 Khác biệt cốt lõi so với legacy
+### 9.2 Khác biệt cốt lõi so với đường cũ
 
 ```mermaid
 flowchart LR

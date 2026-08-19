@@ -1,4 +1,4 @@
-# SOURCE_CAPABILITY_MATRIX — Phase A2 / P2
+# Bảng năng lực nguồn dữ liệu — giai đoạn A2 / P2
 
 > Biến "nguồn nào cấp được field nào" từ kiến thức trong đầu thành **code kiểm tra được**.
 > Tiền đề: [CURRENT_ARCHITECTURE.md](./CURRENT_ARCHITECTURE.md) · [CURRENT_DATA_FLOW.md](./CURRENT_DATA_FLOW.md) · [CANONICAL_VESSEL_MODEL.md](./CANONICAL_VESSEL_MODEL.md)
@@ -14,7 +14,7 @@ Code:
 
 ---
 
-## 1. Source Matrix là gì
+## 1. Bảng năng lực nguồn là gì
 
 Một bảng tra **đóng băng** (`Object.freeze`), khai báo cho từng nguồn:
 
@@ -29,7 +29,7 @@ Một bảng tra **đóng băng** (`Object.freeze`), khai báo cho từng nguồ
 
 Field dùng **từ vựng canonical** (`VesselField`), không phải tên thô của nguồn. Không có `ship_lat`, `lrpd`, `lengthM` trong matrix — chỉ `lat`, `positionReceivedAt`, `length`.
 
-## 2. Tại sao project cần nó
+## 2. Vì sao dự án cần nó
 
 Audit A0 chỉ ra 3 câu hỏi luồng dữ liệu hiện tại **không trả lời được** ([CURRENT_DATA_FLOW.md §8](./CURRENT_DATA_FLOW.md)): field nào từ nguồn nào, ai thắng khi bất đồng, làm sao biết nguồn xuống cấp. A1 giải quyết phần "biểu diễn" (canonical model + `SourceMetadata`). A2 giải quyết phần **"biết trước"**:
 
@@ -54,9 +54,9 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 - `grossTonnage` → **CANDIDATE**: Mongo schema **có cột**, nhưng `VesselFinderHtmlMapper` không parse ([CURRENT_DATA_FLOW.md §2.3](./CURRENT_DATA_FLOW.md)). Schema có cột **không phải** bằng chứng.
 - `currentPort` → **UNSUPPORTED**: không dấu vết nào trong repo, entity cũ không có khái niệm cảng.
 
-## 4. Nguồn × Operation
+## 4. Nguồn × thao tác hỗ trợ
 
-| Source | cost | enabled | prio | searchByName | searchByMmsi | searchByImo | position | particulars | voyage | areaScan |
+| Nguồn | chi phí | bật | ưu tiên | searchByName | searchByMmsi | searchByImo | position | particulars | voyage | areaScan |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `aisstream` | EXISTING_STREAM | — | 10 | — | ✅ | — | ✅ | — | — | ✅ |
 | `vesselfinder` | FREE | ✅ | 20 | — | ✅ | ✅ | ✅ | ✅ | — | ✅ |
@@ -75,12 +75,12 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 `shipinfo.searchByName = false`: endpoint tìm theo tên nằm dưới `/api/` mà `robots.txt` của ShipInfo cấm.
 `shipfinder.searchByImo = false`: `/ship/detail/imo/{imo}` trả 404 — nguồn chỉ tra được bằng MMSI. `searchByName` cũng false vì endpoint duy nhất bị ký chữ ký.
 
-## 5. Field × Source
+## 5. Trường dữ liệu × nguồn
 
 ✅ CONFIRMED · 🟡 CANDIDATE · — UNSUPPORTED
 
 ### Nhóm A · Identity
-| Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
+| Trường | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `mmsi` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `imo` | ✅ | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
@@ -91,7 +91,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `flag` | 🟡 | ✅ | ✅ | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 
 ### Nhóm B · Position
-| Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
+| Trường | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `lat` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 | `lng` | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
@@ -102,7 +102,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `positionReceivedAt` | ✅ | 🟡 | ✅ | ✅ | 🟡 | 🟡 | — | — | 🟡 | — |
 
 ### Nhóm C · Particulars
-| Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
+| Trường | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `grossTonnage` | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `deadweight` | — | 🟡 | ✅ | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | — |
@@ -112,7 +112,7 @@ Ba ví dụ minh hoạ ranh giới, lấy từ VesselFinder:
 | `draught` | 🟡 | ✅ | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 
 ### Nhóm D · Voyage
-| Field | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
+| Trường | AISSTREAM | VESSELFINDER | SHIPINFO | SHIPFINDER | BOATNERD | MARINETRAFFIC_LIVE | SHIPTRAFFIC | VESSELTRACKER | MYSHIPTRACKING | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `destination` | 🟡 | 🟡 | — | ✅ | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
 | `eta` | 🟡 | 🟡 | — | 🟡 | — | 🟡 | 🟡 | 🟡 | 🟡 | — |
@@ -189,7 +189,7 @@ CANDIDATE của VesselFinder có 2 loại lý do khác nhau:
 
 **MYSHIPTRACKING** — toàn bộ **CANDIDATE**. Repo không chứa API client, không chứa tài liệu hay response mẫu để làm bằng chứng. Danh sách field CONFIRMED phải đến từ API task ngoài repo; nâng trạng thái khi có danh sách đó. Xem §11.
 
-## 6. Cost type
+## 6. Phân loại chi phí
 
 | Loại | Nghĩa | Nguồn |
 |---|---|---|
@@ -199,7 +199,7 @@ CANDIDATE của VesselFinder có 2 loại lý do khác nhau:
 
 `FREE` không có nghĩa "dùng thoải mái" — chi phí của nó là 403/429 và cooldown (xem `SCAN_BLOCK_COOLDOWN_MS`).
 
-## 7. enabled / disabled
+## 7. Bật / tắt nguồn
 
 `enabled` là **quyết định vận hành**, tách hẳn khỏi capability kỹ thuật.
 
@@ -234,7 +234,7 @@ Test khoá cả hai: `"mặc định KHÔNG trả nguồn trả tiền"` và `"i
 
 Business fallback **không** được hardcode vào source class nào — matrix chỉ nói *đủ điều kiện*, việc *chọn* thuộc resolver ở phase sau.
 
-## 9. Capability ≠ provider implementation
+## 9. Năng lực khác với việc đã lập trình provider
 
 Đây là điểm dễ hiểu nhầm nhất.
 
@@ -249,7 +249,7 @@ Cụ thể: 8/10 nguồn trong matrix **không có một dòng code adapter nào
 
 Không file nào trong `src/application/capabilities/` import `HttpClient`, mongoose, express, hay bất kỳ datasource nào. Toàn bộ là hàm thuần + hằng đóng băng.
 
-## 10. Promote CANDIDATE → CONFIRMED
+## 10. Nâng một trường từ CANDIDATE lên CONFIRMED
 
 Quy trình bắt buộc khi audit/POC một nguồn xong:
 

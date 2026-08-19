@@ -1,4 +1,4 @@
-# SHIPINFO_DISCOVERY_AUDIT — Phase 10.2
+# Rà soát khả năng tìm tàu qua ShipInfo — giai đoạn 10.2
 
 > Audit `https://shipinfo.net/vessels_list.php` để trả lời: có dùng được làm **A · live discovery** và/hoặc **B · bootstrap vessel universe** không?
 >
@@ -293,7 +293,7 @@ Trong **45 request** ở nhịp 3,5–4 s:
 
 ## 12. Độ ổn định HTML
 
-### 🟡 MODERATE
+### 🟡 MỨC TRUNG BÌNH
 
 | Yếu tố | Đánh giá |
 |---|---|
@@ -345,7 +345,7 @@ Cần **canary test** giống P6/P7: một fixture HTML thật, một test khẳ
 
 ## 15. Khuyến nghị
 
-### BOOTSTRAP: 🟢 **GO**
+### DỰNG TẬP TÀU BAN ĐẦU: 🟢 **NÊN LÀM**
 
 Chạy một lần, có chặn, tiếp tục được sau khi ngắt:
 
@@ -359,7 +359,7 @@ Chạy một lần, có chặn, tiếp tục được sau khi ngắt:
 
 ⛔ **Không** enqueue enrichment ngay sau bootstrap. 1,25 M tàu × 1 request là 1,25 triệu request — chính xác điều [§5 P10.1](../GLOBAL_DISCOVERY_ARCHITECTURE.md) cấm. Bootstrap chỉ dựng **danh bạ**.
 
-### LIVE DISCOVERY: 🔴 **NO-GO**
+### TÌM TÀU THỜI GIAN THỰC: 🔴 **KHÔNG NÊN**
 
 Không có tín hiệu thay đổi nào để bám vào. Làm mới danh bạ theo chu kỳ **30–90 ngày** (cùng thang với `PARTICULARS` ở [§13 P10.1](../GLOBAL_DISCOVERY_ARCHITECTURE.md)) là cách dùng đúng — và đó là *làm mới*, không phải *discovery*.
 

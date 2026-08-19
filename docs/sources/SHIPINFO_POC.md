@@ -1,4 +1,4 @@
-# SHIPINFO_POC — Phase 6 (P6.1 → P6.4)
+# Bản chạy thử ShipInfo — giai đoạn 6 (P6.1 → P6.4)
 
 > Kết quả **triển khai**. Bằng chứng khảo sát nằm riêng ở [SHIPINFO_AUDIT.md](./SHIPINFO_AUDIT.md) — hai thứ cố ý không trộn nhau.
 > ShipInfo là **nguồn thứ hai** có implementation thật, sau VesselFinder.
@@ -37,7 +37,7 @@ graph LR
 
 Một `CollectVesselObservations` **không biết ShipInfo là gì** — nó nhận `source`, tra provider trong registry, chạy qua executor của đúng nguồn đó. Thêm nguồn sau này không phải sửa use case.
 
-## 3. Runtime config
+## 3. Cấu hình lúc chạy
 
 ```ts
 [VesselSource.SHIPINFO]: {
@@ -55,7 +55,7 @@ Mỗi con số bám vào đo đạc P6.1, không copy mẫu. Mục tiêu là **c
 
 ⚠️ `HttpClient` của ShipInfo được dựng với `timeoutMs` lấy **từ chính config này**. Dùng chung client 10s của legacy thì timeout 20s không bao giờ có hiệu lực — `AbortSignal` bên trong `HttpClient` bắn trước.
 
-## 4. Error mapping
+## 4. Ánh xạ lỗi
 
 | Tình huống | Category P4 | Retry? | Health |
 |---|---|---|---|
@@ -74,13 +74,13 @@ Hai mắt xích được thêm ở P6.4 để chuỗi này chạy đúng:
 
 `PARSE_ERROR` **không bao giờ** bị chuyển thành `NOT_FOUND` — nuốt nó sẽ âm thầm xoá dữ liệu đang có khi resolver xuất hiện.
 
-## 5. Health
+## 5. Sức khoẻ nguồn
 
 Dùng nguyên `HEALTHY / DEGRADED / COOLDOWN / DISABLED` của P4, không tạo state riêng.
 
 Đã kiểm bằng test: 10 lần NOT_FOUND liên tiếp → vẫn `HEALTHY`, `notFoundCount = 10`, `failureCount = 0`. 3 lần 403 → `COOLDOWN`, request thứ 4 **fail fast trước khi gọi provider**. ShipInfo cooldown **không** chặn VesselFinder — hai bộ runtime tách rời.
 
-## 6. Observation
+## 6. Bản quan sát
 
 `ProviderDetailsResult` → `providerResultToObservation` (P5, **generic sẵn**, không viết mapper riêng) → tối đa 3 observation. Không có `ShipInfoObservationMapper`.
 

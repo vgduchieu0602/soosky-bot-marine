@@ -1,4 +1,4 @@
-# DETAIL_CANONICAL_READ_MODEL — phase DETAIL-1
+# Mô hình đọc chi tiết tàu từ dữ liệu chuẩn — giai đoạn DETAIL-1
 
 > Trả lời: **"hiện tại Bot biết gì về vessel X?"** — đọc thuần trên canonical, không crawl.
 >
@@ -222,7 +222,7 @@ Có lưới chống phình (< 3 KiB) nhưng hàng rào thật là test cấu tr�
 
 ---
 
-## 9. File
+## 9. Danh sách file
 
 | File | |
 |---|---|

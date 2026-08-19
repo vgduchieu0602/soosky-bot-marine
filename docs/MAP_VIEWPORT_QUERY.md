@@ -1,4 +1,4 @@
-# MAP_VIEWPORT_QUERY — phase MAP-2
+# Truy vấn tàu theo khung nhìn bản đồ — giai đoạn MAP-2
 
 > Application trả lời được: **"trong viewport này hiện có tàu nào vẽ được?"**
 >
@@ -231,7 +231,7 @@ Mẫu thật:
 
 ---
 
-## 11. File
+## 11. Danh sách file
 
 | File | |
 |---|---|

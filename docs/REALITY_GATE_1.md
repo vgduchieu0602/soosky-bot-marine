@@ -1,31 +1,33 @@
 # REALITY GATE 1 — Bot
 
-**Commit tested:** `822d147fc013b8f388b96fd2906b5a7acdc8f5a9`  
-**Date:** 2026-08-17  
+Đây là biên bản nghiệm thu thực tế: chạy thật, không mô phỏng, để chứng minh Bot hoạt động đúng trên môi trường sạch.
+
+**Commit đã kiểm:** `822d147fc013b8f388b96fd2906b5a7acdc8f5a9`
+**Ngày:** 2026-08-17
 **Node:** v22.22.2 · **npm:** 10.9.7
 
-## Commands / results
+## Kết quả từng hạng mục
 
-| Gate | Result | Evidence |
+| Hạng mục | Kết quả | Bằng chứng |
 |---|---|---|
-| clean `npm ci` | **PASS** | exit 0, 124 packages |
-| `npm test` | **PASS** | 1050/1050 pass, exit 0 |
-| `npm run build` | **PASS** | `tsc` exit 0 |
-| contract parity → Marine | **PASS** | `VESSEL CONTRACT V1: MATCH` |
-| NO_DATA misuse | **PASS** | `"---"` only in contracts/mapper/tests; resolver `NO_DATA` is status enum, not persistence sentinel |
-| Mongo DB | **PASS** | local `mongodb://127.0.0.1:27017/soosky_marine_reality_gate` |
-| 2dsphere index | **PASS** | `location_2dsphere` created via `CurrentVesselModel.createIndexes()` |
-| Bot pipeline write | **PASS** | `scripts/reality-gate-seed.ts` → `IngestAisBatch` → 26 vessels, 52 observations saved, 26 resolved |
-| sample canonical doc | **PASS** | mmsi/imo/identity/position.position.lat|lng/observedAt/location present (see Marine report for JSON) |
-| explain 2dsphere | **PASS** | winning plan `IXSCAN` `location_2dsphere`; nReturned=5 keysExamined=5 docsExamined=5 |
-| Bot start AIS off | **PASS** | `BOT_AIS_ENABLED=false`; process served `/health` on :3200 without AISStream config |
-| internal acquire free | **PASS** | HTTP 200 `PARTIAL`/`LOCAL_HIT`, `fallbackUsed=false`, `acquisitionRequestId` echoed |
-| idempotency concurrent | **PASS** | same `acquisitionRequestId` → both 200 `LOCAL_HIT` (one workflow) |
-| different request ids | **PASS*** | after rate budget exhausted → HTTP 429 (per-vessel limit protects external spend) |
-| real paid MyShipTracking | **NOT RUN** | intentionally mocked/disabled; no credits |
+| Cài sạch `npm ci` | **ĐẠT** | exit 0, 124 package |
+| `npm test` | **ĐẠT** | 1050/1050 test qua, exit 0 |
+| `npm run build` | **ĐẠT** | `tsc` exit 0 |
+| Đối chiếu hợp đồng với Marine | **ĐẠT** | `VESSEL CONTRACT V1: MATCH` |
+| Không dùng sai `NO_DATA` | **ĐẠT** | `"---"` chỉ xuất hiện trong contract/mapper/test; `NO_DATA` của resolver là enum trạng thái, không phải giá trị lưu vào DB |
+| Kết nối Mongo | **ĐẠT** | local `mongodb://127.0.0.1:27017/soosky_marine_reality_gate` |
+| Index 2dsphere | **ĐẠT** | `location_2dsphere` được tạo qua `CurrentVesselModel.createIndexes()` |
+| Pipeline Bot ghi được dữ liệu | **ĐẠT** | `scripts/reality-gate-seed.ts` chạy qua `IngestAisBatch`: lưu 26 tàu, 52 bản quan sát, giải 26 tàu |
+| Kiểm tra một bản ghi chuẩn mẫu | **ĐẠT** | có đủ mmsi/imo/identity/position.position.lat và lng/observedAt/location (JSON xem ở báo cáo phía Marine) |
+| `explain` truy vấn 2dsphere | **ĐẠT** | kế hoạch thắng là `IXSCAN` trên `location_2dsphere`; nReturned=5 keysExamined=5 docsExamined=5 |
+| Khởi động Bot khi tắt AIS | **ĐẠT** | `BOT_AIS_ENABLED=false`; tiến trình phục vụ `/health` ở cổng 3200 mà không cần cấu hình AISStream |
+| Gọi nội bộ lấy dữ liệu miễn phí | **ĐẠT** | HTTP 200 trả `PARTIAL`/`LOCAL_HIT`, `fallbackUsed=false`, có echo lại `acquisitionRequestId` |
+| Chống trùng lệnh khi gọi song song | **ĐẠT** | cùng `acquisitionRequestId` thì cả hai đều 200 `LOCAL_HIT` (chỉ một luồng xử lý thật) |
+| Gọi với nhiều ID khác nhau | **ĐẠT*** | khi hết hạn mức thì trả HTTP 429 (giới hạn theo từng tàu bảo vệ chi phí gọi ra ngoài) |
+| Gọi thật MyShipTracking trả phí | **KHÔNG CHẠY** | cố ý mock/tắt; không có credit |
 
-\* Different IDs after 3/min vessel limit correctly rate-limited — credit-safe behavior.
+\* Sau khi vượt ngưỡng 3 lần/phút cho mỗi tàu thì bị chặn đúng như thiết kế — an toàn về chi phí.
 
-## Bot responsibility confirmed
+## Kết luận về trách nhiệm của Bot
 
-Acquisition/write owner. Internal command channel token-protected. Paid lane off.
+Bot là bên sở hữu việc thu thập và ghi dữ liệu. Kênh lệnh nội bộ được bảo vệ bằng token. Nhánh trả phí đang tắt.

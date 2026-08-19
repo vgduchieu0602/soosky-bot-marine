@@ -1,19 +1,20 @@
-# BOT-DATA-PROOF-1
+# BOT-DATA-PROOF-1 — Chứng minh pipeline dữ liệu
 
+Đây là biên bản chạy thật để chứng minh Bot tự crawl và tự dựng được dữ liệu chuẩn, không cần Marine, không tốn tiền.
 
-## Hard safety
+## Rào an toàn bắt buộc
 
-| Control | Value |
+| Chốt chặn | Giá trị |
 |---|---|
 | `BOT_DATA_PROOF_MODE` | `true` |
 | Mongo DB | `soosky_marine_bot_dev` (local `127.0.0.1:27017`) |
-| Production DB guard | `src/config/databaseSafety.ts` refuses known production names |
+| Chặn nhầm DB production | `src/config/databaseSafety.ts` từ chối các tên DB production đã biết |
 | `BOT_AIS_ENABLED` | `false` |
 | `PAID_FALLBACK_ENABLED` | `false` |
-| MyShipTracking calls | **0** (`myShipTrackingKeyPresent: false` in report) |
-| Marine integration | **none** |
+| Số lần gọi MyShipTracking | **0** (báo cáo ghi `myShipTrackingKeyPresent: false`) |
+| Tích hợp Marine | **không có** |
 
-## Commands
+## Lệnh đã chạy
 
 ```bash
 export BOT_DATA_PROOF_MODE=true
@@ -25,16 +26,16 @@ npm run build
 npm test
 
 npm run bot:discovery -- --pages=10 --reset-checkpoint
-npm run bot:discovery -- --pages=100   # resumes checkpoint
+npm run bot:discovery -- --pages=100   # chạy tiếp từ checkpoint
 npm run bot:map-proof
 npm run bot:detail-proof -- --sample=30
 npm run bot:data-report
 ```
 
-## Pipeline proven
+## Đường đi dữ liệu đã được chứng minh
 
 ```
-VesselFinder mp2 tiles
+Ô bản đồ mp2 của VesselFinder
   → VesselFinderProvider.scanArea
   → ObservationRecorder.recordPositions
   → vessel_observations
@@ -42,103 +43,105 @@ VesselFinder mp2 tiles
   → canonical_current_vessels
 ```
 
-No crawler→canonical bypass.
+Không có đường tắt nào từ crawler đi thẳng vào kho chuẩn.
 
-## Live results (summary)
+## Kết quả chạy thật (tóm tắt)
 
-### Discovery (aggregate across runs)
+### Giai đoạn tìm tàu (gộp nhiều lần chạy)
 
-| Metric | Evidence |
+| Chỉ số | Bằng chứng |
 |---|---|
-| Pages with HTTP 200 | 10 + 10 + 5 + 20 (+ earlier resume chain to tile 103) |
-| Errors / 403 / 429 | **0** in successful report batches |
-| Raw rows (latest 20-tile batch) | 1081 |
-| Unique MMSI (that batch) | 1081 |
-| Checkpoint | `bot_crawl_checkpoints` job `data-proof-discovery` → tileIndex **103**/108 |
-| Resume | log: `Resuming checkpoint at tile 15/108` then later finish run |
+| Số trang trả HTTP 200 | 10 + 10 + 5 + 20 (cộng chuỗi chạy tiếp trước đó tới ô số 103) |
+| Lỗi / 403 / 429 | **0** trong các lô báo cáo thành công |
+| Số dòng thô (lô 20 ô gần nhất) | 1081 |
+| Số MMSI khác nhau (lô đó) | 1081 |
+| Checkpoint | `bot_crawl_checkpoints`, job `data-proof-discovery` → tileIndex **103**/108 |
+| Chạy tiếp | log ghi `Resuming checkpoint at tile 15/108` rồi chạy hết |
 
-### Map
+### Giai đoạn bản đồ
 
-| Metric | Value |
+| Chỉ số | Giá trị |
 |---|---|
-| Pages | 10 OK |
-| Position rows | 154 raw / 153 unique |
-| lat/lon on canonical | **2289 / 2289 = 100%** |
-| course / speed / navStatus | ~0% from map tiles (provider limitation) |
-| sourceObservedAt | ~0% from map tiles (no timestamp in mp2) |
+| Số trang | 10 OK |
+| Dòng vị trí | 154 thô / 153 khác nhau |
+| Có lat/lon trong kho chuẩn | **2289 / 2289 = 100%** |
+| course / speed / navStatus | gần 0% từ ô bản đồ (giới hạn của nguồn) |
+| sourceObservedAt | gần 0% từ ô bản đồ (định dạng mp2 không có mốc thời gian) |
 
-### Detail sample (n=30 free multi)
+### Mẫu chi tiết (n=30, đa nguồn miễn phí)
 
-| Field | Coverage |
+| Trường | Độ phủ |
 |---|---|
 | vesselType | **90%** |
 | flag | **100%** |
 | grossTonnage | 0% |
 | deadWeight | 0% |
 | yearOfBuild | 0% |
-| ports / voyage | 0% |
+| cảng / hành trình | 0% |
 
-Many attempts stopped with `NO_FREE_SOURCE_AVAILABLE` after partial identity enrichment; paid disabled by design.
+Nhiều lần thử dừng ở `NO_FREE_SOURCE_AVAILABLE` sau khi mới làm giàu được phần danh tính. Nhánh trả phí đã tắt theo thiết kế.
 
-### Database
+### Cơ sở dữ liệu
 
-| Collection | Count / notes |
+| Collection | Số lượng / ghi chú |
 |---|---|
 | `vessel_observations` | 4800 |
-| `canonical_current_vessels` | 2289 (all with lat/lon) |
-| `bot_crawl_checkpoints` | discovery + map cursors |
-| Indexes obs | mmsi/imo/source/fingerprint/expiresAt |
-| Indexes canonical | mmsi, imo, **location_2dsphere** |
-| Storage | ~4.59 MB data + ~2.1 MB indexes (sample) |
+| `canonical_current_vessels` | 2289 (tất cả đều có lat/lon) |
+| `bot_crawl_checkpoints` | con trỏ của discovery và map |
+| Index của observations | mmsi/imo/source/fingerprint/expiresAt |
+| Index của canonical | mmsi, imo, **location_2dsphere** |
+| Dung lượng | khoảng 4,59 MB dữ liệu + 2,1 MB index (mẫu) |
 
-### Throughput (measured)
+### Tốc độ (đo thật)
 
-| Batch | pages/min | vessels/min |
+| Lô | trang/phút | tàu/phút |
 |---|---|---|
-| discovery 20 tiles / 39.3s / 1081 ships | ~30.5 | ~1650 |
-| map 10 tiles / 17.2s / 154 ships | ~35 | ~540 |
+| discovery 20 ô / 39,3 giây / 1081 tàu | ~30,5 | ~1650 |
+| map 10 ô / 17,2 giây / 154 tàu | ~35 | ~540 |
 
-**Full discovery ETA** (illustrative 31k list-pages scale; our unit is map tiles):  
-- best: ~31k/40 ≈ **13h**  
-- measured ~30 pages/min: **~17h**  
-- conservative (errors/cooldown): **24–48h**
+**Ước tính thời gian quét hết** (quy chiếu minh hoạ theo thang 31 nghìn trang danh sách; đơn vị thật của ta là ô bản đồ):
 
-### Process memory
+- lạc quan nhất: ~31k/40 ≈ **13 giờ**
+- theo tốc độ đo được ~30 trang/phút: **~17 giờ**
+- thận trọng (tính lỗi và thời gian nghỉ): **24–48 giờ**
 
-| State | RSS | heap |
+### Bộ nhớ tiến trình
+
+| Trạng thái | RSS | heap |
 |---|---|---|
-| crawl peak | ~500 MB | ~410 MB |
-| report idle-ish | ~480 MB | ~394 MB |
+| đỉnh lúc crawl | ~500 MB | ~410 MB |
+| lúc chạy báo cáo, gần như rảnh | ~480 MB | ~394 MB |
 
-No continuous climb across empty tiles (stable ~460 MB on empty ocean tiles).
+Không thấy bộ nhớ leo dần khi quét qua các ô rỗng (giữ ổn định ~460 MB trên vùng biển trống).
 
 ### Build / test
 
 | | |
 |---|---|
-| `npm run build` | PASS |
-| `npm test` | **1054/1054 PASS** |
+| `npm run build` | ĐẠT |
+| `npm test` | **1054/1054 ĐẠT** |
 
-## Capability assessment
+## Đánh giá năng lực
 
-| Need | Crawler alone? |
+| Nhu cầu | Chỉ dùng crawler có làm được không? |
 |---|---|
-| A. Discovery (MMSI + name density) | **YES** — VesselFinder map tiles work |
-| B. Map base layer (lat/lon markers) | **YES** for position pins; **NO** reliable course/speed/nav/source time from free map binary |
-| C. Vessel details (GT/DWT/voyage) | **PARTIAL** — flag/type often; tonnage/voyage need better free detail sources or paid |
+| A. Tìm tàu (mật độ MMSI + tên) | **ĐƯỢC** — ô bản đồ VesselFinder chạy tốt |
+| B. Lớp nền bản đồ (chấm lat/lon) | **ĐƯỢC** với chấm vị trí; **KHÔNG** lấy được course/speed/nav/thời gian nguồn một cách tin cậy từ dữ liệu nhị phân của bản đồ miễn phí |
+| C. Chi tiết tàu (GT/DWT/hành trình) | **MỘT PHẦN** — cờ và loại tàu thì thường có; dung tích và hành trình cần nguồn miễn phí tốt hơn, hoặc phải trả phí |
 
-## Verdict
+## Kết luận
 
-**CONDITIONALLY PASS**
+**ĐẠT CÓ ĐIỀU KIỆN**
 
-Why not FULL PASS:
-- No 2–6h continuous soak in this session
-- Live SIGTERM drain not separately instrumented (handlers exist)
-- Detail tonnage/voyage coverage still 0% on free path
-- Manual 10-record source HTML cross-check not fully tabulated
-- Marine working tree shows only unrelated `tmp/*` deletions; no proof-phase source edits
+Chưa đạt hoàn toàn vì:
 
-## Suggested commit
+- Chưa chạy liên tục 2–6 tiếng trong phiên này
+- Chưa đo riêng việc rút dữ liệu khi nhận SIGTERM thật (phần xử lý thì đã có)
+- Độ phủ dung tích và hành trình trên đường miễn phí vẫn 0%
+- Chưa lập bảng đối chiếu tay đầy đủ 10 bản ghi với HTML nguồn
+- Cây làm việc phía Marine chỉ thấy xoá vài file `tmp/*` không liên quan; không có sửa mã nguồn nào thuộc giai đoạn proof
+
+## Commit đề xuất
 
 ```
 feat(runtime): prove standalone marine crawl data pipeline

@@ -1,4 +1,4 @@
-# MYSHIPTRACKING_AUDIT — Phase 9.5
+# Rà soát nguồn MyShipTracking — giai đoạn 9.5
 
 > Audit nguồn **TRẢ TIỀN** duy nhất trong capability matrix, để trả lời một câu: **có đáng viết client không, và nếu có thì mua cái gì?**
 >
@@ -69,7 +69,7 @@ Các endpoint khác có tồn tại nhưng **ngoài phạm vi**: Vessels Status 
 
 ---
 
-## E. Field capability
+## E. Nguồn cấp được những trường nào
 
 Cột **Giá trị trả tiền** là kết luận của §7 spec: dựa vào **nguồn free hiện có đã cấp được gì**, không dựa vào việc API có field hay không. Field API có mà free cũng có thì giá trị trả tiền bằng **không**.
 
@@ -278,7 +278,7 @@ Cần POC xác minh trước khi tin, **theo thứ tự ưu tiên**:
 
 ## K. Kết luận
 
-# 🟡 GO WITH LIMITATIONS
+# 🟡 DÙNG ĐƯỢC, NHƯNG CÓ GIỚI HẠN
 
 **GO vì** — có ba thứ nguồn free thật sự không cấp được, và chúng đã đo được chứ không phải suy đoán:
 

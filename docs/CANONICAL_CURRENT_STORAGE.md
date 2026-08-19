@@ -1,9 +1,8 @@
-# Canonical Current Storage
+# Kho lưu trạng thái tàu chuẩn hiện tại
 
-## Context
+## Bối cảnh
 
-Phase 8.5 persists the best resolved current view of a vessel without changing the
-legacy read/write path. It is intentionally separate from observation storage.
+Giai đoạn 8.5 lưu lại "bản nhìn tốt nhất hiện tại" của một con tàu sau khi đã giải dữ liệu, mà không đụng gì tới đường đọc/ghi cũ. Kho này tách riêng khỏi kho bản quan sát — đây là chủ ý.
 
 ```mermaid
 flowchart TD
@@ -13,80 +12,68 @@ flowchart TD
     C --> S[(canonical_current_vessels)]
 ```
 
-## Observation vs Current Storage
+## Khác nhau giữa kho quan sát và kho hiện tại
 
-`vessel_observations` is append-only evidence: a source said a value at a specific
-time. `canonical_current_vessels` is an updatable read model: the current best
-resolution over that evidence. Canonical history is not duplicated because the
-underlying observations already retain it.
+`vessel_observations` là **bằng chứng, chỉ ghi thêm**: nguồn X đã nói giá trị Y vào lúc Z. Không sửa, không xoá.
 
-Only `ResolvedCurrentVessel` crosses the current-storage boundary. Provider raw
-results never do. The write flow is provider -> observation -> resolver -> current
-repository; `ResolveAndStoreCurrentVessel` starts at an existing observation key and
-does not call providers or the network.
+`canonical_current_vessels` là **mô hình đọc, được cập nhật**: kết quả giải tốt nhất tính trên đống bằng chứng đó.
 
-## Collection and Model
+Lịch sử của bản chuẩn không cần lưu lại lần nữa, vì các bản quan sát bên dưới đã giữ đầy đủ rồi.
 
-The dedicated Mongo collection is `canonical_current_vessels`; it does not reuse
-`vessels`, `latestpositions`, `vesselpositions`, or `vessel_observations`.
+Chỉ duy nhất `ResolvedCurrentVessel` được phép đi qua ranh giới vào kho hiện tại. Dữ liệu thô từ nhà cung cấp thì không bao giờ. Đường ghi là: nhà cung cấp → bản quan sát → resolver → repository hiện tại. `ResolveAndStoreCurrentVessel` bắt đầu từ một khoá quan sát đã có sẵn, nó **không** gọi nhà cung cấp và không chạm vào mạng.
 
-Each document stores `mmsi`, `imo`, `identity`, `position`, `particulars`, `voyage`,
-`resolvedAt`, a content hash, and Mongoose `createdAt`/`updatedAt`. Persistence
-metadata is distinct from resolver time (`resolvedAt`) and source times
-(`observedAt`, `fetchedAt`). Groups may be `null`; an identity-only resolved vessel is
-valid.
+## Collection và model
 
-## Provenance and Dates
+Collection Mongo riêng là `canonical_current_vessels`. Nó không dùng ké `vessels`, `latestpositions`, `vesselpositions` hay `vessel_observations`.
 
-Identity, particulars, and voyage keep each `ResolvedField` unchanged, including
-`value`, `source`, `observationId`, `observedAt`, `fetchedAt`, `reason`, and the small
-`rejected` audit list. Position remains one atomic `ResolvedPosition`: its source,
-observation id, observed/fetched times, freshness, reason, rejected candidates, and
-original position payload are never field-merged by storage.
+Mỗi document lưu: `mmsi`, `imo`, `identity`, `position`, `particulars`, `voyage`, `resolvedAt`, một hash nội dung, cùng `createdAt`/`updatedAt` do Mongoose sinh.
 
-The schema uses BSON `Date` for resolver and provenance times. Date-valued fields in
-resolved-field values (for example ETA and last-port departure) are retained as Dates
-at the persistence boundary.
+Ba loại thời gian này phải phân biệt rõ:
 
-## Keys and Indexes
+- Thời gian lưu trữ (`createdAt`/`updatedAt`) — lúc ghi vào DB
+- Thời gian giải (`resolvedAt`) — lúc resolver chạy
+- Thời gian của nguồn (`observedAt`, `fetchedAt`) — lúc nguồn quan sát và lúc ta lấy về
 
-MMSI is the preferred lookup key and IMO is a secondary exact identifier. Upsert
-locates MMSI first, then IMO; it never uses name, callsign, or fuzzy matching.
-`ResolveCurrentVessel` preserves the caller's MMSI and may supplement a missing IMO
-from resolved identity, but it does not invent a caller-missing MMSI. A later exact
-IMO lookup still reaches an existing MMSI document through the repository's IMO key.
+Các nhóm dữ liệu có thể là `null`. Một con tàu chỉ giải ra được danh tính vẫn là hợp lệ.
 
-Mongo has exactly two indexes:
+## Nguồn gốc dữ liệu và kiểu ngày tháng
 
-- unique partial index on `mmsi` when it is a string;
-- unique partial index on `imo` when it is a string.
+Nhóm identity, particulars và voyage giữ nguyên từng `ResolvedField`, gồm đủ `value`, `source`, `observationId`, `observedAt`, `fetchedAt`, `reason`, và danh sách nhỏ `rejected` để truy vết những ứng viên bị loại.
 
-The `$type: "string"` partial predicates allow any number of IMO-only or MMSI-only
-documents and avoid treating `null` as one shared unique value. No speculative geo,
-source, or freshness indexes are created.
+Vị trí thì khác: nó là **một khối nguyên vẹn** `ResolvedPosition`. Nguồn, id bản quan sát, thời điểm quan sát/lấy về, độ tươi, lý do chọn, danh sách ứng viên bị loại và payload vị trí gốc — tầng lưu trữ **không bao giờ** trộn lẫn từng trường của khối này với khối khác.
 
-## Upsert and Idempotency
+Schema dùng kiểu BSON `Date` cho thời gian của resolver và thời gian nguồn gốc. Những giá trị mang nghĩa ngày tháng nằm trong resolved field (ví dụ ETA hay giờ rời cảng trước) cũng được giữ nguyên dạng Date ở ranh giới lưu trữ.
 
-`ICurrentVesselRepository` exposes `upsert`, `findByMmsi`, and `findByImo`.
-`upsert` returns `CREATED`, `UPDATED`, or `UNCHANGED`.
+## Khoá và index
 
-The repository hashes the complete resolved canonical content except `resolvedAt`.
-All field provenance remains part of the hash: a changed source, observation id, or
-reason is a real update even if the displayed value is the same. If the hash matches,
-the repository performs no write and preserves `updatedAt`; `resolvedAt` alone cannot
-manufacture an update.
+MMSI là khoá tra cứu ưu tiên, IMO là định danh chính xác thứ hai.
 
-`ResolveAndStoreCurrentVessel` returns `NO_DATA` and does not call `upsert` when all
-resolver groups are absent. Otherwise it returns the saved vessel and maps the
-repository status directly to `CREATED`, `UPDATED`, or `UNCHANGED`.
+Khi upsert, hệ thống tìm theo MMSI trước, sau đó mới tới IMO. Nó **không bao giờ** dùng tên tàu, hô hiệu, hay so khớp mờ.
 
-## Action Items
+`ResolveCurrentVessel` giữ nguyên MMSI mà bên gọi đưa vào, và có thể bổ sung IMO còn thiếu từ danh tính đã giải được — nhưng không tự bịa ra MMSI nếu bên gọi không đưa. Một lần tra cứu chính xác bằng IMO sau này vẫn tìm được đúng document có MMSI, thông qua khoá IMO của repository.
 
-No API, scheduler, change stream, event bus, bulk resolver, or legacy integration is
-part of this phase. A future phase may introduce a deliberately scoped read API or
-automation after its query and operational requirements are known.
+Mongo chỉ có đúng hai index:
 
-## Related Notes
+- unique partial index trên `mmsi` khi nó là chuỗi;
+- unique partial index trên `imo` khi nó là chuỗi.
+
+Điều kiện `$type: "string"` cho phép tồn tại bao nhiêu document chỉ-có-IMO hoặc chỉ-có-MMSI cũng được, và tránh việc Mongo coi mọi `null` là cùng một giá trị unique (sẽ chỉ cho phép đúng một bản ghi). Không tạo sẵn index địa lý, index theo nguồn hay theo độ tươi khi chưa có nhu cầu thật.
+
+## Upsert và tính bất biến khi gọi lại
+
+`ICurrentVesselRepository` cung cấp `upsert`, `findByMmsi` và `findByImo`. `upsert` trả về `CREATED`, `UPDATED` hoặc `UNCHANGED`.
+
+Repository băm toàn bộ nội dung chuẩn đã giải, **trừ** `resolvedAt`. Toàn bộ thông tin nguồn gốc vẫn nằm trong hash: đổi nguồn, đổi id bản quan sát, hay đổi lý do chọn đều tính là cập nhật thật, kể cả khi giá trị hiển thị y hệt.
+
+Nếu hash trùng, repository không ghi gì cả và giữ nguyên `updatedAt`. Nói cách khác, riêng `resolvedAt` thay đổi thì không đủ để tạo ra một lần cập nhật giả.
+
+`ResolveAndStoreCurrentVessel` trả `NO_DATA` và không gọi `upsert` khi tất cả nhóm dữ liệu của resolver đều rỗng. Ngược lại nó trả về bản ghi đã lưu và ánh xạ thẳng trạng thái từ repository thành `CREATED`, `UPDATED` hoặc `UNCHANGED`.
+
+## Việc chưa làm
+
+Giai đoạn này **không** bao gồm: API, scheduler, change stream, event bus, resolver theo lô, hay tích hợp với đường code cũ. Giai đoạn sau có thể thêm một API đọc hoặc phần tự động hoá với phạm vi được giới hạn rõ ràng, sau khi biết chính xác nhu cầu truy vấn và vận hành.
+
+## Ghi chú liên quan
 
 - [[OBSERVATION_STORAGE]]
 - [[RESOLVER_POLICY]]

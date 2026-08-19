@@ -1,32 +1,41 @@
-# MyShipTracking paid current-position lane
+# Nhánh lấy vị trí trả phí qua MyShipTracking
 
-## Context
+## Bối cảnh
 
-TRACK-1 adds one explicitly invoked paid refresh for one vessel. It is isolated from map reads, free detail refreshes, database misses, crawler failures, and scheduling.
+TRACK-1 thêm đúng một thao tác: người dùng bấm rõ ràng để làm mới vị trí của **một** tàu, và thao tác đó được phép tốn tiền. Nhánh này tách hẳn khỏi việc đọc bản đồ, làm mới chi tiết miễn phí, xử lý khi DB không có dữ liệu, xử lý khi crawler lỗi, và khỏi mọi lịch chạy tự động.
 
-## Problem
+## Vấn đề
 
-A paid API must not become an accidental free fallback or spend multiple credits for one user action.
+API trả phí tuyệt đối không được biến thành "phương án dự phòng miễn phí" một cách vô tình, và cũng không được tiêu nhiều credit cho một hành động duy nhất của người dùng.
 
-## Key Learning
+## Điều rút ra
 
-The official Vessel Status documentation was audited on 2026-08-17: `GET https://api.myshiptracking.com/api/v2/vessel`, authenticated by `Authorization: Bearer <key>` (or `x-api-key`), accepts exactly one `mmsi` or `imo`, and supports `simple` (1 credit) and `extended` (3 credits). A no-result response is not charged. `X-Credit-Charged`, when present, is the actual charge.
+Tài liệu chính thức Vessel Status đã được rà ngày 2026-08-17:
 
-The lane always sends `response=simple`: TRACK-1 needs current position, while free acquisition retains responsibility for enrichment. The documentation sample contains `lat: 0, lng: 0`, so zero coordinates remain valid under the existing coordinate validator. It also shows numeric `nav_status` despite the field table saying text; the mapper safely accepts either an AIS code 0..15 or non-empty text.
+- Endpoint: `GET https://api.myshiptracking.com/api/v2/vessel`
+- Xác thực: `Authorization: Bearer <key>` (hoặc `x-api-key`)
+- Nhận **đúng một** tham số `mmsi` hoặc `imo`
+- Hai mức: `simple` (1 credit) và `extended` (3 credit)
+- Nếu không tìm thấy kết quả thì **không bị tính tiền**
+- Header `X-Credit-Charged`, khi có, là số credit thực sự bị trừ
 
-## Decision
+Nhánh này luôn gửi `response=simple`: TRACK-1 chỉ cần vị trí hiện tại, còn việc làm giàu thông tin vẫn thuộc về luồng thu thập miễn phí.
 
-- `TrackVesselCurrentPosition` is the only paid entry point. It uses `PaidFallbackGate` with `EXPLICIT_TRACKING`, one MMSI/IMO (MMSI wins when both were supplied), an explicit known budget, and a process-local per-vessel single-flight map.
-- `MyShipTrackingClient` makes exactly one `GET /api/v2/vessel?response=simple` request with timeout and no automatic retry. Ambiguous billing after network/5xx errors is safer than risking a second charge.
-- HTTP/API failures are classified as: 404 `NOT_FOUND`, 402 `NO_CREDITS`, 429 `RATE_LIMITED`, 401/403 `UNAUTHORIZED`, 400 `BAD_REQUEST`, and 5xx `SERVER_ERROR`. Only success creates observations.
-- Success maps to `ProviderDetailsResult`, then `VesselObservation`, then the existing resolver and canonical store. It never writes canonical state directly and has no paid-source priority override.
-- Paid position observations are retained for seven days, matching the resolver candidate window. They are infrequent and credit-bearing, but are not retained indefinitely.
+Hai chi tiết nhỏ nhưng dễ gây lỗi: ví dụ trong tài liệu có `lat: 0, lng: 0`, nên toạ độ bằng 0 vẫn phải được coi là hợp lệ theo bộ kiểm tra toạ độ hiện tại. Tài liệu cũng trả `nav_status` dạng số dù bảng mô tả ghi là chữ, nên mapper chấp nhận cả hai: mã AIS 0..15 hoặc chuỗi không rỗng.
 
-## Action Items
+## Quyết định
 
-- TRACK-2 may design authorization, scheduling, product billing, and a production API route. None are part of TRACK-1.
-- Any manual POC must require an explicit paid confirmation and never print the key.
+- `TrackVesselCurrentPosition` là **cửa vào duy nhất** của nhánh trả phí. Nó đi qua `PaidFallbackGate` với lý do `EXPLICIT_TRACKING`, nhận một MMSI/IMO (nếu đưa cả hai thì MMSI thắng), có hạn mức biết trước rõ ràng, và một bảng chống gọi trùng theo từng tàu trong phạm vi tiến trình.
+- `MyShipTrackingClient` gửi **đúng một** request `GET /api/v2/vessel?response=simple`, có timeout, và **không tự thử lại**. Thà chịu mập mờ về việc đã bị tính tiền hay chưa sau lỗi mạng/5xx, còn hơn rủi ro bị tính tiền lần thứ hai.
+- Lỗi HTTP/API được phân loại rõ: 404 `NOT_FOUND`, 402 `NO_CREDITS`, 429 `RATE_LIMITED`, 401/403 `UNAUTHORIZED`, 400 `BAD_REQUEST`, 5xx `SERVER_ERROR`. Chỉ khi thành công mới tạo bản quan sát.
+- Kết quả thành công đi theo đường: `ProviderDetailsResult` → `VesselObservation` → resolver và kho chuẩn sẵn có. Nó **không bao giờ** ghi thẳng vào trạng thái chuẩn, và cũng không có đặc quyền ưu tiên vì là nguồn trả phí.
+- Bản quan sát vị trí trả phí được giữ 7 ngày, khớp với cửa sổ ứng viên của resolver. Chúng hiếm và tốn tiền, nhưng không vì thế mà giữ vĩnh viễn.
 
-## Related Notes
+## Việc cần làm tiếp
+
+- TRACK-2 sẽ thiết kế phần phân quyền, lịch chạy, tính tiền theo sản phẩm, và route API production. Không phần nào trong số đó thuộc TRACK-1.
+- Mọi bài chạy thử thủ công đều phải bắt xác nhận trả phí rõ ràng và **không bao giờ in khoá API ra màn hình**.
+
+## Ghi chú liên quan
 
 [[ACQUISITION_POLICY]] [[RESOLVER_POLICY]] [[OBSERVATION_STORAGE]]
