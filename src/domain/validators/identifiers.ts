@@ -49,3 +49,33 @@ export function isValidImo(value: unknown): boolean {
   if (digits === null || digits.length !== 7) return false;
   return imoCheckDigit(digits) === Number(digits[6]);
 }
+
+/**
+ * Định danh dùng làm KHOÁ CANONICAL: hợp lệ thì giữ, không hợp lệ thì `null`.
+ *
+ * Vì sao cần: nguồn ngoài trả những giá trị "có mặt nhưng vô nghĩa" —
+ * ShipInfo gửi `imo = "0"` cho tàu không có IMO. Chuỗi đó KHÔNG rỗng nên mọi
+ * kiểm tra kiểu `imo ?? null` đều cho nó đi qua, và nó trở thành định danh
+ * canonical. Hậu quả thật: unique index `imo_1` coi mọi tàu "không có IMO" là
+ * CÙNG một con tàu, và con thứ hai làm sập cả lượt quét vùng bằng E11000.
+ *
+ * Cố ý KHÔNG có danh sách sentinel ("0", "0000000", ...): quy tắc IMO/MMSI đã
+ * đủ để loại chúng. Thêm danh sách đen là mở đường cho hai định nghĩa "hợp lệ"
+ * sống song song rồi lệch nhau.
+ */
+export function normalizeImo(value: unknown): string | null {
+  const digits = digitsOf(value);
+  if (digits === null || !isValidImo(digits)) return null;
+  // `isValidImo` là luật CHECKSUM thuần, và "0000000" thoả checksum một cách
+  // hình thức (0 ≡ 0) — repo đã ghi nhận điều đó. Nhưng số IMO toàn số 0 không
+  // phải một định danh được cấp cho con tàu nào; nó là cách nguồn nói "không
+  // có IMO". Luật checksum giữ nguyên; đây là luật KHOÁ CANONICAL chồng lên.
+  if (/^0+$/.test(digits)) return null;
+  return digits;
+}
+
+/** Cùng luật với `normalizeImo`, áp cho MMSI. */
+export function normalizeMmsi(value: unknown): string | null {
+  const digits = digitsOf(value);
+  return digits !== null && isValidMmsi(digits) ? digits : null;
+}

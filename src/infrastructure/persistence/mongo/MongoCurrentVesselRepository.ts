@@ -16,6 +16,7 @@ import {
 import { currentVesselContentHash } from "../../../application/services/resolution/currentVesselContent";
 import { ResolvedCurrentVessel } from "../../../application/services/resolution/ResolvedCurrentVessel";
 import { isValidCoordinates } from "../../../domain/validators/geo";
+import { normalizeImo } from "../../../domain/validators/identifiers";
 import { CurrentVesselModel } from "./currentVesselModel";
 
 interface CurrentVesselDoc {
@@ -102,7 +103,10 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
     // Khoá canonical chỉ được BỔ SUNG, không xoá: resolve bằng MMSI không được
     // làm mất IMO mà bản ghi trước đã biết.
     doc.mmsi = mmsi ?? existing.mmsi ?? null;
-    doc.imo = imo ?? existing.imo ?? null;
+    // Lưới cuối cùng ngay trước unique index `imo_1`. Dùng LẠI `normalizeImo`
+    // của domain — không phải một luật thứ hai — để một resolved vessel lỗi
+    // cũng không thể biến `"0"` thành định danh canonical.
+    doc.imo = normalizeImo(imo ?? existing.imo);
 
     // ⚠️ `location` đi trong CHÍNH lệnh ghi này, không phải một lượt update thứ
     // hai: hai lệnh nghĩa là có một khoảnh khắc canonical và toạ độ nói hai
@@ -164,8 +168,12 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
       const byMmsi = await CurrentVesselModel.findOne({ mmsi }).lean<CurrentVesselDoc>();
       if (byMmsi !== null) return byMmsi;
     }
-    if (imo !== undefined) {
-      const byImo = await CurrentVesselModel.findOne({ imo }).lean<CurrentVesselDoc>();
+    // Tra theo IMO ĐÃ CHUẨN HOÁ. Nếu dùng giá trị thô, một tàu mang sentinel
+    // `imo = "0"` sẽ khớp vào document của MỘT CON TÀU KHÁC cũng đang mang "0"
+    // và ghi đè lên nó — mất dữ liệu chứ không chỉ là trùng khoá.
+    const normalizedImo = normalizeImo(imo);
+    if (normalizedImo !== null) {
+      const byImo = await CurrentVesselModel.findOne({ imo: normalizedImo }).lean<CurrentVesselDoc>();
       if (byImo !== null) return byImo;
     }
     return null;
@@ -183,7 +191,7 @@ export class MongoCurrentVesselRepository implements ICurrentVesselRepository {
   ): Record<string, unknown> & { mmsi: string | null; imo: string | null } {
     return {
       mmsi: vessel.vesselKey.mmsi ?? null,
-      imo: vessel.vesselKey.imo ?? null,
+      imo: normalizeImo(vessel.vesselKey.imo),
       identity: vessel.identity,
       position: vessel.position,
       particulars: vessel.particulars,

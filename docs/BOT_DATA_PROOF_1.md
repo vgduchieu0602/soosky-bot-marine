@@ -1,8 +1,5 @@
 # BOT-DATA-PROOF-1
 
-**Date:** 2026-08-18  
-**Bot baseline commit:** `0eb44a285c2ce10ec228f5b15ac1460d05a07dd7` (+ uncommitted proof tooling)  
-**Marine:** not modified for this phase (reference only)
 
 ## Hard safety
 

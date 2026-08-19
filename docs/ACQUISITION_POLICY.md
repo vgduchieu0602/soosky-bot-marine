@@ -2,8 +2,6 @@
 
 > Trả lời đúng bảy câu hỏi: **khi nào dữ liệu local là đủ · khi nào cần lấy thêm · lấy từ nguồn nào · khi nào dừng · khi nào mới được tiêu tiền · làm sao không gọi mọi nguồn mỗi request · làm sao không trùng AISStream.**
 >
-> Tiền đề: [CANONICAL_CURRENT_STORAGE.md](./CANONICAL_CURRENT_STORAGE.md) · [RESOLVER_POLICY.md](./RESOLVER_POLICY.md) · [SOURCE_CAPABILITY_MATRIX.md](./SOURCE_CAPABILITY_MATRIX.md) · [CRAWL_RUNTIME.md](./CRAWL_RUNTIME.md) · [OBSERVATION_STORAGE.md](./OBSERVATION_STORAGE.md)
->
 > **P9.1 chỉ thiết kế.** Không `AcquisitionOrchestrator.ts`, không `FallbackEngine.ts`, không client MyShipTracking, không gọi mạng, không Redis/queue/event bus/scheduler.
 
 ---

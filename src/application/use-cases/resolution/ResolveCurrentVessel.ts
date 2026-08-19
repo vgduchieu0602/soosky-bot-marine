@@ -22,6 +22,7 @@
 import { IVesselObservationRepository } from "../../contracts/repositories/IVesselObservationRepository";
 import { ResolvedCurrentVessel } from "../../services/resolution/ResolvedCurrentVessel";
 import { VesselObservationKey } from "../../../domain/entities/VesselObservation";
+import { normalizeImo, normalizeMmsi } from "../../../domain/validators/identifiers";
 import { ResolveCurrentIdentity } from "./ResolveCurrentIdentity";
 import { ResolveCurrentParticulars } from "./ResolveCurrentParticulars";
 import { ResolveCurrentPosition } from "./ResolveCurrentPosition";
@@ -87,14 +88,18 @@ export class ResolveCurrentVessel {
   /**
    * Giữ nguyên định danh người gọi đưa vào. Chỉ BỔ SUNG `imo` khi khoá gốc
    * chưa có và identity phân xử được — không bao giờ ghi đè giá trị đã yêu cầu.
+   *
+   * ĐÂY là ranh giới observation -> CANONICAL, nên cũng là chỗ định danh phải
+   * hợp lệ thật. Observation vẫn giữ nguyên giá trị thô kèm issue để debug
+   * parser; nhưng khoá canonical thì `"0"` phải trở thành "không có IMO".
    */
   private static buildKey(
     key: VesselObservationKey,
     resolvedImo: string | undefined
   ): { mmsi?: string; imo?: string } {
     return {
-      mmsi: key.mmsi,
-      imo: key.imo ?? resolvedImo,
+      mmsi: normalizeMmsi(key.mmsi) ?? undefined,
+      imo: normalizeImo(key.imo ?? resolvedImo) ?? undefined,
     };
   }
 }
